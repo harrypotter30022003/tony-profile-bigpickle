@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 const app = express();
 const PORT = 3001;
@@ -16,9 +17,33 @@ app.use(express.json());
 let requestCount = 0;
 setInterval(() => requestCount = 0, 60000);
 
+// Simple token store (in production, use proper session)
+const validTokens = new Set();
+
+function generateToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
 console.log('Data file:', DATA_FILE);
 
-// Get data
+// Login endpoint
+app.post('/api/login', (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) {
+    const token = generateToken();
+    validTokens.add(token);
+    res.json({ token });
+  } else {
+    res.status(401).json({ error: 'Invalid password' });
+  }
+});
+
+// Verify token middleware
+function verifyToken(token) {
+  return validTokens.has(token);
+}
+
+// Get data (public - for frontend)
 app.get('/api/data', (req, res) => {
   try {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
@@ -36,9 +61,9 @@ app.post('/api/save', (req, res) => {
     return res.status(429).json({error:'Too many requests'});
   }
   
-  const {password, data} = req.body;
-  if(password !== ADMIN_PASSWORD) {
-    return res.status(401).json({error:'Invalid password'});
+  const { token, data } = req.body;
+  if(!verifyToken(token)) {
+    return res.status(401).json({error:'Unauthorized'});
   }
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));

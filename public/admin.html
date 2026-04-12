@@ -35,13 +35,25 @@ function login(err){
   document.getElementById('app').innerHTML = '<div class="box"><h1>Login</h1>'+(err?'<div class="error">'+err+'</div>':'')+'<label>Password</label><input type="password" id="pw"><button onclick="doLogin()">Login</button></div>';
 }
 
-function doLogin(){
-  if(hash(document.getElementById('pw').value) === 'c63bc483'){
-    session = '1';
-    localStorage.setItem('cms_session', '1');
-    loadData();
-  } else {
-    login('Invalid password');
+// Login via API (server validates password)
+async function doLogin(){
+  try {
+    var pw = document.getElementById('pw').value;
+    var res = await fetch(API_BASE + '/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({password: pw})
+    });
+    var result = await res.json();
+    if(result.token){
+      session = result.token;
+      localStorage.setItem('cms_token', result.token);
+      loadData();
+    } else {
+      login('Invalid password');
+    }
+  } catch(e) {
+    login('Error: ' + e.message);
   }
 }
 
@@ -91,7 +103,8 @@ async function save(){
     console.log('Saving to:', API_BASE + '/api/save');
     console.log('Data keys:', Object.keys(data));
     console.log('Saving name:', data.name);
-    var payload = {password:'admin123', data: data};
+    var token = localStorage.getItem('cms_token');
+var payload = {token: token, data: data};
     console.log('Payload password:', payload.password);
     var res = await fetch(API_BASE + '/api/save', {
       method: 'POST',
