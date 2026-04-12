@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# CMS Data - keep private
+src/admin/data.json
+src/admin/data.json.bak
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
