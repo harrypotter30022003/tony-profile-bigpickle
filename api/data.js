@@ -30,6 +30,7 @@ export default async function handler(req, res) {
     res.status(200).json({
       name: 'Do Minh Tuan',
       title: 'Senior Project Manager',
+      phone: '+84 96 288 2315',
       hero: { greeting: 'Welcome to my universe' },
       experience: [],
       skills: {},

@@ -8,7 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 const cvData = {
   name: 'Do Minh Tuan',
   title: 'Senior Project Manager & Tech Leader',
-  phone: '+84 98 240 6901',
+  phone: '+84 96 288 2315',
   email: 'tonydo.pm@gmail.com',
   linkedin: 'http://tony.do/linkedin',
   summary: 'Lead PHP, Mobile Project Team. Directly involved in project management, controlling timeline and budget. Aim to deliver quality products on time.',
@@ -330,7 +330,7 @@ function Contact({ cvData }) {
   
   const handleWhatsApp = (e) => {
     e.preventDefault();
-    const phone = cvData?.phone?.replace(/\D/g, '') || '84982406901';
+    const phone = cvData?.phone?.replace(/\D/g, '') || '84962882315';
     const message = encodeURIComponent(`Hi Tony, I'm ${name || 'interested'}, I saw your portfolio and would like to connect!`);
     window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
   };
