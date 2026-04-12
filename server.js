@@ -3,6 +3,8 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 const PORT = 3001;
@@ -29,7 +31,8 @@ console.log('Data file:', DATA_FILE);
 // Login endpoint
 app.post('/api/login', (req, res) => {
   const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
+  const trimmed = password?.trim();
+  if (trimmed === ADMIN_PASSWORD) {
     const token = generateToken();
     validTokens.add(token);
     res.json({ token });
