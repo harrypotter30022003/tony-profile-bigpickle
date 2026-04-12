@@ -4,6 +4,8 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
+    { "source": "/api/data", "destination": "/api/data.js" },
+    { "source": "/api/login", "destination": "/api/login.js" },
+    { "source": "/api/save", "destination": "/api/save.js" }
   ]
 }
