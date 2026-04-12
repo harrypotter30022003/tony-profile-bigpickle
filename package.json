@@ -7,12 +7,16 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "admin:setup": "node src/admin/setup.js",
+    "admin": "node server.js"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@types/three": "^0.183.1",
+    "cors": "^2.8.6",
+    "express": "^4.22.1",
     "framer-motion": "^12.38.0",
     "gsap": "^3.14.2",
     "react": "^19.2.4",
