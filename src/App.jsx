@@ -326,10 +326,14 @@ function MysteryCards() {
 }
 
 function Contact({ cvData }) {
-  const [form, setForm] = useState({ name: '', email: '', msg: '' });
-  const [sent, setSent] = useState(false);
+  const [name, setName] = useState('');
   
-  const handleSubmit = (e) => { e.preventDefault(); setSent(true); setTimeout(() => setSent(false), 3000); };
+  const handleWhatsApp = (e) => {
+    e.preventDefault();
+    const phone = cvData?.phone?.replace(/\D/g, '') || '84982406901';
+    const message = encodeURIComponent(`Hi Tony, I'm ${name || 'interested'}, I saw your portfolio and would like to connect!`);
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+  };
   
   return (
     <section id="contact" className="contact-section">
@@ -351,12 +355,22 @@ function Contact({ cvData }) {
           </div>
         ))}
       </div>
-      <form className="contact-form" onSubmit={handleSubmit}>
-        <input type="text" placeholder="Your Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-        <input type="email" placeholder="Your Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
-        <textarea placeholder="Your Message" value={form.msg} onChange={e => setForm({ ...form, msg: e.target.value })} required></textarea>
-        <button type="submit" className="btn btn-primary">{sent ? 'Message Sent! 🎉' : 'Send Message'}</button>
-      </form>
+      
+      <div className="whatsapp-connect">
+        <div className="contact-form">
+          <h3 style={{marginBottom: '1.5rem'}}>Fast Connect via WhatsApp</h3>
+          <input 
+            type="text" 
+            placeholder="Your Name (Optional)" 
+            value={name} 
+            onChange={e => setName(e.target.value)} 
+            style={{textAlign: 'center'}}
+          />
+          <button onClick={handleWhatsApp} className="btn btn-primary" style={{width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'}}>
+            <span style={{fontSize: '1.2rem'}}>💬</span> Message on WhatsApp
+          </button>
+        </div>
+      </div>
     </section>
   );
 }
