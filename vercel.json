@@ -1,6 +1,6 @@
 {
   "framework": "vite",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build && node -e \"require('fs').copyFileSync('dist/public/admin.html','dist/admin.html')\"",
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "rewrites": [
