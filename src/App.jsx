@@ -338,9 +338,10 @@ function Contact({ cvData }) {
 }
 
 function Footer({ cvData }) {
+  const currentYear = cvData?.footer?.year || new Date().getFullYear();
   return (
     <footer>
-      <p>© 2024 {cvData?.name} • {cvData?.footer?.text || 'Crafted with passion'}</p>
+      <p>© {currentYear} {cvData?.name} • {cvData?.footer?.text || 'Crafted with passion'}</p>
       <div className="social-links">
         <a href={cvData?.linkedin} target="_blank" rel="noopener noreferrer">💼</a>
         <a href={`mailto:${cvData?.email}`}>📧</a>

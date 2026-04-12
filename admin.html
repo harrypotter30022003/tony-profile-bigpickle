@@ -116,6 +116,9 @@ function updateDataFromForm(){
   data.skills['Web Development'] = (document.getElementById('s_web').value || '').split(',').map(s => s.trim());
   data.skills['Mobile'] = (document.getElementById('s_mobile').value || '').split(',').map(s => s.trim());
   data.skills['Infrastructure'] = (document.getElementById('s_infra').value || '').split(',').map(s => s.trim());
+  data.footer = data.footer || {};
+  data.footer.text = document.getElementById('d_footer_text').value;
+  data.footer.year = document.getElementById('d_footer_year').value;
 }
 
 // Save to API
@@ -185,7 +188,7 @@ function renderProj(){
 
 function render(){
   var s = '<h1>CMS <button onclick="logout()" style="background:#333;color:#fff;margin-left:1rem">Logout</button></h1>';
-  s += '<div class="nav"><button class="active" onclick="switchTab(\'basic\')"> Basic</button><button onclick="switchTab(\'hero\')">Hero</button><button onclick="switchTab(\'exp\')">Experience</button><button onclick="switchTab(\'skills\')">Skills</button><button onclick="switchTab(\'projects\')">Projects</button></div>';
+  s += '<div class="nav"><button class="active" onclick="switchTab(\'basic\')"> Basic</button><button onclick="switchTab(\'hero\')">Hero</button><button onclick="switchTab(\'exp\')">Experience</button><button onclick="switchTab(\'skills\')">Skills</button><button onclick="switchTab(\'projects\')">Projects</button><button onclick="switchTab(\'footer\')">Footer</button></div>';
   
   s += '<div id="tab-basic" class="tab active"><div class="box"><h2>Basic</h2>';
   s += '<label>Name</label><input id="d_name"><label>Title</label><input id="d_title">';
@@ -206,6 +209,9 @@ function render(){
   s += '<div id="tab-projects" class="tab"><div class="box" id="proj_list"><h2>Projects</h2></div>';
   s += '<button class="btn-add" onclick="addProj()">+ Add</button></div>';
   
+  s += '<div id="tab-footer" class="tab"><div class="box"><h2>Footer</h2>';
+  s += '<label>Footer Text</label><input id="d_footer_text"><label>Footer Year</label><input id="d_footer_year"></div></div>';
+  
   s += '<button onclick="save()">Save to Site</button><div id="status"></div>';
   document.getElementById('app').innerHTML = s;
   
@@ -223,6 +229,8 @@ function render(){
   document.getElementById('s_web').value = (data.skills&&data.skills['Web Development']||[]).join(', ');
   document.getElementById('s_mobile').value = (data.skills&&data.skills['Mobile']||[]).join(', ');
   document.getElementById('s_infra').value = (data.skills&&data.skills['Infrastructure']||[]).join(', ');
+  document.getElementById('d_footer_text').value = (data.footer&&data.footer.text)||'';
+  document.getElementById('d_footer_year').value = (data.footer&&data.footer.year)||'';
   
   renderExp();
   renderProj();
