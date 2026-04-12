@@ -14,10 +14,22 @@
     "title": "About Me",
     "subtitle": "Building digital products across Southeast Asia",
     "stats": [
-      { "num": "15+", "label": "Years" },
-      { "num": "50+", "label": "Projects" },
-      { "num": "30+", "label": "Team" },
-      { "num": "7", "label": "Countries" }
+      {
+        "num": "15+",
+        "label": "Years"
+      },
+      {
+        "num": "50+",
+        "label": "Projects"
+      },
+      {
+        "num": "30+",
+        "label": "Team"
+      },
+      {
+        "num": "7",
+        "label": "Countries"
+      }
     ]
   },
   "education": {
@@ -26,41 +38,178 @@
     "period": "2007-2010"
   },
   "certifications": [
-    { "name": "IELTS", "score": "7.5", "issuer": "British Council" }
+    {
+      "name": "IELTS",
+      "score": "7.5",
+      "issuer": "British Council"
+    }
   ],
   "experience": [
-    { "company": "Finantaged", "position": "COO", "period": "2022-2023", "highlights": ["Build IT team for AI Fintech app", "Recruitment across IT, Creative, HR"] },
-    { "company": "CoffeeMug", "position": "Senior PM", "period": "2021-2022", "highlights": ["Managing global projects", "Singapore, Korea, Australia, UK"] },
-    { "company": "StratAgile Vietnam", "position": "Technical Director", "period": "2015-2021", "highlights": ["Managing marketing team", "Leading PHP & Mobile"] },
-    { "company": "StratAgile Pte. Ltd.", "position": "Lead - PHP & Mobile", "period": "2014-2015", "highlights": ["PHP & Mobile Team Lead"] },
-    { "company": "StratAgile Pte. Ltd.", "position": "Senior Developer", "period": "2013-2014", "highlights": ["Web/iPhone development", "iOS apps with Xcode"] },
-    { "company": "StratAgile Pte. Ltd.", "position": "Developer", "period": "2011-2013", "highlights": ["PHP/HTML development"] }
+    {
+      "company": "Finantaged",
+      "position": "COO",
+      "period": "2022-2023",
+      "highlights": [
+        "Build IT team for AI Fintech app",
+        "Recruitment across IT, Creative, HR"
+      ]
+    },
+    {
+      "company": "CoffeeMug",
+      "position": "Senior PM",
+      "period": "2021-2022",
+      "highlights": [
+        "Managing global projects",
+        "Singapore, Korea, Australia, UK"
+      ]
+    },
+    {
+      "company": "StratAgile Vietnam",
+      "position": "Technical Director",
+      "period": "2015-2021",
+      "highlights": [
+        "Managing marketing team",
+        "Leading PHP & Mobile"
+      ]
+    },
+    {
+      "company": "StratAgile Pte. Ltd.",
+      "position": "Lead - PHP & Mobile",
+      "period": "2014-2015",
+      "highlights": [
+        "PHP & Mobile Team Lead"
+      ]
+    },
+    {
+      "company": "StratAgile Pte. Ltd.",
+      "position": "Senior Developer",
+      "period": "2013-2014",
+      "highlights": [
+        "Web/iPhone development",
+        "iOS apps with Xcode"
+      ]
+    },
+    {
+      "company": "StratAgile Pte. Ltd.",
+      "position": "Developer",
+      "period": "2011-2013",
+      "highlights": [
+        "PHP/HTML development"
+      ]
+    }
   ],
   "skills": {
-    "Project Management": ["IT Recruitment", "Team Leadership", "Budget Control"],
-    "Web Development": ["PHP", "WordPress", "Magento", "JavaScript"],
-    "Mobile": ["iOS (Xcode)", "Android Management"],
-    "Infrastructure": ["AWS EC2", "SSL", "LAMP", "CentOS"]
+    "Project Management": [
+      "IT Recruitment",
+      "Team Leadership",
+      "Budget Control"
+    ],
+    "Web Development": [
+      "PHP",
+      "WordPress",
+      "Magento",
+      "JavaScript"
+    ],
+    "Mobile": [
+      "iOS (Xcode)",
+      "Android Management"
+    ],
+    "Infrastructure": [
+      "AWS EC2",
+      "SSL",
+      "LAMP",
+      "CentOS"
+    ]
   },
   "projects": [
-    { "name": "Clue-Box", "link": "http://clue-box.com/", "desc": "Mobile survey app with rewards", "tags": ["iOS", "PHP", "AWS"] },
-    { "name": "Post-a-Card", "link": "https://www.techinasia.com/postacard-app-singapore", "desc": "SingPost postcard app worldwide", "tags": ["iOS", "Android"] },
-    { "name": "Symptom Care", "link": "http://www.ncis.com.sg/", "desc": "Cancer symptom monitoring", "tags": ["R&D", "PM"] },
-    { "name": "Smile Asia", "link": "http://smileasia.org", "desc": "Charity eCommerce for Ritz-Carlton", "tags": ["WordPress"] },
-    { "name": "Le Duy Hotels", "link": "http://leduyhotel.vn", "desc": "Hotel booking platform", "tags": ["WordPress"] }
+    {
+      "name": "Clue-Box",
+      "link": "http://clue-box.com/",
+      "desc": "Mobile survey app with rewards",
+      "tags": [
+        "iOS",
+        "PHP",
+        "AWS"
+      ]
+    },
+    {
+      "name": "Post-a-Card",
+      "link": "https://www.techinasia.com/postacard-app-singapore",
+      "desc": "SingPost postcard app worldwide",
+      "tags": [
+        "iOS",
+        "Android"
+      ]
+    },
+    {
+      "name": "Symptom Care",
+      "link": "http://www.ncis.com.sg/",
+      "desc": "Cancer symptom monitoring",
+      "tags": [
+        "R&D",
+        "PM"
+      ]
+    },
+    {
+      "name": "Smile Asia",
+      "link": "http://smileasia.org",
+      "desc": "Charity eCommerce for Ritz-Carlton",
+      "tags": [
+        "WordPress"
+      ]
+    },
+    {
+      "name": "Le Duy Hotels",
+      "link": "http://leduyhotel.vn",
+      "desc": "Hotel booking platform",
+      "tags": [
+        "WordPress"
+      ]
+    }
   ],
   "hiddenMessages": [
-    { "quote": "Quality is not an act, it is a habit.", "author": "Aristotle" },
-    { "quote": "Innovation distinguishes between a leader and a follower.", "author": "Steve Jobs" },
-    { "quote": "The best way to predict the future is to create it.", "author": "Peter Drucker" },
-    { "quote": "Success is not final, failure is not fatal.", "author": "Winston Churchill" },
-    { "quote": "Teamwork makes the dream work.", "author": "John C. Maxwell" }
+    {
+      "quote": "Quality is not an act, it is a habit.",
+      "author": "Aristotle"
+    },
+    {
+      "quote": "Innovation distinguishes between a leader and a follower.",
+      "author": "Steve Jobs"
+    },
+    {
+      "quote": "The best way to predict the future is to create it.",
+      "author": "Peter Drucker"
+    },
+    {
+      "quote": "Success is not final, failure is not fatal.",
+      "author": "Winston Churchill"
+    },
+    {
+      "quote": "Teamwork makes the dream work.",
+      "author": "John C. Maxwell"
+    }
   ],
   "mysteryValues": [
-    { "icon": "🚀", "title": "Innovation", "message": "I believe in pushing boundaries and finding creative solutions that make a real impact." },
-    { "icon": "💎", "title": "Quality", "message": "Excellence is non-negotiable. Every detail matters in delivering exceptional results." },
-    { "icon": "🤝", "title": "Teamwork", "message": "Great achievements are never solo efforts. I thrive in collaborative environments." },
-    { "icon": "🎯", "title": "Results", "message": "I measure success by outcomes, not just activities. Deadlines are sacred." }
+    {
+      "icon": "🚀",
+      "title": "Innovation",
+      "message": "I believe in pushing boundaries and finding creative solutions that make a real impact."
+    },
+    {
+      "icon": "💎",
+      "title": "Quality",
+      "message": "Excellence is non-negotiable. Every detail matters in delivering exceptional results."
+    },
+    {
+      "icon": "🤝",
+      "title": "Teamwork",
+      "message": "Great achievements are never solo efforts. I thrive in collaborative environments."
+    },
+    {
+      "icon": "🎯",
+      "title": "Results",
+      "message": "I measure success by outcomes, not just activities. Deadlines are sacred."
+    }
   ],
   "contact": {
     "title": "Get In Touch",

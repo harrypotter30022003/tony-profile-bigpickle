@@ -5,7 +5,6 @@ import './App.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Tony Do Portfolio - Auto-deploy test
 const cvData = {
   name: 'Do Minh Tuan',
   title: 'Senior Project Manager & Tech Leader',
@@ -51,7 +50,7 @@ function Navigation() {
   
   return (
     <nav>
-      <div className="logo">Tony Do</div>
+      <div className="logo">{cvData?.name?.split(' ')[0] || 'Tony'}</div>
       <ul className={`nav-links ${isOpen ? 'active' : ''}`}>
         {['About', 'Experience', 'Skills', 'Projects', 'Contact'].map(item => (
           <li key={item}><a href={`#${item.toLowerCase()}`} onClick={() => setIsOpen(false)}>{item}</a></li>
@@ -64,7 +63,7 @@ function Navigation() {
   );
 }
 
-function Hero() {
+function Hero({ cvData }) {
   return (
     <section className="hero">
       <div className="hero-bg">
@@ -73,25 +72,24 @@ function Hero() {
         <div className="hero-orb hero-orb-3"></div>
       </div>
       <div className="hero-content">
-        <p className="greeting">Welcome to my universe</p>
-        <h1>Hi, I'm <span className="gradient-text">{cvData.name}</span></h1>
-        <p className="subtitle">{cvData.title} • 15+ Years Building Digital Products</p>
+        <p className="greeting">{cvData?.hero?.greeting || 'Welcome to my universe'}</p>
+        <h1>Hi, I'm <span className="gradient-text">{cvData?.name}</span></h1>
+        <p className="subtitle">{cvData?.title} • 15+ Years Building Digital Products</p>
         <div className="cta-buttons">
-          <a href="#projects" className="btn btn-primary">View Projects</a>
-          <a href="#contact" className="btn btn-secondary">Contact Me</a>
+          <a href="#projects" className="btn btn-primary">{cvData?.hero?.ctaPrimary || 'View Projects'}</a>
+          <a href="#contact" className="btn btn-secondary">{cvData?.hero?.ctaSecondary || 'Contact Me'}</a>
         </div>
       </div>
-      <div className="scroll-indicator"><span></span></div>
     </section>
   );
 }
 
-function About() {
+function About({ cvData }) {
   return (
     <section id="about">
       <div className="section-header">
-        <h2>About Me</h2>
-        <p>Building digital products across Southeast Asia</p>
+        <h2>{cvData?.about?.title || 'About Me'}</h2>
+        <p>{cvData?.about?.subtitle || 'Building digital products across Southeast Asia'}</p>
       </div>
       <div className="about-grid">
         <div className="about-visual">
@@ -103,10 +101,10 @@ function About() {
           </div>
         </div>
         <div className="about-content">
-          <h3>Senior Project Manager & Technical Leader</h3>
-          <p>{cvData.summary}</p>
+          <h3>{cvData?.title}</h3>
+          <p>{cvData?.summary}</p>
           <div className="stats-grid">
-            {[{ num: '15+', label: 'Years' }, { num: '50+', label: 'Projects' }, { num: '30+', label: 'Team' }, { num: '7', label: 'Countries' }].map((s, i) => (
+            {(cvData?.about?.stats || []).map((s, i) => (
               <div key={i} className="stat-card">
                 <div className="stat-num">{s.num}</div>
                 <div className="stat-label">{s.label}</div>
@@ -115,10 +113,10 @@ function About() {
           </div>
           <div className="edu-section">
             <div className="edu-card">
-              <h4>{cvData.education.institution}</h4>
-              <p>{cvData.education.degree} • {cvData.education.period}</p>
+              <h4>{cvData?.education.institution}</h4>
+              <p>{cvData?.education.degree} • {cvData?.education.period}</p>
             </div>
-            <div className="cert-badge">📜 {cvData.certifications[0].name} {cvData.certifications[0].score} - {cvData.certifications[0].issuer}</div>
+            <div className="cert-badge">📜 {cvData?.certifications[0].name} {cvData?.certifications[0].score} - {cvData?.certifications[0].issuer}</div>
           </div>
         </div>
       </div>
@@ -126,15 +124,15 @@ function About() {
   );
 }
 
-function Experience() {
+function Experience({ cvData }) {
   return (
     <section id="experience">
       <div className="section-header">
         <h2>Experience</h2>
-        <p>My journey through the years</p>
+        <p>{cvData?.experienceTitle || 'My journey through the years'}</p>
       </div>
       <div className="timeline">
-        {cvData.experience.map((exp, i) => (
+        {cvData?.experience.map((exp, i) => (
           <div key={i} className="timeline-item">
             <div className="timeline-dot"></div>
             <div className="timeline-content">
@@ -150,7 +148,7 @@ function Experience() {
   );
 }
 
-function Skills() {
+function Skills({ cvData }) {
   const icons = { 'Project Management': '📊', 'Web Development': '🌐', 'Mobile': '📱', 'Infrastructure': '☁️' };
   const levels = { 'IT Recruitment': 85, 'Team Leadership': 95, 'Budget Control': 90, 'PHP': 92, 'WordPress': 95, 'Magento': 80, 'JavaScript': 85, 'iOS (Xcode)': 82, 'Android Management': 80, 'AWS EC2': 82, 'SSL': 88, 'LAMP': 90, 'CentOS': 85 };
   
@@ -158,10 +156,10 @@ function Skills() {
     <section id="skills">
       <div className="section-header">
         <h2>Skills</h2>
-        <p>Technologies & expertise</p>
+        <p>{cvData?.skillsTitle || 'Technologies & expertise'}</p>
       </div>
       <div className="skills-grid">
-        {Object.entries(cvData.skills).map(([cat, skills]) => (
+        {Object.entries(cvData?.skills).map(([cat, skills]) => (
           <div key={cat} className="skill-card">
             <h3>{icons[cat]} {cat}</h3>
             <div className="skill-list">
@@ -184,17 +182,17 @@ function Skills() {
   );
 }
 
-function Projects() {
+function Projects({ cvData }) {
   const icons = ['📊', '📮', '🏥', '🎗️', '🏨'];
   
   return (
     <section id="projects">
       <div className="section-header">
         <h2>Projects</h2>
-        <p>Featured work & achievements</p>
+        <p>{cvData?.projectsTitle || 'Featured work & achievements'}</p>
       </div>
       <div className="projects-grid">
-        {cvData.projects.map((p, i) => (
+        {cvData?.projects.map((p, i) => (
           <div key={i} className="project-card">
             <div className="project-icon">{icons[i]}</div>
             <div className="project-info">
@@ -241,16 +239,14 @@ function HiddenWisdomSection() {
 
   return (
     <section 
-      className={`darkness-section ${isActive ? 'active' : ''}`} 
+      className={`darkness-section ${isActive ? 'active' : ''}`}
       ref={sectionRef}
       onMouseEnter={() => setIsActive(true)}
       onMouseLeave={() => setIsActive(false)}
       onMouseMove={handleMouseMove}
       style={spotlightStyle}
     >
-      {/* Full darkness overlay with spotlight mask */}
       <div className="darkness-overlay">
-        {/* Title and quote revealed by spotlight - everything inside is masked */}
         <div className="darkness-content">
           <div className="darkness-title">
             <h2>✨ Hidden Wisdom ✨</h2>
@@ -305,7 +301,7 @@ function MysteryCards() {
   );
 }
 
-function Contact() {
+function Contact({ cvData }) {
   const [form, setForm] = useState({ name: '', email: '', msg: '' });
   const [sent, setSent] = useState(false);
   
@@ -314,15 +310,15 @@ function Contact() {
   return (
     <section id="contact" className="contact-section">
       <div className="section-header">
-        <h2>Get In Touch</h2>
-        <p>Let's create something amazing together</p>
+        <h2>{cvData?.contact?.title || 'Get In Touch'}</h2>
+        <p>{cvData?.contact?.subtitle || "Let's create something amazing together"}</p>
       </div>
       <div className="contact-grid">
         {[
-          { icon: '📧', title: 'Email', value: cvData.email, link: `mailto:${cvData.email}` },
-          { icon: '📱', title: 'Phone', value: cvData.phone, link: `tel:${cvData.phone}` },
-          { icon: '💼', title: 'LinkedIn', value: 'Connect', link: cvData.linkedin },
-          { icon: '📍', title: 'Location', value: 'Ho Chi Minh City', link: null }
+          { icon: '📧', title: 'Email', value: cvData?.email, link: `mailto:${cvData?.email}` },
+          { icon: '📱', title: 'Phone', value: cvData?.phone, link: `tel:${cvData?.phone}` },
+          { icon: '💼', title: 'LinkedIn', value: 'Connect', link: cvData?.linkedin },
+          { icon: '📍', title: 'Location', value: cvData?.contact?.location || 'Ho Chi Minh City', link: null }
         ].map((c, i) => (
           <div key={i} className="contact-card">
             <div className="contact-icon">{c.icon}</div>
@@ -341,51 +337,53 @@ function Contact() {
   );
 }
 
-function Footer() {
+function Footer({ cvData }) {
   return (
     <footer>
-      <p>© 2024 {cvData.name} • Crafted with passion</p>
+      <p>© 2024 {cvData?.name} • {cvData?.footer?.text || 'Crafted with passion'}</p>
       <div className="social-links">
-        <a href={cvData.linkedin} target="_blank" rel="noopener noreferrer">💼</a>
-        <a href={`mailto:${cvData.email}`}>📧</a>
-        <a href={`tel:${cvData.phone}`}>📱</a>
+        <a href={cvData?.linkedin} target="_blank" rel="noopener noreferrer">💼</a>
+        <a href={`mailto:${cvData?.email}`}>📧</a>
+        <a href={`tel:${cvData?.phone}`}>📱</a>
       </div>
     </footer>
   );
 }
 
 function App() {
-  const initialized = useRef(false);
+  const [data, setData] = useState(cvData);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-
-    gsap.fromTo('.hero-content', { opacity: 0, y: 100 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.3 });
-    gsap.fromTo('.hero-orb', { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.5, stagger: 0.3, delay: 0.5 });
-
-    gsap.to('.hero-orb-1', { y: -100, duration: 3, repeat: -1, yoyo: true, ease: 'sine.inOut' });
-    gsap.to('.hero-orb-2', { y: -150, duration: 4, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 0.5 });
-    gsap.to('.hero-orb-3', { y: -80, duration: 3.5, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 1 });
+    fetch('/api/data')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setData(d); setLoaded(true); })
+      .catch(() => setLoaded(true));
   }, []);
+
+  useEffect(() => {
+    if (loaded) {
+      setTimeout(() => {
+        gsap.fromTo('.hero-content', { opacity: 0, y: 100 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.3 });
+        gsap.fromTo('.hero-orb', { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.5, stagger: 0.3, delay: 0.5 });
+      }, 100);
+    }
+  }, [loaded]);
+
+  if (!loaded) return <div style={{background:'#0a0a0f',height:'100vh'}}></div>;
 
   return (
     <div className="app">
-      <div className="background-effects">
-        <div className="floating-orb orb-1"></div>
-        <div className="floating-orb orb-2"></div>
-        <div className="floating-orb orb-3"></div>
-      </div>
       <Navigation />
-      <Hero />
-      <About />
-      <Experience />
-      <Skills />
-      <Projects />
+      <Hero cvData={data} />
+      <About cvData={data} />
+      <Experience cvData={data} />
+      <Skills cvData={data} />
+      <Projects cvData={data} />
       <HiddenWisdomSection />
       <MysteryCards />
-      <Contact />
-      <Footer />
+      <Contact cvData={data} />
+      <Footer cvData={data} />
     </div>
   );
 }
