@@ -390,6 +390,24 @@ function Footer({ cvData }) {
   );
 }
 
+function WhatsAppWidget({ cvData }) {
+  const phone = cvData?.phone?.replace(/\D/g, '') || '84962882315';
+  const message = encodeURIComponent("Hi Tony, I'm interested in connecting with you!");
+  
+  return (
+    <a 
+      href={`https://wa.me/${phone}?text=${message}`}
+      className="whatsapp-float"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Contact on WhatsApp"
+    >
+      <span className="tooltip">Chat with me</span>
+      <span style={{ fontSize: '1.5rem' }}>💬</span>
+    </a>
+  );
+}
+
 function App() {
   const [data, setData] = useState(cvData);
   const [loaded, setLoaded] = useState(false);
@@ -424,6 +442,7 @@ function App() {
       <MysteryCards />
       <Contact cvData={data} />
       <Footer cvData={data} />
+      <WhatsAppWidget cvData={data} />
     </div>
   );
 }
