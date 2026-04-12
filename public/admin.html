@@ -85,8 +85,8 @@ function logout(){
   login();
 }
 
-// Load from API
-const API_BASE = typeof window !== 'undefined' && window.location.port === '5190' ? 'http://localhost:3001' : '';
+// Load from API (relative - works local and Vercel)
+const API_BASE = '';
 
 async function loadData(){
   try {
