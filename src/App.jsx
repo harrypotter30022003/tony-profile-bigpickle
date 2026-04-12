@@ -342,6 +342,7 @@ function Footer({ cvData }) {
   return (
     <footer>
       <p>© {currentYear} {cvData?.name} • {cvData?.footer?.text || 'Crafted with passion'}</p>
+
       <div className="social-links">
         <a href={cvData?.linkedin} target="_blank" rel="noopener noreferrer">💼</a>
         <a href={`mailto:${cvData?.email}`}>📧</a>
