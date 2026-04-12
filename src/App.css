@@ -555,6 +555,28 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   .timeline-dot { left: 12px !important; right: auto !important; }
   .about-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  
+  /* Mobile Menu Fix */
+  nav { padding: 1rem 1.5rem; }
+  .nav-links { 
+    position: fixed; 
+    top: 0; 
+    right: -100%; 
+    width: 80%; 
+    height: 100vh; 
+    background: rgba(10, 10, 15, 0.98); 
+    backdrop-filter: blur(20px);
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    transition: right 0.4s cubic-bezier(0.23, 1, 0.32, 1); 
+    z-index: 1000;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+  }
+  .nav-links.active { right: 0; }
+  .nav-links li { margin: 1.5rem 0; }
+  .nav-links a { font-size: 1.2rem; }
+  .mobile-menu { display: flex; z-index: 1001; }
 }
 
 /* Floating WhatsApp Widget */
