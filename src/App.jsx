@@ -5,6 +5,7 @@ import './App.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Tony Do Portfolio - Auto-deploy test
 const cvData = {
   name: 'Do Minh Tuan',
   title: 'Senior Project Manager & Tech Leader',
