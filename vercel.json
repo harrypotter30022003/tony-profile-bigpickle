@@ -1,11 +1,6 @@
 {
   "framework": "vite",
-  "buildCommand": "npm run build && node -e \"require('fs').copyFileSync('dist/public/admin.html','dist/admin.html')\"",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install",
-  "rewrites": [
-    { "source": "/api/data", "destination": "/api/data.js" },
-    { "source": "/api/login", "destination": "/api/login.js" },
-    { "source": "/api/save", "destination": "/api/save.js" }
-  ]
+  "installCommand": "npm install"
 }
