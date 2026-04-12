@@ -45,13 +45,13 @@ const hiddenMessages = [
   { quote: "Teamwork makes the dream work.", author: "John C. Maxwell" }
 ];
 
-function Navigation() {
+function Navigation({ cvData }) {
   const [isOpen, setIsOpen] = useState(false);
   
   return (
     <nav>
-      <div className="logo">{cvData?.name?.split(' ')[0] || 'Tony'}</div>
-      <ul className={`nav-links ${isOpen ? 'active' : ''}`}>
+      <div className="logo">{cvData?.name || 'Tony'}</div>
+      <ul className={`nav-links \${isOpen ? 'active' : ''}`}>
         {['About', 'Experience', 'Skills', 'Projects', 'Contact'].map(item => (
           <li key={item}><a href={`#${item.toLowerCase()}`} onClick={() => setIsOpen(false)}>{item}</a></li>
         ))}
@@ -376,7 +376,7 @@ function App() {
 
   return (
     <div className="app">
-      <Navigation />
+      <Navigation cvData={data} />
       <Hero cvData={data} />
       <About cvData={data} />
       <Experience cvData={data} />
