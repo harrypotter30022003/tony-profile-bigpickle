@@ -139,6 +139,8 @@ nav {
   padding: 6rem 2rem 4rem;
   position: relative;
   overflow: hidden;
+  max-width: none;
+  width: 100%;
 }
 
 .hero-bg { position: absolute; inset: 0; z-index: -1; }
