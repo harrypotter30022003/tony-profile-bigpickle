@@ -85,6 +85,30 @@ function Hero({ cvData }) {
 }
 
 function About({ cvData }) {
+  const statsRef = useRef(null);
+
+  useEffect(() => {
+    const stats = statsRef.current.querySelectorAll('.stat-num');
+    stats.forEach(stat => {
+      const target = parseInt(stat.getAttribute('data-target'));
+      if (isNaN(target)) return;
+      
+      gsap.fromTo(stat, 
+        { innerText: 0 },
+        { 
+          innerText: target, 
+          duration: 2, 
+          snap: { innerText: 1 },
+          ease: 'power1.out',
+          scrollTrigger: {
+            trigger: stat,
+            start: 'top 90%',
+          }
+        }
+      );
+    });
+  }, [cvData]);
+
   return (
     <section id="about">
       <div className="section-header">
@@ -103,10 +127,10 @@ function About({ cvData }) {
         <div className="about-content">
           <h3>{cvData?.title}</h3>
           <p>{cvData?.summary}</p>
-          <div className="stats-grid">
+          <div className="stats-grid" ref={statsRef}>
             {(cvData?.about?.stats || []).map((s, i) => (
               <div key={i} className="stat-card">
-                <div className="stat-num">{s.num}</div>
+                <div className="stat-num" data-target={parseInt(s.num)}>{s.num}</div>
                 <div className="stat-label">{s.label}</div>
               </div>
             ))}
