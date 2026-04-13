@@ -256,6 +256,16 @@ function HiddenWisdomSection() {
     }
   };
 
+  const handleTouchMove = (e) => {
+    if (sectionRef.current && e.touches[0]) {
+      const rect = sectionRef.current.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = ((touch.clientX - rect.left) / rect.width) * 100;
+      const y = ((touch.clientY - rect.top) / rect.height) * 100;
+      setSpotlightPos({ x, y });
+    }
+  };
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentQuote(prev => (prev + 1) % hiddenMessages.length);
@@ -275,13 +285,16 @@ function HiddenWisdomSection() {
       onMouseEnter={() => setIsActive(true)}
       onMouseLeave={() => setIsActive(false)}
       onMouseMove={handleMouseMove}
+      onTouchStart={() => setIsActive(true)}
+      onTouchEnd={() => setIsActive(false)}
+      onTouchMove={handleTouchMove}
       style={spotlightStyle}
     >
       <div className="darkness-overlay">
         <div className="darkness-content">
           <div className="darkness-title">
             <h2>✨ Hidden Wisdom ✨</h2>
-            <p>{isActive ? 'Shine your light to reveal the message...' : 'Hover to discover...'}</p>
+            <p>{isActive ? 'Shine your light to reveal the message...' : 'Touch/Hover to discover...'}</p>
           </div>
           <div className="spotlight-reveal">
             <div className="reveal-glow"></div>
@@ -291,6 +304,40 @@ function HiddenWisdomSection() {
         </div>
       </div>
     </section>
+  );
+}
+
+function BackToTop() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const toggleVisible = () => {
+      const scrolled = document.documentElement.scrollTop;
+      if (scrolled > 300) {
+        setVisible(true);
+      } else if (scrolled <= 300) {
+        setVisible(false);
+      }
+    };
+    window.addEventListener('scroll', toggleVisible);
+    return () => window.removeEventListener('scroll', toggleVisible);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  return (
+    <button 
+      className={`back-to-top ${visible ? 'visible' : ''}`} 
+      onClick={scrollToTop}
+      aria-label="Back to top"
+    >
+      ↑
+    </button>
   );
 }
 
@@ -448,6 +495,7 @@ function App() {
       <Contact cvData={data} />
       <Footer cvData={data} />
       <WhatsAppWidget cvData={data} />
+      <BackToTop />
     </div>
   );
 }
