@@ -86,14 +86,14 @@ body {
 nav {
   position: fixed;
   top: 0; left: 0; right: 0;
-  z-index: 9999;
+  z-index: 99999;
   padding: 1.2rem 3rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(10, 10, 15, 0.75);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
@@ -637,14 +637,14 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
     left: 0;
     width: 100vw; 
     height: 100vh; 
-    background: rgba(5, 5, 10, 0.95); 
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
+    background: rgba(5, 5, 10, 0.98); 
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
     flex-direction: column; 
     justify-content: center; 
     align-items: center; 
     transition: opacity 0.3s ease, visibility 0.3s ease; 
-    z-index: 2000;
+    z-index: 100000;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -672,13 +672,12 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
     transform: translateX(-50%);
     width: 50px;
     height: 50px;
-    font-size: 1.5rem; 
+    font-size: 2rem; 
     color: var(--accent); 
     cursor: pointer;
     list-style: none;
-    border: 1px solid var(--accent);
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    background: transparent;
   }
 
   .mobile-menu { 
