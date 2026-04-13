@@ -84,7 +84,7 @@ body {
 nav {
   position: fixed;
   top: 0; left: 0; right: 0;
-  z-index: 100;
+  z-index: 9999;
   padding: 1.2rem 3rem;
   display: flex;
   justify-content: space-between;
@@ -589,9 +589,9 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
     left: 0;
     width: 100vw; 
     height: 100vh; 
-    background: rgba(10, 10, 15, 0.9); 
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    background: rgba(5, 5, 10, 0.95); 
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
     flex-direction: column; 
     justify-content: center; 
     align-items: center; 
@@ -615,14 +615,22 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   
   /* Mobile Close Button Style */
   .mobile-close { 
-    display: block; 
+    display: flex; 
+    align-items: center;
+    justify-content: center;
     position: absolute; 
     top: 2rem; 
-    right: 2rem; 
-    font-size: 2rem; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem; 
     color: var(--accent); 
     cursor: pointer;
     list-style: none;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .mobile-menu { 
