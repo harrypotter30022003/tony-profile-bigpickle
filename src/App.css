@@ -6,8 +6,8 @@
   --accent: #00f5d4;
   --accent2: #7b2cbf;
   --accent3: #ff006e;
-  --text: #e0e0e0;
-  --text-muted: #666;
+  --text: #ffffff;
+  --text-muted: #b0b0b8;
   --glass: rgba(255,255,255,0.03);
   --glass-border: rgba(255,255,255,0.08);
   --gradient: linear-gradient(135deg, #00f5d4 0%, #7b2cbf 50%, #ff006e 100%);
