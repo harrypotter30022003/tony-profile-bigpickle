@@ -14,13 +14,15 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; font-size: 16px; }
 
 body {
   font-family: 'Inter', sans-serif;
   background: var(--bg);
   color: var(--text);
   overflow-x: hidden;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .app { position: relative; }
@@ -111,12 +113,58 @@ nav {
   color: var(--text);
   text-decoration: none;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   position: relative;
   padding: 0.5rem 0;
   transition: color 0.3s;
+}
+
+.btn {
+  padding: 1rem 2.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-primary {
+  background: var(--gradient);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 40px rgba(0,245,212,0.3);
+}
+
+.btn-primary:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 20px 60px rgba(0,245,212,0.5); color: #ffffff; }
+
+.btn-secondary { background: transparent; color: var(--text); border: 2px solid var(--accent); }
+.btn-secondary:hover { background: var(--accent); color: #ffffff; transform: translateY(-5px); }
+
+.stat-label { color: var(--text-muted); font-size: 1rem; margin-top: 0.5rem; }
+
+.timeline-date { font-family: 'Orbitron', sans-serif; font-size: 1rem; color: var(--accent); }
+
+.project-info p { color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem; }
+.project-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; justify-content: center; }
+.tag { background: rgba(0,245,212,0.1); color: var(--accent); padding: 0.4rem 1rem; border-radius: 20px; font-size: 1rem; }
+
+.contact-form input, .contact-form textarea {
+  width: 100%;
+  padding: 1.2rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: inherit;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s;
+  font-size: 1rem;
 }
 
 .nav-links a::after {
@@ -280,7 +328,7 @@ section { padding: 6rem 2rem; max-width: 1400px; margin: 0 auto; }
 .edu-section { margin-top: 2rem; }
 .edu-card { background: var(--glass); border: 1px solid var(--glass-border); padding: 1.5rem; border-radius: 15px; margin-bottom: 1rem; }
 .edu-card h4 { margin-bottom: 0.5rem; }
-.edu-card p { color: var(--text-muted); font-size: 0.9rem; }
+.edu-card p { color: var(--text-muted); font-size: 1rem; }
 
 .cert-badge { display: inline-block; background: var(--glass); border: 1px solid var(--glass-border); padding: 0.75rem 1.5rem; border-radius: 50px; font-size: 0.9rem; }
 
@@ -675,8 +723,8 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   color: white;
   padding: 8px 15px;
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
