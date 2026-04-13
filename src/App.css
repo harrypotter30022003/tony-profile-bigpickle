@@ -460,22 +460,23 @@ section.darkness-section {
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: rgba(10, 10, 15, 0.9);
-  backdrop-filter: blur(80px);
-  -webkit-backdrop-filter: blur(80px);
+  background: rgba(10, 10, 15, 0.4); /* Reduced opacity for better blur visibility */
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   pointer-events: none;
   
   /* Inverted Mask: Transparent in the middle, Black everywhere else */
+  /* Increased circle size and transparency for a brighter, bigger reveal */
   -webkit-mask-image: radial-gradient(
-    circle 150px at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+    circle 200px at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
     transparent 0%,
-    transparent 20%,
+    transparent 50%,
     black 100%
   );
   mask-image: radial-gradient(
-    circle 150px at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+    circle 200px at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
     transparent 0%,
-    transparent 20%,
+    transparent 50%,
     black 100%
   );
   
@@ -487,11 +488,33 @@ section.darkness-section {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(0, 245, 212, 0.1) 0%, transparent 70%);
-  filter: blur(20px);
+  width: 500px; /* Bigger glow */
+  height: 500px;
+  background: radial-gradient(circle, rgba(0, 245, 212, 0.4) 0%, transparent 70%); /* Brighter glow */
+  filter: blur(40px);
   z-index: -1;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+/* Add a pseudo-element for the default spotlight visible state */
+.darkness-section::after {
+  content: '';
+  position: absolute;
+  top: var(--spotlight-y, 50%);
+  left: var(--spotlight-x, 50%);
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(0, 245, 212, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 0.3s;
 }
 
 
