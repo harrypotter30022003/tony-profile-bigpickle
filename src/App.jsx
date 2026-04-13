@@ -339,7 +339,7 @@ function Contact({ cvData }) {
     e.preventDefault();
     const phone = cvData?.phone?.replace(/\D/g, '') || '84962882315';
     const message = encodeURIComponent(`Hi Tony, I'm ${name || 'interested'}, I saw your portfolio and would like to connect!`);
-    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+    window.location.href = `https://api.whatsapp.com/send?phone=${phone}&text=${message}`;
   };
   
   return (
@@ -403,10 +403,8 @@ function WhatsAppWidget({ cvData }) {
   
   return (
     <a 
-      href={`https://wa.me/${phone}?text=${message}`}
+      href={`https://api.whatsapp.com/send?phone=${phone}&text=${message}`}
       className="whatsapp-float"
-      target="_blank"
-      rel="noopener noreferrer"
       aria-label="Contact on WhatsApp"
     >
       <span className="tooltip">Chat with me</span>
