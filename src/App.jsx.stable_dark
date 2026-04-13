@@ -456,26 +456,13 @@ function WhatsAppWidget({ cvData }) {
 function App() {
   const [data, setData] = useState(cvData);
   const [loaded, setLoaded] = useState(false);
-  const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
-    // Load theme preference
-    const savedTheme = localStorage.getItem('tony-theme') || 'dark';
-    setTheme(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
-
     fetch('/api/data')
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setData(d); setLoaded(true); })
       .catch(() => setLoaded(true));
   }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('tony-theme', newTheme);
-  };
 
   useEffect(() => {
     if (loaded) {
@@ -502,10 +489,6 @@ function App() {
       <Footer cvData={data} />
       <WhatsAppWidget cvData={data} />
       <BackToTop />
-      
-      <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme">
-        {theme === 'dark' ? '☀️' : '🌙'}
-      </button>
     </div>
   );
 }
