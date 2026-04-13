@@ -125,7 +125,7 @@ function About({ cvData }) {
       <div className="about-grid">
         <div className="about-visual">
           <div className="avatar-container">
-            <div className="avatar-ring"></div>
+            <div className="avatar-ring ring-1"></div>
             <div className="avatar-ring ring-2"></div>
             <div className="avatar-ring ring-3"></div>
             <div className="avatar-emoji">👨‍💻</div>

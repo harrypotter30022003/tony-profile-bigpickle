@@ -323,10 +323,10 @@ section { padding: 6rem 2rem; max-width: 1400px; margin: 0 auto; }
 .project-card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: 0 30px 60px rgba(0,245,212,0.2); }
 
 .project-icon { height: 150px; background: linear-gradient(135deg, #1a1a2e, #0a0a0f); display: flex; align-items: center; justify-content: center; font-size: 4rem; }
-.project-info { padding: 1.5rem; }
+.project-info { padding: 1.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; }
 .project-info h3 { font-family: 'Orbitron', sans-serif; margin-bottom: 0.5rem; }
 .project-info p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; }
-.project-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.project-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; justify-content: center; }
 .tag { background: rgba(0,245,212,0.1); color: var(--accent); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; }
 .project-link { color: var(--accent); text-decoration: none; font-weight: 500; }
 
@@ -479,6 +479,10 @@ section.darkness-section {
   transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   animation: fadeInUp 0.6s ease forwards;
   opacity: 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -556,9 +560,24 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   .timeline-item { width: 100%; padding-left: 50px; }
   .timeline-item:nth-child(even) { left: 0; }
   .timeline-dot { left: 12px !important; right: auto !important; }
-  .about-grid { grid-template-columns: 1fr; }
+  .about-grid { grid-template-columns: 1fr; gap: 2rem; overflow: hidden; }
+  .about-visual { order: -1; padding: 2rem 0; }
+  .avatar-container { width: 200px; height: 200px; }
+  .avatar-emoji { font-size: 5rem; }
+  .ring-1 { width: 100%; height: 100%; }
+  .ring-2 { width: 115%; height: 115%; }
+  .ring-3 { width: 130%; height: 130%; }
+  
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   
+  /* Center align project cards */
+  .project-info { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .project-tags { justify-content: center; }
+  
+  /* Center align mystery cards */
+  .mystery-card { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .mystery-icon { margin-bottom: 1rem; }
+
   /* Mobile Menu Overlay Fix */
   nav { padding: 1rem 1.5rem; width: 100%; }
   
