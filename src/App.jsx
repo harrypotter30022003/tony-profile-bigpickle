@@ -51,12 +51,19 @@ function Navigation({ cvData }) {
   return (
     <nav>
       <div className="logo">{cvData?.name || 'Tony'}</div>
+      
+      {/* Desktop & Mobile Menu */}
       <ul className={`nav-links ${isOpen ? 'active' : ''}`}>
+        {/* Close button for mobile */}
+        <li className="mobile-close" onClick={() => setIsOpen(false)}>✕</li>
+        
         {['About', 'Experience', 'Skills', 'Projects', 'Contact'].map(item => (
           <li key={item}><a href={`#${item.toLowerCase()}`} onClick={() => setIsOpen(false)}>{item}</a></li>
         ))}
       </ul>
-      <div className="mobile-menu" onClick={() => setIsOpen(!isOpen)}>
+
+      {/* Hamburger Icon */}
+      <div className="mobile-menu" onClick={() => setIsOpen(true)}>
         <span></span><span></span><span></span>
       </div>
     </nav>
