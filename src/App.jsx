@@ -242,27 +242,27 @@ function Projects({ cvData }) {
 }
 
 function HiddenWisdomSection() {
-  const [spotlightPos, setSpotlightPos] = useState({ x: 50, y: 50 });
   const [currentQuote, setCurrentQuote] = useState(0);
   const sectionRef = useRef(null);
   const [isActive, setIsActive] = useState(false);
 
-  const handleMouseMove = (e) => {
+  const updateSpotlight = (clientX, clientY) => {
     if (sectionRef.current) {
       const rect = sectionRef.current.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      setSpotlightPos({ x, y });
+      const x = ((clientX - rect.left) / rect.width) * 100;
+      const y = ((clientY - rect.top) / rect.height) * 100;
+      sectionRef.current.style.setProperty('--spotlight-x', `${x}%`);
+      sectionRef.current.style.setProperty('--spotlight-y', `${y}%`);
     }
   };
 
+  const handleMouseMove = (e) => {
+    updateSpotlight(e.clientX, e.clientY);
+  };
+
   const handleTouchMove = (e) => {
-    if (sectionRef.current && e.touches[0]) {
-      const rect = sectionRef.current.getBoundingClientRect();
-      const touch = e.touches[0];
-      const x = ((touch.clientX - rect.left) / rect.width) * 100;
-      const y = ((touch.clientY - rect.top) / rect.height) * 100;
-      setSpotlightPos({ x, y });
+    if (e.touches[0]) {
+      updateSpotlight(e.touches[0].clientX, e.touches[0].clientY);
     }
   };
 
@@ -272,11 +272,6 @@ function HiddenWisdomSection() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  const spotlightStyle = {
-    '--spotlight-x': `${spotlightPos.x}%`,
-    '--spotlight-y': `${spotlightPos.y}%`
-  };
 
   return (
     <section 
@@ -288,19 +283,17 @@ function HiddenWisdomSection() {
       onTouchStart={() => setIsActive(true)}
       onTouchEnd={() => setIsActive(false)}
       onTouchMove={handleTouchMove}
-      style={spotlightStyle}
     >
-      <div className="darkness-overlay">
-        <div className="darkness-content">
-          <div className="darkness-title">
-            <h2>✨ Hidden Wisdom ✨</h2>
-            <p>{isActive ? 'Shine your light to reveal the message...' : 'Touch/Hover to discover...'}</p>
-          </div>
-          <div className="spotlight-reveal">
-            <div className="reveal-glow"></div>
-            <p className="reveal-quote">"{hiddenMessages[currentQuote].quote}"</p>
-            <p className="reveal-author">— {hiddenMessages[currentQuote].author}</p>
-          </div>
+      <div className="darkness-overlay"></div>
+      <div className="darkness-content">
+        <div className="darkness-title">
+          <h2>✨ Hidden Wisdom ✨</h2>
+          <p>{isActive ? 'Shine your light to clear the fog...' : 'Touch/Hover to discover...'}</p>
+        </div>
+        <div className="spotlight-reveal">
+          <div className="reveal-glow"></div>
+          <p className="reveal-quote">"{hiddenMessages[currentQuote].quote}"</p>
+          <p className="reveal-author">— {hiddenMessages[currentQuote].author}</p>
         </div>
       </div>
     </section>

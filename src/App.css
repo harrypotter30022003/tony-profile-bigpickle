@@ -431,40 +431,17 @@ section { padding: 6rem 2rem; max-width: 1400px; margin: 0 auto; }
   margin: 4rem 0 -4rem;
   padding: 4rem 2rem;
   background: #050508;
+  touch-action: pan-y; /* Allow vertical scroll by default */
+}
+
+.darkness-section.active {
+  touch-action: none; /* Disable scrolling when interacting with spotlight */
 }
 
 section.darkness-section {
   padding: 0;
   margin: 4rem 0 -4rem;
   max-width: none;
-}
-
-.darkness-section::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: 
-    radial-gradient(ellipse at 20% 30%, rgba(123,44,191,0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 70%, rgba(255,0,110,0.05) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.darkness-overlay {
-  position: absolute;
-  inset: 0;
-  cursor: none;
-  -webkit-mask-image: radial-gradient(
-    circle 120px at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
-    black 0%,
-    black 100%,
-    transparent 100%
-  );
-  mask-image: radial-gradient(
-    circle 120px at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
-    black 0%,
-    black 100%,
-    transparent 100%
-  );
 }
 
 .darkness-content {
@@ -476,10 +453,44 @@ section.darkness-section {
   justify-content: center;
   min-height: 80vh;
   text-align: center;
+  z-index: 1; /* Content is below the overlay but visible through the mask */
+}
+
+.darkness-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgba(10, 10, 15, 0.4);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  pointer-events: none;
+  
+  /* Inverted Mask: Transparent in the middle, Black everywhere else */
+  -webkit-mask-image: radial-gradient(
+    circle 150px at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+    transparent 0%,
+    transparent 40%,
+    black 100%
+  );
+  mask-image: radial-gradient(
+    circle 150px at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+    transparent 0%,
+    transparent 40%,
+    black 100%
+  );
+  
+  transition: opacity 0.5s ease;
+}
+
+.darkness-section:not(.active) .darkness-overlay {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 .darkness-title {
   margin-bottom: 4rem;
+  position: relative;
+  z-index: 3; /* Title stays above the blur */
 }
 
 .darkness-title h2 {
