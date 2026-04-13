@@ -561,7 +561,7 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   .nav-links { 
     position: fixed; 
     top: 0; 
-    right: -100%; 
+    right: 0;
     width: 80%; 
     height: 100vh; 
     background: rgba(10, 10, 15, 0.98); 
@@ -572,15 +572,14 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
     transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1); 
     z-index: 1000;
     box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-    display: flex; /* Ensure it stays flex */
-  }
-  .nav-links.active { transform: translateX(-125%); } /* Move from -100% to -225% total (relative to right) */
-  /* Actually a better way for fixed positioning: */
-  .nav-links { 
-    right: 0; 
+    display: flex;
     transform: translateX(100%);
+    pointer-events: none; /* Prevent interaction when hidden */
   }
-  .nav-links.active { transform: translateX(0); }
+  .nav-links.active { 
+    transform: translateX(0); 
+    pointer-events: all;
+  }
   
   .nav-links li { margin: 1.5rem 0; width: 100%; text-align: center; }
   .nav-links a { font-size: 1.2rem; display: block; width: 100%; }

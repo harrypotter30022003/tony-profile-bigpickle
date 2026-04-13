@@ -51,7 +51,7 @@ function Navigation({ cvData }) {
   return (
     <nav>
       <div className="logo">{cvData?.name || 'Tony'}</div>
-      <ul className={`nav-links \${isOpen ? 'active' : ''}`}>
+      <ul className={`nav-links ${isOpen ? 'active' : ''}`}>
         {['About', 'Experience', 'Skills', 'Projects', 'Contact'].map(item => (
           <li key={item}><a href={`#${item.toLowerCase()}`} onClick={() => setIsOpen(false)}>{item}</a></li>
         ))}
