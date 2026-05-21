@@ -400,6 +400,15 @@ function Contact({ cvData }) {
     e.preventDefault();
     const phone = cvData?.phone?.replace(/\D/g, '') || '84962882315';
     const message = encodeURIComponent(`Hi Tony, I'm ${name || 'interested'}, I saw your portfolio and would like to connect!`);
+    
+    // GA4 Custom Event tracking for WhatsApp form submission
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'whatsapp_contact_click', {
+        event_category: 'Engagement',
+        event_label: name ? 'With Name' : 'Anonymous'
+      });
+    }
+
     window.location.href = `https://api.whatsapp.com/send?phone=${phone}&text=${message}`;
   };
   
@@ -411,15 +420,33 @@ function Contact({ cvData }) {
       </div>
       <div className="contact-grid">
         {[
-          { icon: '📧', title: 'Email', value: cvData?.email, link: `mailto:${cvData?.email}` },
-          { icon: '📱', title: 'Phone', value: cvData?.phone, link: `tel:${cvData?.phone}` },
-          { icon: '💼', title: 'LinkedIn', value: 'Connect', link: cvData?.linkedin },
-          { icon: '📍', title: 'Location', value: cvData?.contact?.location || 'Ho Chi Minh City', link: null }
+          { icon: '📧', title: 'Email', value: cvData?.email, link: `mailto:${cvData?.email}`, type: 'email' },
+          { icon: '📱', title: 'Phone', value: cvData?.phone, link: `tel:${cvData?.phone}`, type: 'phone' },
+          { icon: '💼', title: 'LinkedIn', value: 'Connect', link: cvData?.linkedin, type: 'linkedin' },
+          { icon: '📍', title: 'Location', value: cvData?.contact?.location || 'Ho Chi Minh City', link: null, type: 'location' }
         ].map((c, i) => (
           <div key={i} className="contact-card">
             <div className="contact-icon">{c.icon}</div>
             <h3>{c.title}</h3>
-            <p>{c.link ? <a href={c.link} target="_blank" rel="noopener noreferrer">{c.value}</a> : c.value}</p>
+            <p>
+              {c.link ? (
+                <a 
+                  href={c.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    if (typeof window.gtag === 'function') {
+                      window.gtag('event', 'contact_info_click', {
+                        contact_type: c.type,
+                        value: c.value
+                      });
+                    }
+                  }}
+                >
+                  {c.value}
+                </a>
+              ) : c.value}
+            </p>
           </div>
         ))}
       </div>
@@ -467,11 +494,20 @@ function WhatsAppWidget({ cvData }) {
   const phone = cvData?.phone?.replace(/\D/g, '') || '84962882315';
   const message = encodeURIComponent("Hi Tony, I'm interested in connecting with you!");
   
+  const handleWidgetClick = () => {
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'whatsapp_float_click', {
+        event_category: 'Engagement'
+      });
+    }
+  };
+
   return (
     <a 
       href={`https://api.whatsapp.com/send?phone=${phone}&text=${message}`}
       className="whatsapp-float"
       aria-label="Contact on WhatsApp"
+      onClick={handleWidgetClick}
     >
       <span className="tooltip">Chat with me</span>
       <span style={{ fontSize: '1.5rem' }}>💬</span>
@@ -655,6 +691,26 @@ function App() {
 
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  // Page View analytics on Hash Route change
+  useEffect(() => {
+    if (typeof window.gtag === 'function') {
+      const pagePath = window.location.hash || '/';
+      const pageTitle = currentView === 'home' 
+        ? 'Home Portfolio' 
+        : currentView === 'blog' 
+          ? 'Blog Feed' 
+          : currentView === 'blog-detail' 
+            ? `Blog: ${activeSlug}` 
+            : 'Privacy Policy';
+
+      window.gtag('event', 'page_view', {
+        page_path: pagePath,
+        page_title: pageTitle,
+        page_location: window.location.href
+      });
+    }
+  }, [currentView, activeSlug]);
 
   useEffect(() => {
     // Load theme preference
