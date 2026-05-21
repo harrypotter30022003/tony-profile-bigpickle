@@ -186,9 +186,36 @@ function renderProj(){
   el.innerHTML = html;
 }
 
+function addBlog(){
+  data.blog = data.blog || [];
+  data.blog.push({title:'',slug:'',date:new Date().toISOString().split('T')[0],author:data.name||'Do Minh Tuan',summary:'',content:''});
+  renderBlog();
+}
+function deleteBlog(i){
+  data.blog.splice(i,1);
+  renderBlog();
+}
+function renderBlog(){
+  var el = document.getElementById('blog_list');
+  if(!el) return;
+  var html = '<h2>Blog Articles</h2>';
+  data.blog = data.blog || [];
+  for(var i=0; i<data.blog.length; i++){
+    var b = data.blog[i];
+    html += '<div class="item"><button class="btn-del" onclick="deleteBlog('+i+')">X</button>';
+    html += '<label>Title</label><input placeholder="Article Title" value="'+esc(b.title)+'" onchange="data.blog['+i+'].title=this.value; if(!data.blog['+i+'].slug){ data.blog['+i+'].slug=this.value.toLowerCase().replace(/[^a-z0-9]+/g,\'-\').replace(/(^-|-$)/g,\'\'); renderBlog(); }">';
+    html += '<label>Slug (SEO friendly URL path)</label><input placeholder="slug-url-path" value="'+esc(b.slug)+'" onchange="data.blog['+i+'].slug=this.value">';
+    html += '<label>Date</label><input placeholder="YYYY-MM-DD" value="'+esc(b.date)+'" onchange="data.blog['+i+'].date=this.value">';
+    html += '<label>Author</label><input placeholder="Author Name" value="'+esc(b.author)+'" onchange="data.blog['+i+'].author=this.value">';
+    html += '<label>Short Summary</label><textarea placeholder="Short summary describing the article..." onchange="data.blog['+i+'].summary=this.value">'+esc(b.summary)+'</textarea>';
+    html += '<label>Content (Markdown/Text)</label><textarea placeholder="Full article content..." style="height: 250px" onchange="data.blog['+i+'].content=this.value">'+esc(b.content)+'</textarea></div>';
+  }
+  el.innerHTML = html;
+}
+
 function render(){
   var s = '<h1>CMS <button onclick="logout()" style="background:#333;color:#fff;margin-left:1rem">Logout</button></h1>';
-  s += '<div class="nav"><button class="active" onclick="switchTab(\'basic\')"> Basic</button><button onclick="switchTab(\'hero\')">Hero</button><button onclick="switchTab(\'exp\')">Experience</button><button onclick="switchTab(\'skills\')">Skills</button><button onclick="switchTab(\'projects\')">Projects</button><button onclick="switchTab(\'footer\')">Footer</button></div>';
+  s += '<div class="nav"><button class="active" onclick="switchTab(\'basic\')"> Basic</button><button onclick="switchTab(\'hero\')">Hero</button><button onclick="switchTab(\'exp\')">Experience</button><button onclick="switchTab(\'skills\')">Skills</button><button onclick="switchTab(\'projects\')">Projects</button><button onclick="switchTab(\'blog\')">Blog</button><button onclick="switchTab(\'footer\')">Footer</button></div>';
   
   s += '<div id="tab-basic" class="tab active"><div class="box"><h2>Basic</h2>';
   s += '<label>Name</label><input id="d_name"><label>Title</label><input id="d_title">';
@@ -208,6 +235,9 @@ function render(){
   
   s += '<div id="tab-projects" class="tab"><div class="box" id="proj_list"><h2>Projects</h2></div>';
   s += '<button class="btn-add" onclick="addProj()">+ Add</button></div>';
+  
+  s += '<div id="tab-blog" class="tab"><div class="box" id="blog_list"><h2>Blog Articles</h2></div>';
+  s += '<button class="btn-add" onclick="addBlog()">+ Add Article</button></div>';
   
   s += '<div id="tab-footer" class="tab"><div class="box"><h2>Footer</h2>';
   s += '<label>Footer Text</label><input id="d_footer_text"><label>Footer Year</label><input id="d_footer_year"></div></div>';
@@ -234,6 +264,7 @@ function render(){
   
   renderExp();
   renderProj();
+  renderBlog();
 }
 
 if(!session){login();}else{loadData();}

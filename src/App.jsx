@@ -45,20 +45,41 @@ const hiddenMessages = [
   { quote: "Teamwork makes the dream work.", author: "John C. Maxwell" }
 ];
 
-function Navigation({ cvData }) {
+function Navigation({ cvData, currentView }) {
   const [isOpen, setIsOpen] = useState(false);
   
+  const menuItems = currentView === 'home' 
+    ? [
+        { label: 'About', href: '#about' },
+        { label: 'Experience', href: '#experience' },
+        { label: 'Skills', href: '#skills' },
+        { label: 'Projects', href: '#projects' },
+        { label: 'Blog', href: '#blog' },
+        { label: 'Contact', href: '#contact' }
+      ]
+    : [
+        { label: 'Home', href: '#' },
+        { label: 'Blog', href: '#blog' },
+        { label: 'Contact', href: '#contact' }
+      ];
+
   return (
     <nav>
-      <div className="logo">{cvData?.name || 'Tony'}</div>
+      <div className="logo">
+        <a href="#" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 'bold' }}>
+          {cvData?.name || 'Tony'}
+        </a>
+      </div>
       
       {/* Desktop & Mobile Menu */}
       <ul className={`nav-links ${isOpen ? 'active' : ''}`}>
         {/* Close button for mobile */}
         <li className="mobile-close" onClick={() => setIsOpen(false)}>✕</li>
         
-        {['About', 'Experience', 'Skills', 'Projects', 'Contact'].map(item => (
-          <li key={item}><a href={`#${item.toLowerCase()}`} onClick={() => setIsOpen(false)}>{item}</a></li>
+        {menuItems.map(item => (
+          <li key={item.label}>
+            <a href={item.href} onClick={() => setIsOpen(false)}>{item.label}</a>
+          </li>
         ))}
       </ul>
 
@@ -426,7 +447,12 @@ function Footer({ cvData }) {
   const currentYear = cvData?.footer?.year || new Date().getFullYear();
   return (
     <footer>
-      <p>© {currentYear} {cvData?.name} • {cvData?.footer?.text || 'Crafted with passion'}</p>
+      <div className="footer-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', alignItems: 'center' }}>
+        <p>© {currentYear} {cvData?.name} • {cvData?.footer?.text || 'Crafted with passion'}</p>
+        <p style={{ fontSize: '0.95rem' }}>
+          <a href="#privacy-policy" style={{ color: 'var(--accent)', textDecoration: 'none', transition: 'opacity 0.2s', fontWeight: '500' }} onMouseOver={e => e.target.style.opacity = 0.8} onMouseOut={e => e.target.style.opacity = 1}>Privacy Policy</a>
+        </p>
+      </div>
 
       <div className="social-links">
         <a href={cvData?.linkedin} target="_blank" rel="noopener noreferrer">💼</a>
@@ -453,10 +479,182 @@ function WhatsAppWidget({ cvData }) {
   );
 }
 
+function renderContent(text) {
+  if (!text) return null;
+  const blocks = text.split('\n\n');
+  return blocks.map((block, i) => {
+    if (block.trim().startsWith('### ')) {
+      return <h3 key={i} style={{ marginTop: '1.5rem', marginBottom: '0.8rem', color: 'var(--accent)' }}>{block.replace('### ', '')}</h3>;
+    }
+    if (block.trim().startsWith('## ')) {
+      return <h2 key={i} style={{ marginTop: '2rem', marginBottom: '1rem', color: 'var(--accent)' }}>{block.replace('## ', '')}</h2>;
+    }
+    if (block.trim().startsWith('# ')) {
+      return <h1 key={i} style={{ marginTop: '2.5rem', marginBottom: '1.2rem', color: 'var(--accent)' }}>{block.replace('# ', '')}</h1>;
+    }
+    if (block.trim().startsWith('- ')) {
+      const items = block.split('\n').map(item => item.replace('- ', '').trim());
+      return (
+        <ul key={i} style={{ marginLeft: '1.5rem', marginBottom: '1rem', listStyleType: 'disc' }}>
+          {items.map((item, j) => <li key={j} style={{ marginBottom: '0.4rem', fontSize: '1rem', lineHeight: '1.6' }}>{item}</li>)}
+        </ul>
+      );
+    }
+    return <p key={i} style={{ marginBottom: '1.2rem', fontSize: '1.05rem', lineHeight: '1.7', color: 'var(--text-color)' }}>{block}</p>;
+  });
+}
+
+function BlogFeed({ cvData }) {
+  const articles = cvData?.blog || [];
+  
+  return (
+    <section className="blog-section" style={{ minHeight: '80vh', paddingTop: '100px', paddingBottom: '100px' }}>
+      <div className="section-header">
+        <h2>📚 Articles & Insights</h2>
+        <p>In-depth thoughts on Tech Leadership, Web Scaling, and Software Project Management</p>
+      </div>
+      
+      {articles.length === 0 ? (
+        <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#888' }}>No articles published yet. Check back soon!</p>
+      ) : (
+        <div className="blog-feed-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+          gap: '2rem',
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 1.5rem'
+        }}>
+          {articles.map((article, i) => (
+            <article key={i} className="project-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', padding: '2rem' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#888', marginBottom: '1rem' }}>
+                  <span>📅 {article.date}</span>
+                  <span>✍️ {article.author || 'Do Minh Tuan'}</span>
+                </div>
+                <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: 'var(--text-color)' }}>{article.title}</h3>
+                <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#aaa', marginBottom: '1.5rem' }}>{article.summary}</p>
+              </div>
+              <a href={`#blog/${article.slug}`} className="btn btn-secondary" style={{ width: 'fit-content', fontSize: '0.9rem', padding: '0.6rem 1.2rem' }}>Read Article →</a>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function BlogDetail({ cvData, slug }) {
+  const articles = cvData?.blog || [];
+  const article = articles.find(a => a.slug === slug);
+  
+  if (!article) {
+    return (
+      <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <h2>🔍 Article Not Found</h2>
+        <p style={{ margin: '1rem 0 2rem', color: '#888' }}>The article you are looking for might have been moved or renamed.</p>
+        <a href="#blog" className="btn btn-primary">Back to Articles</a>
+      </div>
+    );
+  }
+  
+  return (
+    <article className="blog-article-detail" style={{ minHeight: '80vh', paddingTop: '120px', paddingBottom: '100px', maxWidth: '800px', margin: '0 auto', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
+      <header style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+        <a href="#blog" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--accent)', marginBottom: '1.5rem', textDecoration: 'none', fontWeight: '500' }}>← Back to All Articles</a>
+        <h1 className="gradient-text" style={{ fontSize: '2.5rem', lineHeight: '1.2', marginBottom: '1.5rem' }}>{article.title}</h1>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', fontSize: '0.95rem', color: '#888' }}>
+          <span>📅 Published: {article.date}</span>
+          <span>✍️ Author: {article.author || 'Do Minh Tuan'}</span>
+        </div>
+      </header>
+      
+      <div className="blog-body-content box" style={{ padding: '2.5rem', borderRadius: '12px', background: 'rgba(18, 18, 26, 0.4)', border: '1px solid var(--border-color)', backdropFilter: 'blur(10px)' }}>
+        {renderContent(article.content)}
+      </div>
+      
+      <footer style={{ marginTop: '3rem', borderTop: '1px solid var(--border-color)', paddingTop: '2rem', textAlign: 'center' }}>
+        <h3 style={{ marginBottom: '1rem' }}>Interested in working together or discussing tech?</h3>
+        <a href="#contact" className="btn btn-primary">Connect with Tony</a>
+      </footer>
+    </article>
+  );
+}
+
+function PrivacyPolicy() {
+  return (
+    <div className="privacy-policy-page" style={{ minHeight: '80vh', paddingTop: '120px', paddingBottom: '100px', maxWidth: '800px', margin: '0 auto', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
+      <header style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+        <h1 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Privacy Policy</h1>
+        <p style={{ color: '#888' }}>Last Updated: May 22, 2026</p>
+      </header>
+      
+      <div className="privacy-content box" style={{ padding: '2.5rem', borderRadius: '12px', background: 'rgba(18, 18, 26, 0.4)', border: '1px solid var(--border-color)', backdropFilter: 'blur(10px)', lineHeight: '1.7' }}>
+        <p style={{ marginBottom: '1.5rem' }}>At Tony Do Portfolio (me.tony.do), accessible from https://me.tony.do or https://tony.do, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by Tony Do Portfolio and how we use it.</p>
+        
+        <h2 style={{ color: 'var(--accent)', fontSize: '1.5rem', marginTop: '2rem', marginBottom: '1rem' }}>Consent</h2>
+        <p style={{ marginBottom: '1.5rem' }}>By using our website, you hereby consent to our Privacy Policy and agree to its terms.</p>
+        
+        <h2 style={{ color: 'var(--accent)', fontSize: '1.5rem', marginTop: '2rem', marginBottom: '1rem' }}>Information We Collect</h2>
+        <p style={{ marginBottom: '1.5rem' }}>This website is primarily a personal portfolio. If you choose to contact us directly via WhatsApp, email, or any forms, we may receive additional information about you such as your name, email address, phone number, the contents of the message and/or attachments you may send us, and any other information you may choose to provide.</p>
+        
+        <h2 style={{ color: 'var(--accent)', fontSize: '1.5rem', marginTop: '2rem', marginBottom: '1rem' }}>Log Files</h2>
+        <p style={{ marginBottom: '1.5rem' }}>Tony Do Portfolio follows a standard procedure of using log files. These files log visitors when they visit websites. All hosting companies do this as part of hosting services' analytics. The information collected by log files includes internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any information that is personally identifiable. The purpose of the information is for analyzing trends, administering the site, tracking users' movement on the website, and gathering demographic information.</p>
+        
+        <h2 style={{ color: 'var(--accent)', fontSize: '1.5rem', marginTop: '2rem', marginBottom: '1rem' }}>Cookies and Web Beacons</h2>
+        <p style={{ marginBottom: '1.5rem' }}>Like any other website, Tony Do Portfolio uses 'cookies'. These cookies are used to store information including visitors' preferences, and the pages on the website that the visitor accessed or visited. The information is used to optimize the users' experience by customizing our web page content based on visitors' browser type and/or other information.</p>
+        
+        <h2 style={{ color: 'var(--accent)', fontSize: '1.5rem', marginTop: '2rem', marginBottom: '1rem' }}>Google DoubleClick DART Cookie</h2>
+        <p style={{ marginBottom: '1.5rem' }}>Google is one of the third-party vendors on our site. It also uses cookies, known as DART cookies, to serve ads to our site visitors based upon their visit to me.tony.do and other sites on the internet. However, visitors may choose to decline the use of DART cookies by visiting the Google ad and content network Privacy Policy at the following URL: <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>https://policies.google.com/technologies/ads</a></p>
+        
+        <h2 style={{ color: 'var(--accent)', fontSize: '1.5rem', marginTop: '2rem', marginBottom: '1rem' }}>Advertising Partners Privacy Policies</h2>
+        <p style={{ marginBottom: '1.5rem' }}>Third-party ad servers or ad networks use technologies like cookies, JavaScript, or Web Beacons that are used in their respective advertisements and links that appear on Tony Do Portfolio, which are sent directly to users' browser. They automatically receive your IP address when this occurs. These technologies are used to measure the effectiveness of their advertising campaigns and/or to personalize the advertising content that you see on websites that you visit.</p>
+        <p style={{ marginBottom: '1.5rem' }}>Note that Tony Do Portfolio has no access to or control over these cookies that are used by third-party advertisers.</p>
+        
+        <h2 style={{ color: 'var(--accent)', fontSize: '1.5rem', marginTop: '2rem', marginBottom: '1rem' }}>Third Party Privacy Policies</h2>
+        <p style={{ marginBottom: '1.5rem' }}>Tony Do Portfolio's Privacy Policy does not apply to other advertisers or websites. Thus, we are advising you to consult the respective Privacy Policies of these third-party ad servers for more detailed information. It may include their practices and instructions about how to opt-out of certain options.</p>
+        
+        <h2 style={{ color: 'var(--accent)', fontSize: '1.5rem', marginTop: '2rem', marginBottom: '1rem' }}>GDPR and CCPA Data Protection Rights</h2>
+        <p style={{ marginBottom: '1.5rem' }}>We want to make sure you are fully aware of all of your data protection rights. Every user is entitled to the following: the right to access, the right to rectification, the right to erasure, the right to restrict processing, the right to object to processing, and the right to data portability. If you make a request, we have one month to respond to you.</p>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [data, setData] = useState(cvData);
   const [loaded, setLoaded] = useState(false);
   const [theme, setTheme] = useState('dark');
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'blog', 'blog-detail', 'privacy-policy'
+  const [activeSlug, setActiveSlug] = useState('');
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#blog/')) {
+        const slug = hash.replace('#blog/', '');
+        setCurrentView('blog-detail');
+        setActiveSlug(slug);
+        window.scrollTo(0, 0);
+      } else if (hash === '#blog') {
+        setCurrentView('blog');
+        setActiveSlug('');
+        window.scrollTo(0, 0);
+      } else if (hash === '#privacy-policy') {
+        setCurrentView('privacy-policy');
+        setActiveSlug('');
+        window.scrollTo(0, 0);
+      } else {
+        setCurrentView('home');
+        setActiveSlug('');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange(); // Run on mount
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   useEffect(() => {
     // Load theme preference
@@ -490,15 +688,27 @@ function App() {
 
   return (
     <div className="app">
-      <Navigation cvData={data} />
-      <Hero cvData={data} />
-      <About cvData={data} />
-      <Experience cvData={data} />
-      <Skills cvData={data} />
-      <Projects cvData={data} />
-      <HiddenWisdomSection />
-      <MysteryCards />
-      <Contact cvData={data} />
+      <Navigation cvData={data} currentView={currentView} />
+      
+      {currentView === 'home' && (
+        <>
+          <Hero cvData={data} />
+          <About cvData={data} />
+          <Experience cvData={data} />
+          <Skills cvData={data} />
+          <Projects cvData={data} />
+          <HiddenWisdomSection />
+          <MysteryCards />
+          <Contact cvData={data} />
+        </>
+      )}
+
+      {currentView === 'blog' && <BlogFeed cvData={data} />}
+      
+      {currentView === 'blog-detail' && <BlogDetail cvData={data} slug={activeSlug} />}
+      
+      {currentView === 'privacy-policy' && <PrivacyPolicy />}
+
       <Footer cvData={data} />
       <WhatsAppWidget cvData={data} />
       <BackToTop />
