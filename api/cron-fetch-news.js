@@ -201,6 +201,16 @@ JSON Response:`;
     }
 
     const geminiData = await geminiResponse.json();
+    
+    // Crash-proofing safety check: verify Gemini returned valid candidate text structure
+    if (!geminiData.candidates || !geminiData.candidates[0] || !geminiData.candidates[0].content || !geminiData.candidates[0].content.parts || !geminiData.candidates[0].content.parts[0]) {
+      console.error('Unexpected Gemini Response Structure:', JSON.stringify(geminiData));
+      return res.status(500).json({ 
+        error: 'Gemini API did not return structured text content.', 
+        details: geminiData 
+      });
+    }
+
     const rawJsonText = geminiData.candidates[0].content.parts[0].text.trim();
     
     // Safety check: strip any markdown wrapping characters (```json ... ```) that LLMs sometimes generate
