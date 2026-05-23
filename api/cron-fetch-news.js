@@ -203,9 +203,9 @@ JSON Response:`;
         console.log(`Attempting Gemini generation using model: ${label}...`);
         const geminiUrl = `https://generativelanguage.googleapis.com/${model.version}/models/${model.name}:generateContent?key=${geminiApiKey}`;
         
-        // Gemini-pro (1.0) does not support responseMimeType JSON configuration, so we only use it on 1.5 models
+        // Gemini REST API expects snake_case parameters (response_mime_type)
         const config = model.name.includes('1.5') 
-          ? { responseMimeType: 'application/json' } 
+          ? { response_mime_type: 'application/json' } 
           : undefined;
 
         const geminiResponse = await fetch(geminiUrl, {
