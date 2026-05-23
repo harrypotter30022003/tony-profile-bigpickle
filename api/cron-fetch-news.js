@@ -203,17 +203,11 @@ JSON Response:`;
         console.log(`Attempting Gemini generation using model: ${label}...`);
         const geminiUrl = `https://generativelanguage.googleapis.com/${model.version}/models/${model.name}:generateContent?key=${geminiApiKey}`;
         
-        // Gemini REST API expects snake_case parameters (response_mime_type)
-        const config = model.name.includes('1.5') 
-          ? { response_mime_type: 'application/json' } 
-          : undefined;
-
         const geminiResponse = await fetch(geminiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: config
+            contents: [{ parts: [{ text: prompt }] }]
           })
         });
 
