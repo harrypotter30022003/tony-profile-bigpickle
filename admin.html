@@ -188,7 +188,16 @@ function renderProj(){
 
 function addBlog(){
   data.blog = data.blog || [];
-  data.blog.push({title:'',slug:'',date:new Date().toISOString().split('T')[0],author:data.name||'Do Minh Tuan',summary:'',content:''});
+  data.blog.push({
+    title: '',
+    slug: '',
+    category: 'Tech Made Simple 💡',
+    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+    date: new Date().toISOString().split('T')[0],
+    author: data.name || 'Do Minh Tuan',
+    summary: '',
+    content: ''
+  });
   renderBlog();
 }
 function deleteBlog(i){
@@ -202,9 +211,23 @@ function renderBlog(){
   data.blog = data.blog || [];
   for(var i=0; i<data.blog.length; i++){
     var b = data.blog[i];
+    b.category = b.category || 'Tech Made Simple 💡';
+    b.image = b.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80';
+
     html += '<div class="item"><button class="btn-del" onclick="deleteBlog('+i+')">X</button>';
     html += '<label>Title</label><input placeholder="Article Title" value="'+esc(b.title)+'" onchange="data.blog['+i+'].title=this.value; if(!data.blog['+i+'].slug){ data.blog['+i+'].slug=this.value.toLowerCase().replace(/[^a-z0-9]+/g,\'-\').replace(/(^-|-$)/g,\'\'); renderBlog(); }">';
     html += '<label>Slug (SEO friendly URL path)</label><input placeholder="slug-url-path" value="'+esc(b.slug)+'" onchange="data.blog['+i+'].slug=this.value">';
+    
+    // Category Select Dropdown
+    html += '<label>Category</label><select style="width:100%;padding:0.7rem;background:#1a1a2e;border:1px solid #333;color:#fff;border-radius:6px;margin-bottom:0.8rem" onchange="data.blog['+i+'].category=this.value">';
+    var cats = ['Tech Made Simple 💡', 'Business Hackers 🚀', 'Future Pulse 🔮', 'Developer Corner 💻'];
+    for(var j=0; j<cats.length; j++){
+      var sel = b.category === cats[j] ? ' selected' : '';
+      html += '<option value="'+cats[j]+'"'+sel+'>'+cats[j]+'</option>';
+    }
+    html += '</select>';
+
+    html += '<label>Cover Image URL (Unsplash recommended)</label><input placeholder="https://images.unsplash.com/..." value="'+esc(b.image)+'" onchange="data.blog['+i+'].image=this.value">';
     html += '<label>Date</label><input placeholder="YYYY-MM-DD" value="'+esc(b.date)+'" onchange="data.blog['+i+'].date=this.value">';
     html += '<label>Author</label><input placeholder="Author Name" value="'+esc(b.author)+'" onchange="data.blog['+i+'].author=this.value">';
     html += '<label>Short Summary</label><textarea placeholder="Short summary describing the article..." onchange="data.blog['+i+'].summary=this.value">'+esc(b.summary)+'</textarea>';

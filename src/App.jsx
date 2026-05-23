@@ -519,59 +519,193 @@ function renderContent(text) {
   if (!text) return null;
   const blocks = text.split('\n\n');
   return blocks.map((block, i) => {
-    if (block.trim().startsWith('### ')) {
-      return <h3 key={i} style={{ marginTop: '1.5rem', marginBottom: '0.8rem', color: 'var(--accent)' }}>{block.replace('### ', '')}</h3>;
+    const trimmed = block.trim();
+    if (trimmed.startsWith('### ')) {
+      // Catch specific highlighted headers
+      if (trimmed.startsWith('### 👨‍💻 Developer Tip') || trimmed.startsWith('### 👨‍💻 Dev Sandbox Tip')) {
+        const contentLines = block.split('\n');
+        const header = contentLines[0].replace('### ', '');
+        const body = contentLines.slice(1).join('\n');
+        return (
+          <div key={i} style={{
+            marginTop: '2rem',
+            marginBottom: '2rem',
+            padding: '1.5rem',
+            borderRadius: '10px',
+            background: 'rgba(58, 134, 255, 0.08)',
+            borderLeft: '4px solid #3a86ff',
+            borderTop: '1px solid rgba(58, 134, 255, 0.1)',
+            borderRight: '1px solid rgba(58, 134, 255, 0.1)',
+            borderBottom: '1px solid rgba(58, 134, 255, 0.1)'
+          }}>
+            <h4 style={{ color: '#3a86ff', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', marginBottom: '0.8rem', marginTop: 0 }}>{header}</h4>
+            <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-color)' }}>{body}</p>
+          </div>
+        );
+      }
+      
+      if (trimmed.startsWith('### 💼 Business Growth Takeaway') || trimmed.startsWith('### 💼 Business Takeaway')) {
+        const contentLines = block.split('\n');
+        const header = contentLines[0].replace('### ', '');
+        const body = contentLines.slice(1).join('\n');
+        return (
+          <div key={i} style={{
+            marginTop: '2rem',
+            marginBottom: '2rem',
+            padding: '1.5rem',
+            borderRadius: '10px',
+            background: 'rgba(255, 0, 110, 0.08)',
+            borderLeft: '4px solid #ff006e',
+            borderTop: '1px solid rgba(255, 0, 110, 0.1)',
+            borderRight: '1px solid rgba(255, 0, 110, 0.1)',
+            borderBottom: '1px solid rgba(255, 0, 110, 0.1)'
+          }}>
+            <h4 style={{ color: '#ff006e', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', marginBottom: '0.8rem', marginTop: 0 }}>{header}</h4>
+            <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-color)' }}>{body}</p>
+          </div>
+        );
+      }
+
+      return <h3 key={i} style={{ marginTop: '1.8rem', marginBottom: '0.8rem', color: 'var(--accent)' }}>{trimmed.replace('### ', '')}</h3>;
     }
-    if (block.trim().startsWith('## ')) {
-      return <h2 key={i} style={{ marginTop: '2rem', marginBottom: '1rem', color: 'var(--accent)' }}>{block.replace('## ', '')}</h2>;
+    if (trimmed.startsWith('## ')) {
+      return <h2 key={i} style={{ marginTop: '2.2rem', marginBottom: '1rem', color: 'var(--accent)' }}>{trimmed.replace('## ', '')}</h2>;
     }
-    if (block.trim().startsWith('# ')) {
-      return <h1 key={i} style={{ marginTop: '2.5rem', marginBottom: '1.2rem', color: 'var(--accent)' }}>{block.replace('# ', '')}</h1>;
+    if (trimmed.startsWith('# ')) {
+      return <h1 key={i} style={{ marginTop: '2.8rem', marginBottom: '1.2rem', color: 'var(--accent)' }}>{trimmed.replace('# ', '')}</h1>;
     }
-    if (block.trim().startsWith('- ')) {
-      const items = block.split('\n').map(item => item.replace('- ', '').trim());
+    if (trimmed.startsWith('- ')) {
+      const items = trimmed.split('\n').map(item => item.replace('- ', '').trim());
       return (
         <ul key={i} style={{ marginLeft: '1.5rem', marginBottom: '1rem', listStyleType: 'disc' }}>
-          {items.map((item, j) => <li key={j} style={{ marginBottom: '0.4rem', fontSize: '1rem', lineHeight: '1.6' }}>{item}</li>)}
+          {items.map((item, j) => <li key={j} style={{ marginBottom: '0.4rem', fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-color)' }}>{item}</li>)}
         </ul>
       );
     }
-    return <p key={i} style={{ marginBottom: '1.2rem', fontSize: '1.05rem', lineHeight: '1.7', color: 'var(--text-color)' }}>{block}</p>;
+    return <p key={i} style={{ marginBottom: '1.2rem', fontSize: '1.05rem', lineHeight: '1.7', color: 'var(--text-color)' }}>{trimmed}</p>;
   });
 }
 
 function BlogFeed({ cvData }) {
   const articles = cvData?.blog || [];
+  const [selectedCategory, setSelectedCategory] = useState('All');
   
+  const categories = ['All', 'Tech Made Simple 💡', 'Business Hackers 🚀', 'Future Pulse 🔮', 'Developer Corner 💻'];
+  
+  const filteredArticles = selectedCategory === 'All' 
+    ? articles 
+    : articles.filter(a => a.category === selectedCategory);
+
+  const getCategoryColor = (cat) => {
+    switch (cat) {
+      case 'Tech Made Simple 💡': return '#00f5d4';
+      case 'Business Hackers 🚀': return '#ff006e';
+      case 'Future Pulse 🔮': return '#7b2cbf';
+      case 'Developer Corner 💻': return '#3a86ff';
+      default: return '#888';
+    }
+  };
+
   return (
     <section className="blog-section" style={{ minHeight: '80vh', paddingTop: '100px', paddingBottom: '100px' }}>
       <div className="section-header">
         <h2>📚 Articles & Insights</h2>
-        <p>In-depth thoughts on Tech Leadership, Web Scaling, and Software Project Management</p>
+        <p>Simple tech tricks, small business growth hacks, and programming tutorials</p>
+      </div>
+
+      {/* Category Filter Navigation */}
+      <div className="category-filter" style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '0.8rem',
+        flexWrap: 'wrap',
+        marginBottom: '3rem',
+        padding: '0 1.5rem'
+      }}>
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            style={{
+              padding: '0.6rem 1.2rem',
+              borderRadius: '30px',
+              border: '1px solid',
+              borderColor: selectedCategory === cat ? getCategoryColor(cat) : 'rgba(255, 255, 255, 0.1)',
+              background: selectedCategory === cat ? `${getCategoryColor(cat)}22` : 'rgba(18, 18, 26, 0.6)',
+              color: selectedCategory === cat ? '#fff' : '#aaa',
+              fontSize: '0.95rem',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              backdropFilter: 'blur(5px)'
+            }}
+          >
+            {cat}
+          </button>
+        ))}
       </div>
       
-      {articles.length === 0 ? (
-        <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#888' }}>No articles published yet. Check back soon!</p>
+      {filteredArticles.length === 0 ? (
+        <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#888', marginTop: '2rem' }}>No articles published in this category yet. Check back soon!</p>
       ) : (
         <div className="blog-feed-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: '2rem',
+          gap: '2.5rem',
           maxWidth: '1200px',
           margin: '0 auto',
           padding: '0 1.5rem'
         }}>
-          {articles.map((article, i) => (
-            <article key={i} className="project-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', padding: '2rem' }}>
+          {filteredArticles.map((article, i) => (
+            <article key={i} className="project-card" style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              height: '100%', 
+              justifyContent: 'space-between', 
+              padding: '0', 
+              overflow: 'hidden',
+              borderRadius: '16px',
+              border: '1px solid var(--border-color)',
+              background: 'rgba(18, 18, 26, 0.4)'
+            }}>
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#888', marginBottom: '1rem' }}>
-                  <span>📅 {article.date}</span>
-                  <span>✍️ {article.author || 'Do Minh Tuan'}</span>
+                {/* Cover Image */}
+                <div style={{ width: '100%', height: '200px', overflow: 'hidden', position: 'relative' }}>
+                  <img 
+                    src={article.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80'} 
+                    alt={article.title} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  {/* Category Badge */}
+                  <span style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    left: '1rem',
+                    background: 'rgba(10, 10, 15, 0.85)',
+                    border: `1px solid ${getCategoryColor(article.category)}`,
+                    color: '#fff',
+                    padding: '0.3rem 0.8rem',
+                    borderRadius: '20px',
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold',
+                    backdropFilter: 'blur(5px)'
+                  }}>
+                    {article.category || 'General'}
+                  </span>
                 </div>
-                <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: 'var(--text-color)' }}>{article.title}</h3>
-                <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#aaa', marginBottom: '1.5rem' }}>{article.summary}</p>
+
+                <div style={{ padding: '2rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#888', marginBottom: '1rem' }}>
+                    <span>📅 {article.date}</span>
+                    <span>✍️ {article.author || 'Do Minh Tuan'}</span>
+                  </div>
+                  <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: 'var(--text-color)', lineHeight: '1.3' }}>{article.title}</h3>
+                  <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#aaa', marginBottom: '0.5rem' }}>{article.summary}</p>
+                </div>
               </div>
-              <a href={`#blog/${article.slug}`} className="btn btn-secondary" style={{ width: 'fit-content', fontSize: '0.9rem', padding: '0.6rem 1.2rem' }}>Read Article →</a>
+
+              <div style={{ padding: '0 2rem 2rem 2rem' }}>
+                <a href={`#blog/${article.slug}`} className="btn btn-secondary" style={{ width: 'fit-content', fontSize: '0.9rem', padding: '0.6rem 1.2rem' }}>Read Article →</a>
+              </div>
             </article>
           ))}
         </div>
@@ -593,17 +727,48 @@ function BlogDetail({ cvData, slug }) {
       </div>
     );
   }
+
+  const getCategoryColor = (cat) => {
+    switch (cat) {
+      case 'Tech Made Simple 💡': return '#00f5d4';
+      case 'Business Hackers 🚀': return '#ff006e';
+      case 'Future Pulse 🔮': return '#7b2cbf';
+      case 'Developer Corner 💻': return '#3a86ff';
+      default: return '#888';
+    }
+  };
   
   return (
-    <article className="blog-article-detail" style={{ minHeight: '80vh', paddingTop: '120px', paddingBottom: '100px', maxWidth: '800px', margin: '0 auto', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
+    <article className="blog-article-detail" style={{ minHeight: '80vh', paddingTop: '100px', paddingBottom: '100px', maxWidth: '800px', margin: '0 auto', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
       <header style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
         <a href="#blog" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--accent)', marginBottom: '1.5rem', textDecoration: 'none', fontWeight: '500' }}>← Back to All Articles</a>
         <h1 className="gradient-text" style={{ fontSize: '2.5rem', lineHeight: '1.2', marginBottom: '1.5rem' }}>{article.title}</h1>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', fontSize: '0.95rem', color: '#888' }}>
+        
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.95rem', color: '#888' }}>
           <span>📅 Published: {article.date}</span>
           <span>✍️ Author: {article.author || 'Do Minh Tuan'}</span>
+          <span style={{
+            border: `1px solid ${getCategoryColor(article.category)}`,
+            color: getCategoryColor(article.category),
+            padding: '0.2rem 0.6rem',
+            borderRadius: '15px',
+            fontSize: '0.8rem',
+            fontWeight: '600',
+            background: `${getCategoryColor(article.category)}11`
+          }}>
+            {article.category || 'General'}
+          </span>
         </div>
       </header>
+
+      {/* Hero Cover Image */}
+      <div style={{ width: '100%', height: '350px', borderRadius: '16px', overflow: 'hidden', marginBottom: '3rem', border: '1px solid var(--border-color)' }}>
+        <img 
+          src={article.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80'} 
+          alt={article.title} 
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      </div>
       
       <div className="blog-body-content box" style={{ padding: '2.5rem', borderRadius: '12px', background: 'rgba(18, 18, 26, 0.4)', border: '1px solid var(--border-color)', backdropFilter: 'blur(10px)' }}>
         {renderContent(article.content)}
@@ -663,6 +828,72 @@ function App() {
   const [theme, setTheme] = useState('dark');
   const [currentView, setCurrentView] = useState('home'); // 'home', 'blog', 'blog-detail', 'privacy-policy'
   const [activeSlug, setActiveSlug] = useState('');
+  const [activeArticle, setActiveArticle] = useState(null);
+
+  useEffect(() => {
+    if (currentView === 'blog-detail' && activeSlug) {
+      const art = (data?.blog || []).find(a => a.slug === activeSlug);
+      setActiveArticle(art || null);
+    } else {
+      setActiveArticle(null);
+    }
+  }, [currentView, activeSlug, data]);
+
+  // SEO & Meta Tag Management (Dynamic Header Injection & JSON-LD Rich Snippets)
+  useEffect(() => {
+    const metaDescription = document.querySelector('meta[name="description"]');
+    let jsonLdScript = document.getElementById('seo-jsonld');
+    
+    if (!jsonLdScript) {
+      jsonLdScript = document.createElement('script');
+      jsonLdScript.id = 'seo-jsonld';
+      jsonLdScript.type = 'application/ld+json';
+      document.head.appendChild(jsonLdScript);
+    }
+
+    if (currentView === 'blog-detail' && activeArticle) {
+      document.title = `${activeArticle.title} | Tony Do - Tech Leader`;
+      if (metaDescription) {
+        metaDescription.setAttribute('content', activeArticle.summary || '');
+      }
+      
+      const jsonLdData = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": activeArticle.title,
+        "image": activeArticle.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
+        "datePublished": activeArticle.date,
+        "author": {
+          "@type": "Person",
+          "name": activeArticle.author || "Do Minh Tuan",
+          "url": "https://me.tony.do"
+        },
+        "description": activeArticle.summary
+      };
+      jsonLdScript.textContent = JSON.stringify(jsonLdData);
+    } else if (currentView === 'blog') {
+      document.title = "Blog & Technical Insights | Tony Do - Tech Leader";
+      if (metaDescription) {
+        metaDescription.setAttribute('content', "Read beginner-friendly programming tips, everyday technology tutorials, and high-level business growth hacks by Do Minh Tuan.");
+      }
+      
+      const jsonLdData = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Blog & Technical Insights - Tony Do",
+        "description": "Read beginner-friendly programming tips, everyday technology tutorials, and high-level business growth hacks by Do Minh Tuan."
+      };
+      jsonLdScript.textContent = JSON.stringify(jsonLdData);
+    } else {
+      document.title = "Do Minh Tuan - Senior Project Manager & Tech Leader";
+      if (metaDescription) {
+        metaDescription.setAttribute('content', "Portfolio of Do Minh Tuan - Senior Project Manager with 15+ years experience in Web Development, Mobile Apps, and IT Leadership");
+      }
+      if (jsonLdScript) {
+        jsonLdScript.textContent = '';
+      }
+    }
+  }, [currentView, activeSlug, activeArticle]);
 
   useEffect(() => {
     const handleHashChange = () => {
