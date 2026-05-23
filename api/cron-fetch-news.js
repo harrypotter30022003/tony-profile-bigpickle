@@ -195,11 +195,12 @@ JSON Response:`;
 
     let geminiData = null;
     let successfulModel = '';
-    let lastError = null;
+    let attemptedErrors = {};
 
     for (const model of modelsToTry) {
+      const label = `${model.name} (${model.version})`;
       try {
-        console.log(`Attempting Gemini generation using model: ${model.name} (${model.version})...`);
+        console.log(`Attempting Gemini generation using model: ${label}...`);
         const geminiUrl = `https://generativelanguage.googleapis.com/${model.version}/models/${model.name}:generateContent?key=${geminiApiKey}`;
         
         // Gemini-pro (1.0) does not support responseMimeType JSON configuration, so we only use it on 1.5 models
@@ -223,19 +224,19 @@ JSON Response:`;
           break;
         } else {
           const errText = await geminiResponse.text();
-          console.warn(`Model ${model.name} failed:`, errText);
-          lastError = errText;
+          console.warn(`Model ${label} failed:`, errText);
+          attemptedErrors[label] = errText;
         }
       } catch (e) {
-        console.warn(`Model ${model.name} error:`, e.message);
-        lastError = e.message;
+        console.warn(`Model ${label} error:`, e.message);
+        attemptedErrors[label] = e.message;
       }
     }
 
     if (!geminiData) {
       return res.status(500).json({ 
         error: 'Gemini API Error after trying all fallback models.', 
-        details: lastError 
+        attempts: attemptedErrors 
       });
     }
     
