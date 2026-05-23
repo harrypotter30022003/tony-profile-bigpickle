@@ -185,22 +185,59 @@ Return your response in this exact JSON schema:
 
 JSON Response:`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: 'application/json' }
-      })
-    });
+    // Robust multi-model fallback array to guarantee execution regardless of account permissions
+    const modelsToTry = [
+      { name: 'gemini-1.5-flash', version: 'v1' },
+      { name: 'gemini-1.5-flash', version: 'v1beta' },
+      { name: 'gemini-pro', version: 'v1beta' },
+      { name: 'gemini-1.5-pro', version: 'v1beta' }
+    ];
 
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text();
-      return res.status(500).json({ error: 'Gemini API Error', details: errText });
+    let geminiData = null;
+    let successfulModel = '';
+    let lastError = null;
+
+    for (const model of modelsToTry) {
+      try {
+        console.log(`Attempting Gemini generation using model: ${model.name} (${model.version})...`);
+        const geminiUrl = `https://generativelanguage.googleapis.com/${model.version}/models/${model.name}:generateContent?key=${geminiApiKey}`;
+        
+        // Gemini-pro (1.0) does not support responseMimeType JSON configuration, so we only use it on 1.5 models
+        const config = model.name.includes('1.5') 
+          ? { responseMimeType: 'application/json' } 
+          : undefined;
+
+        const geminiResponse = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: config
+          })
+        });
+
+        if (geminiResponse.ok) {
+          geminiData = await geminiResponse.json();
+          successfulModel = model.name;
+          console.log(`Gemini generation succeeded with model: ${model.name}!`);
+          break;
+        } else {
+          const errText = await geminiResponse.text();
+          console.warn(`Model ${model.name} failed:`, errText);
+          lastError = errText;
+        }
+      } catch (e) {
+        console.warn(`Model ${model.name} error:`, e.message);
+        lastError = e.message;
+      }
     }
 
-    const geminiData = await geminiResponse.json();
+    if (!geminiData) {
+      return res.status(500).json({ 
+        error: 'Gemini API Error after trying all fallback models.', 
+        details: lastError 
+      });
+    }
     
     // Crash-proofing safety check: verify Gemini returned valid candidate text structure
     if (!geminiData.candidates || !geminiData.candidates[0] || !geminiData.candidates[0].content || !geminiData.candidates[0].content.parts || !geminiData.candidates[0].content.parts[0]) {
