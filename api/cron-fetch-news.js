@@ -65,12 +65,17 @@ const coverImagePresets = {
 };
 
 export default async function handler(req, res) {
+  // Log request metadata for easy debugging in Vercel logs
+  console.log('Cron Request UA:', req.headers['user-agent']);
+  console.log('Cron Request Headers keys:', Object.keys(req.headers));
+
   // 1. Security Authorization Guard
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.authorization;
   const isAuthorized =
     req.headers['x-vercel-cron'] === 'true' ||
     req.headers['x-cron'] === 'true' ||
+    req.headers['user-agent'] === 'vercel-cron/1.0' ||
     (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
     !process.env.VERCEL; // Always allow local testing
 
