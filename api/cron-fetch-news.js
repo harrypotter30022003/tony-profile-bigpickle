@@ -69,6 +69,7 @@ export default async function handler(req, res) {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.authorization;
   const isAuthorized =
+    req.headers['x-vercel-cron'] === 'true' ||
     req.headers['x-cron'] === 'true' ||
     (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
     !process.env.VERCEL; // Always allow local testing
