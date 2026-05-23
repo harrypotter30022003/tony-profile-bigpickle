@@ -77,8 +77,12 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // Use the provided Gemini Key inside the handler directly
-  const geminiApiKey = process.env.GEMINI_API_KEY || 'AIzaSyDPdJ2bNqJfHJ1QL4czNFrRWWOCT5wtMnQ';
+  // Use the secured Gemini Key from Vercel Environment Variables
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+
+  if (!geminiApiKey) {
+    return res.status(500).json({ error: 'Gemini API Key is not configured in Vercel environment variables.' });
+  }
 
   try {
     // 2. Load current blog data to evaluate category distribution and prevent duplication
