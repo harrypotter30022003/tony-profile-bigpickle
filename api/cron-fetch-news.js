@@ -185,12 +185,12 @@ Return your response in this exact JSON schema:
 
 JSON Response:`;
 
-    // Robust multi-model fallback array to guarantee execution regardless of account permissions
+    // Robust multi-model fallback array mapped to your key's certified Google directory
     const modelsToTry = [
-      { name: 'gemini-flash-latest', version: 'v1' },
-      { name: 'gemini-2.0-flash', version: 'v1' },
-      { name: 'gemini-pro-latest', version: 'v1' },
-      { name: 'gemini-1.5-flash', version: 'v1' }
+      { name: 'gemini-flash-latest', version: 'v1beta' },
+      { name: 'gemini-2.5-flash', version: 'v1beta' },
+      { name: 'gemini-pro-latest', version: 'v1beta' },
+      { name: 'gemini-2.5-flash-lite', version: 'v1beta' }
     ];
 
     let geminiData = null;
