@@ -187,10 +187,10 @@ JSON Response:`;
 
     // Robust multi-model fallback array to guarantee execution regardless of account permissions
     const modelsToTry = [
-      { name: 'gemini-1.5-flash', version: 'v1' },
-      { name: 'gemini-1.5-flash', version: 'v1beta' },
-      { name: 'gemini-pro', version: 'v1beta' },
-      { name: 'gemini-1.5-pro', version: 'v1beta' }
+      { name: 'gemini-flash-latest', version: 'v1' },
+      { name: 'gemini-2.0-flash', version: 'v1' },
+      { name: 'gemini-pro-latest', version: 'v1' },
+      { name: 'gemini-1.5-flash', version: 'v1' }
     ];
 
     let geminiData = null;
