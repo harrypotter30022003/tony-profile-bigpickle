@@ -7,22 +7,22 @@ const RSS_FEEDS = [
   { name: 'TechCrunch Startups', url: 'https://techcrunch.com/feed/' }
 ];
 
-// Helper to extract tag contents from vanilla RSS XML
+// Helper to extract tag contents from vanilla RSS XML (handles tag attributes and CDATA)
 const extractTag = (xml, tag) => {
   const openTag = `<${tag}>`;
   const closeTag = `</${tag}>`;
-  if (!xml.includes(openTag)) {
-    const regex = new RegExp(`<${tag}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${tag}>`, 'i');
-    const match = xml.match(regex);
-    return match ? match[1].trim() : '';
+  
+  // Use robust regex to support tags with attributes (e.g. <description type="html">)
+  const regex = new RegExp(`<${tag}(?:\\s+[^>]*)?>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${tag}>`, 'i');
+  const match = xml.match(regex);
+  if (match) {
+    let content = match[1].trim();
+    if (content.startsWith('<![CDATA[')) {
+      content = content.replace('<![CDATA[', '').replace(']]>', '').trim();
+    }
+    return content;
   }
-  const start = xml.indexOf(openTag) + openTag.length;
-  const end = xml.indexOf(closeTag, start);
-  let content = xml.substring(start, end).trim();
-  if (content.startsWith('<![CDATA[')) {
-    content = content.replace('<![CDATA[', '').replace(']]>', '').trim();
-  }
-  return content;
+  return '';
 };
 
 // Parse items from XML
@@ -123,7 +123,11 @@ export default async function handler(req, res) {
     
     for (const feed of shuffledFeeds) {
       try {
-        const feedRes = await fetch(feed.url);
+        const feedRes = await fetch(feed.url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          }
+        });
         if (!feedRes.ok) continue;
         const xmlText = await feedRes.text();
         const items = parseRssItems(xmlText);
@@ -193,7 +197,14 @@ JSON Response:`;
 
     const geminiData = await geminiResponse.json();
     const rawJsonText = geminiData.candidates[0].content.parts[0].text.trim();
-    const generatedArticle = JSON.parse(rawJsonText);
+    
+    // Safety check: strip any markdown wrapping characters (```json ... ```) that LLMs sometimes generate
+    let cleanJson = rawJsonText;
+    if (cleanJson.startsWith('```')) {
+      cleanJson = cleanJson.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
+    }
+    
+    const generatedArticle = JSON.parse(cleanJson);
 
     // 5. Populate cover image and fallback defaults
     const presetImages = coverImagePresets[targetCategory] || coverImagePresets['Tech Made Simple 💡'];
