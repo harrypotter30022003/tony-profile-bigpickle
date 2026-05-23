@@ -257,9 +257,18 @@ JSON Response:`;
     const presetImages = coverImagePresets[targetCategory] || coverImagePresets['Tech Made Simple 💡'];
     const randomImage = presetImages[Math.floor(Math.random() * presetImages.length)];
     
+    // Resolve any slug collisions to guarantee 100% unique URLs
+    let proposedSlug = (generatedArticle.slug || chosenItem.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')).trim();
+    let finalSlug = proposedSlug;
+    let counter = 1;
+    while (existingSlugs.has(finalSlug)) {
+      finalSlug = `${proposedSlug}-${counter}`;
+      counter++;
+    }
+
     const newArticle = {
       title: generatedArticle.title || chosenItem.title,
-      slug: generatedArticle.slug || chosenItem.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      slug: finalSlug,
       category: generatedArticle.category || targetCategory,
       image: randomImage,
       date: new Date().toISOString().split('T')[0],
@@ -270,7 +279,18 @@ JSON Response:`;
 
     // 6. Prepend new article to the database list and save
     existingBlog.unshift(newArticle);
-    cloudData.blog = existingBlog;
+    
+    // Safety check: De-duplicate the entire list by slug to clean up any accidental previous duplicates
+    const cleanBlogList = [];
+    const uniqueSlugs = new Set();
+    existingBlog.forEach(post => {
+      if (!uniqueSlugs.has(post.slug)) {
+        uniqueSlugs.add(post.slug);
+        cleanBlogList.push(post);
+      }
+    });
+
+    cloudData.blog = cleanBlogList;
     await kv.set('portfolio_data', cloudData);
 
     return res.status(200).json({
