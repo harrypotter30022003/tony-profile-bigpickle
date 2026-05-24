@@ -19,6 +19,15 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
     - Upgraded raw HTML and React routers to dynamically control Facebook OpenGraph and Twitter Card meta structures.
     - Forced native image lazy-loading (`loading="lazy"`) across all card layouts.
     - Secured workspace by purging `.env` secrets from Git indices.
+6.  **Completed Tier 2 Performance & Engagement Suite**:
+    - Extracted all helper rendering functions to `src/utils/blogHelpers.jsx` and decoupled blog views into separate React components.
+    - Integrated dynamic `React.lazy` code-splitting and dynamic imports, reducing the initial loading bundle footprint.
+    - Implemented a category-adaptive horizontal scroll reading progress bar.
+    - Implemented an intelligent Same-Category Related Posts recommendation panel.
+    - Integrated native offsite Social Sharing buttons (LinkedIn, Facebook, Clipboard Copy).
+    - Upgraded metadata injection from single schemas to dynamic multi-schema JSON-LD layouts using standard Schema.org `@graph` blocks, injecting both `BlogPosting` and `BreadcrumbList` schemas dynamically.
+    - Purged heavy, unused dependencies (`three`, `@react-three/fiber`, `@react-three/drei`, `framer-motion`, `vanilla-tilt`) cleanly from `package.json`.
+    - Sanitized and fixed `vercel.json` to resolve configuration errors and unblock Vercel's strict schema validator.
 
 ---
 
