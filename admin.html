@@ -238,7 +238,7 @@ function renderBlog(){
 
 function render(){
   var s = '<h1>CMS <button onclick="logout()" style="background:#333;color:#fff;margin-left:1rem">Logout</button></h1>';
-  s += '<div class="nav"><button class="active" onclick="switchTab(\'basic\')"> Basic</button><button onclick="switchTab(\'hero\')">Hero</button><button onclick="switchTab(\'exp\')">Experience</button><button onclick="switchTab(\'skills\')">Skills</button><button onclick="switchTab(\'projects\')">Projects</button><button onclick="switchTab(\'blog\')">Blog</button><button onclick="switchTab(\'footer\')">Footer</button></div>';
+  s += '<div class="nav"><button class="active" onclick="switchTab(\'basic\')"> Basic</button><button onclick="switchTab(\'hero\')">Hero</button><button onclick="switchTab(\'exp\')">Experience</button><button onclick="switchTab(\'skills\')">Skills</button><button onclick="switchTab(\'projects\')">Projects</button><button onclick="switchTab(\'blog\')">Blog</button><button onclick="switchTab(\'footer\')">Footer</button><button onclick="switchTab(\'usage\')">Usage & Subscribers</button></div>';
   
   s += '<div id="tab-basic" class="tab active"><div class="box"><h2>Basic</h2>';
   s += '<label>Name</label><input id="d_name"><label>Title</label><input id="d_title">';
@@ -265,6 +265,15 @@ function render(){
   s += '<div id="tab-footer" class="tab"><div class="box"><h2>Footer</h2>';
   s += '<label>Footer Text</label><input id="d_footer_text"><label>Footer Year</label><input id="d_footer_year"></div></div>';
   
+  s += '<div id="tab-usage" class="tab"><div class="box"><h2>Mailing List & API Usage Monitoring</h2>';
+  s += '<div id="sub_list_container">Loading subscribers...</div>';
+  s += '<h2>Cloud Providers & Free Tier Limits</h2>';
+  s += '<div class="item" style="border-left: 4px solid #00f5d4; background: #1a1a2e; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;"><strong>SendPulse SMTP (Newsletter Sends)</strong><br><span style="color:#aaa; font-size:0.9rem">• Limit: 15,000 emails/month (max 3,000 emails/day)<br>• Capacity: Up to 500 subscribers<br>• Sender Domain: contact@tony.do (Verified)</span></div>';
+  s += '<div class="item" style="border-left: 4px solid #ff006e; background: #1a1a2e; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;"><strong>Vercel KV / Upstash (Database Storage)</strong><br><span style="color:#aaa; font-size:0.9rem">• Limit: 3,000 requests/day<br>• Storage Capacity: 256 MB<br>• Usage: Core portfolio reads & subscriber storage</span></div>';
+  s += '<div class="item" style="border-left: 4px solid #3a86ff; background: #1a1a2e; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;"><strong>Google Gemini API (AI News Articles)</strong><br><span style="color:#aaa; font-size:0.9rem">• Limits on Gemini 1.5 Flash: 15 Requests per Minute (RPM)<br>• Day Quota: 1,500 Requests per Day (RPD)<br>• Cost: 100% Free on Flash Model</span></div>';
+  s += '<div class="item" style="border-left: 4px solid #7b2cbf; background: #1a1a2e; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;"><strong>Vercel Hosting Platform (Bandwidth & Build)</strong><br><span style="color:#aaa; font-size:0.9rem">• Limit: 100 GB Bandwidth/month<br>• Compute: 100 GB-Hours Serverless Execution/month<br>• Deploy Limit: 100 builds/day</span></div>';
+  s += '</div></div>';
+  
   s += '<button onclick="save()">Save to Site</button><div id="status"></div>';
   document.getElementById('app').innerHTML = s;
   
@@ -288,6 +297,57 @@ function render(){
   renderExp();
   renderProj();
   renderBlog();
+  loadSubscribers();
+}
+
+async function loadSubscribers() {
+  const container = document.getElementById('sub_list_container');
+  if (!container) return;
+  try {
+    const res = await fetch(API_BASE + '/api/subscribers?token=' + encodeURIComponent(session));
+    const result = await res.json();
+    if (result.success && Array.isArray(result.subscribers)) {
+      const subs = result.subscribers;
+      if (subs.length === 0) {
+        container.innerHTML = '<p style="color:#888; margin-bottom: 1rem;">No subscribers on your list yet. Start collecting emails using the blog widgets!</p>';
+        return;
+      }
+      let html = '<div style="max-height: 200px; overflow-y: auto; background: #1a1a2e; border: 1px solid #333; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">';
+      html += '<table style="width: 100%; border-collapse: collapse; text-align: left;">';
+      html += '<thead style="border-bottom: 2px solid #333; color: #888; font-size: 0.85rem;"><tr><th style="padding: 0.5rem;">Email Address</th><th style="padding: 0.5rem;">Subscribed Date</th></tr></thead><tbody>';
+      subs.forEach(sub => {
+        const date = new Date(sub.subscribedAt).toLocaleString();
+        html += `<tr style="border-bottom: 1px solid #222;"><td style="padding: 0.6rem; font-weight: 500;">${esc(sub.email)}</td><td style="padding: 0.6rem; color: #888;">${date}</td></tr>`;
+      });
+      html += '</tbody></table></div>';
+      html += `<p style="margin-bottom: 1rem; font-size: 0.95rem; color: #00f5d4;">📊 Total Subscribers: <strong>${subs.length}</strong> / 500 (Free limit capacity: ${(subs.length/500*100).toFixed(1)}%)</p>`;
+      html += '<button onclick="exportSubscribersCSV()" style="margin-bottom: 1.5rem; background: #00f5d4; color: #000;">📥 Export Subscribers to CSV</button>';
+      container.innerHTML = html;
+      window.activeSubscribersList = subs;
+    } else {
+      container.innerHTML = '<div class="error">' + (result.error || 'Failed to load subscribers') + '</div>';
+    }
+  } catch(e) {
+    container.innerHTML = '<div class="error">Error loading subscribers: ' + e.message + '</div>';
+  }
+}
+
+function exportSubscribersCSV() {
+  const subs = window.activeSubscribersList;
+  if (!Array.isArray(subs) || subs.length === 0) return;
+  let csv = 'Email Address,Subscribed At\r\n';
+  subs.forEach(sub => {
+    csv += `${sub.email},${sub.subscribedAt}\r\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", "subscribers_mailing_list.csv");
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 if(!session){login();}else{loadData();}
