@@ -41,7 +41,7 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
     - Designed and rendered frosted glass "Join the Tech Stream" subscription widgets with secure double-signup and unsubscription API landing pages (`api/subscribe.js` and `api/unsubscribe.js`) storing data securely in Vercel KV.
     - Embedded Cusdis privacy-first comments threads dynamically underneath blog details with automatic dynamic script loading and cleanup, unburdening serverless databases from spam bots and security vulnerabilities.
     - Integrated Microsoft Clarity tracking tags inside `index.html`'s `<head>` to record scroll depths, clicks, and session playbacks for zero performance overhead.
-    - Built a secure, password-protected serverless API `api/subscribers.js` and integrated a beautiful, interactive "Usage & Subscribers" tab inside `admin.html`, letting you securely monitor active mailing list subscriptions, export them to CSV on a single click, and view exact free tier usage limits of SendPulse SMTP, Vercel KV, Gemini API, and Vercel Hosting.
+    - Built a secure, password-protected serverless API `api/subscribers.js` and integrated a beautiful, interactive "Usage & Subscribers" tab inside `admin.html`, letting you securely monitor active mailing list subscriptions, export them to CSV on a single click, and view exact free tier usage limits of SendPulse SMTP, Vercel KV, Gemini API, and Vercel Hosting. (Upgraded to dynamically fetch and display real-time SendPulse SMTP email limit sending balances via secure server-side OAuth APIs, and added reference metrics cards for Firebase Core & Google Analytics 4 user behavior limits).
 
 ---
 
