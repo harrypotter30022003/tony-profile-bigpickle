@@ -1097,3 +1097,12 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
     grid-template-columns: 1fr;
   }
 }
+
+/* Blog Loading Spinner */
+.spinner {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

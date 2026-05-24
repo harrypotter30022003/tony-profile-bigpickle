@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+
+const BlogFeed = lazy(() => import('./components/BlogFeed'));
+const BlogDetail = lazy(() => import('./components/BlogDetail'));
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './App.css';
@@ -515,381 +518,28 @@ function WhatsAppWidget({ cvData }) {
   );
 }
 
-function renderContent(text) {
-  if (!text) return null;
-  const blocks = text.split('\n\n');
-  return blocks.map((block, i) => {
-    const trimmed = block.trim();
-    if (trimmed.startsWith('### ')) {
-      // Catch specific highlighted headers
-      if (trimmed.startsWith('### 👨‍💻 Developer Tip') || trimmed.startsWith('### 👨‍💻 Dev Sandbox Tip')) {
-        const contentLines = block.split('\n');
-        const header = contentLines[0].replace('### ', '');
-        const body = contentLines.slice(1).join('\n');
-        return (
-          <div key={i} style={{
-            marginTop: '2rem',
-            marginBottom: '2rem',
-            padding: '1.5rem',
-            borderRadius: '10px',
-            background: 'rgba(58, 134, 255, 0.08)',
-            borderLeft: '4px solid #3a86ff',
-            borderTop: '1px solid rgba(58, 134, 255, 0.1)',
-            borderRight: '1px solid rgba(58, 134, 255, 0.1)',
-            borderBottom: '1px solid rgba(58, 134, 255, 0.1)'
-          }}>
-            <h4 style={{ color: '#3a86ff', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', marginBottom: '0.8rem', marginTop: 0 }}>{header}</h4>
-            <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6', color: 'var(--text)' }}>{body}</p>
-          </div>
-        );
-      }
-      
-      if (trimmed.startsWith('### 💼 Business Growth Takeaway') || trimmed.startsWith('### 💼 Business Takeaway')) {
-        const contentLines = block.split('\n');
-        const header = contentLines[0].replace('### ', '');
-        const body = contentLines.slice(1).join('\n');
-        return (
-          <div key={i} style={{
-            marginTop: '2rem',
-            marginBottom: '2rem',
-            padding: '1.5rem',
-            borderRadius: '10px',
-            background: 'rgba(255, 0, 110, 0.08)',
-            borderLeft: '4px solid #ff006e',
-            borderTop: '1px solid rgba(255, 0, 110, 0.1)',
-            borderRight: '1px solid rgba(255, 0, 110, 0.1)',
-            borderBottom: '1px solid rgba(255, 0, 110, 0.1)'
-          }}>
-            <h4 style={{ color: '#ff006e', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', marginBottom: '0.8rem', marginTop: 0 }}>{header}</h4>
-            <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6', color: 'var(--text)' }}>{body}</p>
-          </div>
-        );
-      }
-
-      return <h3 key={i} style={{ marginTop: '1.8rem', marginBottom: '0.8rem', color: 'var(--accent)' }}>{trimmed.replace('### ', '')}</h3>;
-    }
-    if (trimmed.startsWith('## ')) {
-      return <h2 key={i} style={{ marginTop: '2.2rem', marginBottom: '1rem', color: 'var(--accent)' }}>{trimmed.replace('## ', '')}</h2>;
-    }
-    if (trimmed.startsWith('# ')) {
-      return <h1 key={i} style={{ marginTop: '2.8rem', marginBottom: '1.2rem', color: 'var(--accent)' }}>{trimmed.replace('# ', '')}</h1>;
-    }
-    if (trimmed.startsWith('- ')) {
-      const items = trimmed.split('\n').map(item => item.replace('- ', '').trim());
-      return (
-        <ul key={i} style={{ marginLeft: '1.5rem', marginBottom: '1rem', listStyleType: 'disc' }}>
-          {items.map((item, j) => <li key={j} style={{ marginBottom: '0.4rem', fontSize: '1rem', lineHeight: '1.6', color: 'var(--text)' }}>{item}</li>)}
-        </ul>
-      );
-    }
-    return <p key={i} style={{ marginBottom: '1.2rem', fontSize: '1.05rem', lineHeight: '1.7', color: 'var(--text)' }}>{trimmed}</p>;
-  });
-}
-
-// Utility: Calculate dynamic reading time based on word count
-const getReadingTime = (content) => {
-  const words = content ? content.trim().split(/\s+/).length : 0;
-  return `⏱️ ${Math.ceil(words / 200)} min read`;
-};
-
-// Utility: Guaranteed valid fallback images (by category) to prevent broken 404 links
-const getFallbackImage = (category) => {
-  switch (category) {
-    case 'Tech Made Simple 💡':
-      return 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=600&q=80';
-    case 'Business Hackers 🚀':
-      return 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80';
-    case 'Future Pulse 🔮':
-      return 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80';
-    case 'Developer Corner 💻':
-      return 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80';
-    default:
-      return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80';
-  }
-};
-
-function BlogFeed({ cvData }) {
-  const articles = cvData?.blog || [];
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 12;
-
-  // Reset page back to 1 when changing categories
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory]);
-  
-  const categories = ['All', 'Tech Made Simple 💡', 'Business Hackers 🚀', 'Future Pulse 🔮', 'Developer Corner 💻'];
-  
-  const filteredArticles = selectedCategory === 'All' 
-    ? articles 
-    : articles.filter(a => a.category === selectedCategory);
-
-  const totalPages = Math.ceil(filteredArticles.length / postsPerPage);
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = filteredArticles.slice(indexOfFirstPost, indexOfLastPost);
-
-  const handlePageChange = (pageNumber, e) => {
-    // Standard SEO-friendly preventDefault for smooth React toggle, while preserving crawlable link anchors in the HTML tree
-    if (e) e.preventDefault();
-    setCurrentPage(pageNumber);
-    const targetEl = document.querySelector('.blog-section');
-    if (targetEl) {
-      window.scrollTo({
-        top: targetEl.offsetTop - 80,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const getCategoryColor = (cat) => {
-    switch (cat) {
-      case 'Tech Made Simple 💡': return '#00f5d4';
-      case 'Business Hackers 🚀': return '#ff006e';
-      case 'Future Pulse 🔮': return '#7b2cbf';
-      case 'Developer Corner 💻': return '#3a86ff';
-      default: return '#888';
-    }
-  };
-
+function BlogLoadingSpinner() {
   return (
-    <section className="blog-section" style={{ minHeight: '80vh', paddingTop: '100px', paddingBottom: '100px' }}>
-      <div className="section-header">
-        <h2>📚 Articles & Insights</h2>
-        <p>Simple tech tricks, small business growth hacks, and programming tutorials</p>
-      </div>
-
-      {/* Category Filter Navigation */}
-      <div className="category-filter" style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '0.8rem',
-        flexWrap: 'wrap',
-        marginBottom: '3rem',
-        padding: '0 1.5rem'
-      }}>
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            style={{
-              padding: '0.6rem 1.2rem',
-              borderRadius: '30px',
-              border: '1px solid',
-              borderColor: selectedCategory === cat ? getCategoryColor(cat) : 'rgba(255, 255, 255, 0.1)',
-              background: selectedCategory === cat ? `${getCategoryColor(cat)}22` : 'rgba(18, 18, 26, 0.6)',
-              color: selectedCategory === cat ? '#fff' : '#aaa',
-              fontSize: '0.95rem',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              backdropFilter: 'blur(5px)',
-              '--glow-color': getCategoryColor(cat) // Binds active neon color to CSS variables for hover glow
-            }}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-      
-      {currentPosts.length === 0 ? (
-        <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#888', marginTop: '2rem' }}>No articles published in this category yet. Check back soon!</p>
-      ) : (
-        <>
-          <div className="blog-feed-grid">
-            {currentPosts.map((article, i) => (
-              <article 
-                key={i} 
-                className="blog-card" 
-                onClick={() => window.location.hash = `#blog/${article.slug}`}
-                style={{
-                  '--glow-color': getCategoryColor(article.category) // Passes active neon color to CSS variable for hover glows
-                }}
-              >
-                <div>
-                  {/* Cover Image with 404 Fallback Bound */}
-                  <div style={{ width: '100%', height: '200px', overflow: 'hidden', position: 'relative' }}>
-                    <img 
-                      src={article.image || getFallbackImage(article.category)} 
-                      alt={article.title} 
-                      loading="lazy"
-                      onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    {/* Category Badge */}
-                    <span style={{
-                      position: 'absolute',
-                      top: '1rem',
-                      left: '1rem',
-                      background: 'rgba(10, 10, 15, 0.85)',
-                      border: `1px solid ${getCategoryColor(article.category)}`,
-                      color: '#fff',
-                      padding: '0.3rem 0.8rem',
-                      borderRadius: '20px',
-                      fontSize: '0.8rem',
-                      fontWeight: 'bold',
-                      backdropFilter: 'blur(5px)'
-                    }}>
-                      {article.category || 'General'}
-                    </span>
-                  </div>
-
-                  <div style={{ padding: '2rem' }}>
-                    <div className="blog-card-meta">
-                      <span>📅 {article.date}</span>
-                      <span>{getReadingTime(article.content)}</span>
-                      <span>✍️ {article.author || 'Do Minh Tuan'}</span>
-                    </div>
-                    <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: 'var(--text)', lineHeight: '1.3' }}>{article.title}</h3>
-                    <p className="blog-card-summary">{article.summary}</p>
-                  </div>
-                </div>
-
-                <div style={{ padding: '0 2rem 2rem 2rem' }}>
-                  <a 
-                    href={`#blog/${article.slug}`} 
-                    className="btn btn-secondary" 
-                    onClick={(e) => e.stopPropagation()} // Prevents event propagation collisions
-                    style={{ width: 'fit-content', fontSize: '0.9rem', padding: '0.6rem 1.2rem' }}
-                  >
-                    Read Article →
-                  </a>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          {/* Pagination Controls bar */}
-          {totalPages > 1 && (
-            <div className="pagination-container" aria-label="Blog pagination">
-              {/* Previous Page Button */}
-              <a
-                href={`#blog?page=${currentPage - 1}`}
-                onClick={(e) => currentPage > 1 && handlePageChange(currentPage - 1, e)}
-                className={currentPage === 1 ? 'disabled' : ''}
-              >
-                ← Prev
-              </a>
-
-              {/* Page Numbers */}
-              {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(pageNum => (
-                <a
-                  key={pageNum}
-                  href={`#blog?page=${pageNum}`}
-                  onClick={(e) => handlePageChange(pageNum, e)}
-                  className={currentPage === pageNum ? 'active' : ''}
-                  style={{
-                    '--glow-color': getCategoryColor(selectedCategory), // Passes active category color to CSS variables for active glows
-                    '--active-bg': currentPage === pageNum ? `${getCategoryColor(selectedCategory)}22` : undefined
-                  }}
-                >
-                  {pageNum}
-                </a>
-              ))}
-
-              {/* Next Page Button */}
-              <a
-                href={`#blog?page=${currentPage + 1}`}
-                onClick={(e) => currentPage < totalPages && handlePageChange(currentPage + 1, e)}
-                className={currentPage === totalPages ? 'disabled' : ''}
-              >
-                Next →
-              </a>
-            </div>
-          )}
-        </>
-      )}
-    </section>
-  );
-}
-
-function BlogDetail({ cvData, slug }) {
-  const articles = cvData?.blog || [];
-  const article = articles.find(a => a.slug === slug);
-  
-  if (!article) {
-    return (
-      <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <h2>🔍 Article Not Found</h2>
-        <p style={{ margin: '1rem 0 2rem', color: '#888' }}>The article you are looking for might have been moved or renamed.</p>
-        <a href="#blog" className="btn btn-primary">Back to Articles</a>
-      </div>
-    );
-  }
-
-  const getCategoryColor = (cat) => {
-    switch (cat) {
-      case 'Tech Made Simple 💡': return '#00f5d4';
-      case 'Business Hackers 🚀': return '#ff006e';
-      case 'Future Pulse 🔮': return '#7b2cbf';
-      case 'Developer Corner 💻': return '#3a86ff';
-      default: return '#888';
-    }
-  };
-  
-  return (
-    <article className="blog-article-detail" style={{ minHeight: '80vh', paddingTop: '100px', paddingBottom: '100px', maxWidth: '800px', margin: '0 auto', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
-      
-      {/* Semantic Breadcrumbs (SEO & Navigation) */}
-      <div className="breadcrumbs" style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.4rem',
-        fontSize: '0.9rem',
-        color: '#888',
-        marginBottom: '1.5rem',
-        flexWrap: 'wrap'
-      }}>
-        <a href="#" style={{ color: '#aaa', textDecoration: 'none', transition: 'color 0.2s' }}>Home</a>
-        <span>›</span>
-        <a href="#blog" style={{ color: '#aaa', textDecoration: 'none', transition: 'color 0.2s' }}>Blog</a>
-        <span>›</span>
-        <span style={{ color: getCategoryColor(article.category), fontWeight: '500' }}>{article.category}</span>
-      </div>
-
-      <header style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
-        <a href="#blog" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--accent)', marginBottom: '1.5rem', textDecoration: 'none', fontWeight: '500' }}>← Back to All Articles</a>
-        <h1 className="gradient-text" style={{ fontSize: '2.5rem', lineHeight: '1.2', marginBottom: '1.5rem' }}>{article.title}</h1>
-        
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.95rem', color: '#888' }}>
-          <span>📅 Published: {article.date}</span>
-          <span>{getReadingTime(article.content)}</span>
-          <span>✍️ Author: {article.author || 'Do Minh Tuan'}</span>
-          <span style={{
-            border: `1px solid ${getCategoryColor(article.category)}`,
-            color: getCategoryColor(article.category),
-            padding: '0.2rem 0.6rem',
-            borderRadius: '15px',
-            fontSize: '0.8rem',
-            fontWeight: '600',
-            background: `${getCategoryColor(article.category)}11`
-          }}>
-            {article.category || 'General'}
-          </span>
-        </div>
-      </header>
-
-      {/* Hero Cover Image with 404 Fallback Bound */}
-      <div style={{ width: '100%', height: '350px', borderRadius: '16px', overflow: 'hidden', marginBottom: '3rem', border: '1px solid var(--border-color)' }}>
-        <img 
-          src={article.image || getFallbackImage(article.category)} 
-          alt={article.title} 
-          loading="lazy"
-          onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
-      </div>
-      
-      <div className="blog-body-content box" style={{ padding: '2.5rem', borderRadius: '12px', background: 'rgba(18, 18, 26, 0.4)', border: '1px solid var(--border-color)', backdropFilter: 'blur(10px)' }}>
-        {renderContent(article.content)}
-      </div>
-      
-      <footer style={{ marginTop: '3rem', borderTop: '1px solid var(--border-color)', paddingTop: '2rem', textAlign: 'center' }}>
-        <h3 style={{ marginBottom: '1rem' }}>Interested in working together or discussing tech?</h3>
-        <a href="#contact" className="btn btn-primary">Connect with Tony</a>
-      </footer>
-    </article>
+    <div style={{
+      minHeight: '80vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '1rem',
+      background: 'var(--bg)',
+      color: 'var(--text)'
+    }}>
+      <div className="spinner" style={{
+        width: '40px',
+        height: '40px',
+        border: '3px solid rgba(255, 255, 255, 0.05)',
+        borderTop: '3px solid var(--accent)',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+      }} />
+      <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', letterSpacing: '2px', textTransform: 'uppercase' }}>Decoding Stream...</span>
+    </div>
   );
 }
 
@@ -1000,16 +650,43 @@ function App() {
       
       const jsonLdData = {
         "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        "headline": activeArticle.title,
-        "image": pageImg,
-        "datePublished": activeArticle.date,
-        "author": {
-          "@type": "Person",
-          "name": activeArticle.author || "Do Minh Tuan",
-          "url": "https://me.tony.do"
-        },
-        "description": activeArticle.summary
+        "@graph": [
+          {
+            "@type": "BlogPosting",
+            "headline": activeArticle.title,
+            "image": pageImg,
+            "datePublished": activeArticle.date,
+            "author": {
+              "@type": "Person",
+              "name": activeArticle.author || "Do Minh Tuan",
+              "url": "https://me.tony.do"
+            },
+            "description": activeArticle.summary
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://me.tony.do/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Blog",
+                "item": "https://me.tony.do/#blog"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": activeArticle.title,
+                "item": pageUrl
+              }
+            ]
+          }
+        ]
       };
       jsonLdScript.textContent = JSON.stringify(jsonLdData);
     } else if (currentView === 'blog') {
@@ -1170,9 +847,10 @@ function App() {
         </>
       )}
 
-      {currentView === 'blog' && <BlogFeed cvData={data} />}
-      
-      {currentView === 'blog-detail' && <BlogDetail cvData={data} slug={activeSlug} />}
+      <Suspense fallback={<BlogLoadingSpinner />}>
+        {currentView === 'blog' && <BlogFeed cvData={data} />}
+        {currentView === 'blog-detail' && <BlogDetail cvData={data} slug={activeSlug} />}
+      </Suspense>
       
       {currentView === 'privacy-policy' && <PrivacyPolicy />}
 
