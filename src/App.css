@@ -917,6 +917,45 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   padding: 0 1.5rem;
 }
 
+.blog-card {
+  display: flex; 
+  flex-direction: column; 
+  height: 100%; 
+  justify-content: space-between; 
+  padding: 0; 
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border) !important;
+  background: var(--glass) !important; /* Automatic dark/light theme background tokens */
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer; /* Makes entire card hover-responsive and look clickable */
+}
+
+.blog-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px var(--glow-color, rgba(0, 245, 212, 0.15)) !important;
+  border-color: var(--glow-color, var(--accent)) !important;
+}
+
+.blog-card-meta {
+  display: flex; 
+  justify-content: space-between; 
+  font-size: 0.85rem; 
+  color: var(--text-muted) !important; /* Proper theme-adaptive muted metadata */
+  opacity: 0.8;
+  margin-bottom: 1rem; 
+  flex-wrap: wrap; 
+  gap: 0.5rem;
+}
+
+.blog-card-summary {
+  font-size: 1.02rem; 
+  line-height: 1.6; 
+  color: var(--text) !important; /* Proper theme-adaptive text variable */
+  opacity: 0.8; 
+  margin-bottom: 0.5rem;
+}
+
 .pagination-container {
   display: flex;
   justify-content: center;

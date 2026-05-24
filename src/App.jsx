@@ -539,7 +539,7 @@ function renderContent(text) {
             borderBottom: '1px solid rgba(58, 134, 255, 0.1)'
           }}>
             <h4 style={{ color: '#3a86ff', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', marginBottom: '0.8rem', marginTop: 0 }}>{header}</h4>
-            <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-color)' }}>{body}</p>
+            <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6', color: 'var(--text)' }}>{body}</p>
           </div>
         );
       }
@@ -561,7 +561,7 @@ function renderContent(text) {
             borderBottom: '1px solid rgba(255, 0, 110, 0.1)'
           }}>
             <h4 style={{ color: '#ff006e', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', marginBottom: '0.8rem', marginTop: 0 }}>{header}</h4>
-            <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-color)' }}>{body}</p>
+            <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6', color: 'var(--text)' }}>{body}</p>
           </div>
         );
       }
@@ -578,11 +578,11 @@ function renderContent(text) {
       const items = trimmed.split('\n').map(item => item.replace('- ', '').trim());
       return (
         <ul key={i} style={{ marginLeft: '1.5rem', marginBottom: '1rem', listStyleType: 'disc' }}>
-          {items.map((item, j) => <li key={j} style={{ marginBottom: '0.4rem', fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-color)' }}>{item}</li>)}
+          {items.map((item, j) => <li key={j} style={{ marginBottom: '0.4rem', fontSize: '1rem', lineHeight: '1.6', color: 'var(--text)' }}>{item}</li>)}
         </ul>
       );
     }
-    return <p key={i} style={{ marginBottom: '1.2rem', fontSize: '1.05rem', lineHeight: '1.7', color: 'var(--text-color)' }}>{trimmed}</p>;
+    return <p key={i} style={{ marginBottom: '1.2rem', fontSize: '1.05rem', lineHeight: '1.7', color: 'var(--text)' }}>{trimmed}</p>;
   });
 }
 
@@ -698,17 +698,14 @@ function BlogFeed({ cvData }) {
         <>
           <div className="blog-feed-grid">
             {currentPosts.map((article, i) => (
-              <article key={i} className="project-card" style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                height: '100%', 
-                justifyContent: 'space-between', 
-                padding: '0', 
-                overflow: 'hidden',
-                borderRadius: '16px',
-                border: '1px solid var(--border-color)',
-                background: 'rgba(18, 18, 26, 0.4)'
-              }}>
+              <article 
+                key={i} 
+                className="blog-card" 
+                onClick={() => window.location.hash = `#blog/${article.slug}`}
+                style={{
+                  '--glow-color': getCategoryColor(article.category) // Passes active neon color to CSS variable for hover glows
+                }}
+              >
                 <div>
                   {/* Cover Image with 404 Fallback Bound */}
                   <div style={{ width: '100%', height: '200px', overflow: 'hidden', position: 'relative' }}>
@@ -737,18 +734,25 @@ function BlogFeed({ cvData }) {
                   </div>
 
                   <div style={{ padding: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#888', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div className="blog-card-meta">
                       <span>📅 {article.date}</span>
                       <span>{getReadingTime(article.content)}</span>
                       <span>✍️ {article.author || 'Do Minh Tuan'}</span>
                     </div>
-                    <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: 'var(--text-color)', lineHeight: '1.3' }}>{article.title}</h3>
-                    <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#aaa', marginBottom: '0.5rem' }}>{article.summary}</p>
+                    <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: 'var(--text)', lineHeight: '1.3' }}>{article.title}</h3>
+                    <p className="blog-card-summary">{article.summary}</p>
                   </div>
                 </div>
 
                 <div style={{ padding: '0 2rem 2rem 2rem' }}>
-                  <a href={`#blog/${article.slug}`} className="btn btn-secondary" style={{ width: 'fit-content', fontSize: '0.9rem', padding: '0.6rem 1.2rem' }}>Read Article →</a>
+                  <a 
+                    href={`#blog/${article.slug}`} 
+                    className="btn btn-secondary" 
+                    onClick={(e) => e.stopPropagation()} // Prevents event propagation collisions
+                    style={{ width: 'fit-content', fontSize: '0.9rem', padding: '0.6rem 1.2rem' }}
+                  >
+                    Read Article →
+                  </a>
                 </div>
               </article>
             ))}
