@@ -54,13 +54,25 @@ export default function BlogDetail({ cvData, slug }) {
       }} />
 
       {/* Semantic Breadcrumbs navigation */}
-      <nav aria-label="Breadcrumb" className="breadcrumbs-container" style={{ marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-        <a href="#" style={{ color: 'var(--text-muted)' }}>Home</a>
-        <span style={{ color: 'var(--text-muted)' }}>/</span>
-        <a href="#blog" style={{ color: 'var(--text-muted)' }}>Blog</a>
-        <span style={{ color: 'var(--text-muted)' }}>/</span>
-        <span style={{ color: activeColor, fontWeight: '500' }}>{article.title}</span>
-      </nav>
+      <div className="breadcrumbs-container" style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '8px', 
+        flexWrap: 'wrap',
+        marginBottom: '2rem',
+        fontSize: '0.9rem',
+        color: 'var(--text-muted)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        paddingBottom: '1rem',
+        width: '100%',
+        justifyContent: 'flex-start'
+      }}>
+        <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--text)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>Home</a>
+        <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
+        <a href="#blog" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--text)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>Blog</a>
+        <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
+        <span style={{ color: activeColor, fontWeight: '500', opacity: 0.95 }}>{article.title}</span>
+      </div>
 
       {/* Article Header Metadata panel */}
       <header style={{ marginBottom: '3rem' }}>
