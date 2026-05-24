@@ -589,12 +589,37 @@ function renderContent(text) {
 function BlogFeed({ cvData }) {
   const articles = cvData?.blog || [];
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 12;
+
+  // Reset page back to 1 when changing categories
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory]);
   
   const categories = ['All', 'Tech Made Simple 💡', 'Business Hackers 🚀', 'Future Pulse 🔮', 'Developer Corner 💻'];
   
   const filteredArticles = selectedCategory === 'All' 
     ? articles 
     : articles.filter(a => a.category === selectedCategory);
+
+  const totalPages = Math.ceil(filteredArticles.length / postsPerPage);
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = filteredArticles.slice(indexOfFirstPost, indexOfLastPost);
+
+  const handlePageChange = (pageNumber, e) => {
+    // Standard SEO-friendly preventDefault for smooth React toggle, while preserving crawlable link anchors in the HTML tree
+    if (e) e.preventDefault();
+    setCurrentPage(pageNumber);
+    const targetEl = document.querySelector('.blog-section');
+    if (targetEl) {
+      window.scrollTo({
+        top: targetEl.offsetTop - 80,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   const getCategoryColor = (cat) => {
     switch (cat) {
@@ -644,71 +669,152 @@ function BlogFeed({ cvData }) {
         ))}
       </div>
       
-      {filteredArticles.length === 0 ? (
+      {currentPosts.length === 0 ? (
         <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#888', marginTop: '2rem' }}>No articles published in this category yet. Check back soon!</p>
       ) : (
-        <div className="blog-feed-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: '2.5rem',
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 1.5rem'
-        }}>
-          {filteredArticles.map((article, i) => (
-            <article key={i} className="project-card" style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              height: '100%', 
-              justifyContent: 'space-between', 
-              padding: '0', 
-              overflow: 'hidden',
-              borderRadius: '16px',
-              border: '1px solid var(--border-color)',
-              background: 'rgba(18, 18, 26, 0.4)'
-            }}>
-              <div>
-                {/* Cover Image */}
-                <div style={{ width: '100%', height: '200px', overflow: 'hidden', position: 'relative' }}>
-                  <img 
-                    src={article.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80'} 
-                    alt={article.title} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  {/* Category Badge */}
-                  <span style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    left: '1rem',
-                    background: 'rgba(10, 10, 15, 0.85)',
-                    border: `1px solid ${getCategoryColor(article.category)}`,
-                    color: '#fff',
-                    padding: '0.3rem 0.8rem',
-                    borderRadius: '20px',
-                    fontSize: '0.8rem',
-                    fontWeight: 'bold',
-                    backdropFilter: 'blur(5px)'
-                  }}>
-                    {article.category || 'General'}
-                  </span>
-                </div>
-
-                <div style={{ padding: '2rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#888', marginBottom: '1rem' }}>
-                    <span>📅 {article.date}</span>
-                    <span>✍️ {article.author || 'Do Minh Tuan'}</span>
+        <>
+          <div className="blog-feed-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gap: '2.5rem',
+            maxWidth: '1200px',
+            margin: '0 auto',
+            padding: '0 1.5rem'
+          }}>
+            {currentPosts.map((article, i) => (
+              <article key={i} className="project-card" style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                height: '100%', 
+                justifyContent: 'space-between', 
+                padding: '0', 
+                overflow: 'hidden',
+                borderRadius: '16px',
+                border: '1px solid var(--border-color)',
+                background: 'rgba(18, 18, 26, 0.4)'
+              }}>
+                <div>
+                  {/* Cover Image */}
+                  <div style={{ width: '100%', height: '200px', overflow: 'hidden', position: 'relative' }}>
+                    <img 
+                      src={article.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80'} 
+                      alt={article.title} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    {/* Category Badge */}
+                    <span style={{
+                      position: 'absolute',
+                      top: '1rem',
+                      left: '1rem',
+                      background: 'rgba(10, 10, 15, 0.85)',
+                      border: `1px solid ${getCategoryColor(article.category)}`,
+                      color: '#fff',
+                      padding: '0.3rem 0.8rem',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      backdropFilter: 'blur(5px)'
+                    }}>
+                      {article.category || 'General'}
+                    </span>
                   </div>
-                  <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: 'var(--text-color)', lineHeight: '1.3' }}>{article.title}</h3>
-                  <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#aaa', marginBottom: '0.5rem' }}>{article.summary}</p>
-                </div>
-              </div>
 
-              <div style={{ padding: '0 2rem 2rem 2rem' }}>
-                <a href={`#blog/${article.slug}`} className="btn btn-secondary" style={{ width: 'fit-content', fontSize: '0.9rem', padding: '0.6rem 1.2rem' }}>Read Article →</a>
-              </div>
-            </article>
-          ))}
-        </div>
+                  <div style={{ padding: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#888', marginBottom: '1rem' }}>
+                      <span>📅 {article.date}</span>
+                      <span>✍️ {article.author || 'Do Minh Tuan'}</span>
+                    </div>
+                    <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: 'var(--text-color)', lineHeight: '1.3' }}>{article.title}</h3>
+                    <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#aaa', marginBottom: '0.5rem' }}>{article.summary}</p>
+                  </div>
+                </div>
+
+                <div style={{ padding: '0 2rem 2rem 2rem' }}>
+                  <a href={`#blog/${article.slug}`} className="btn btn-secondary" style={{ width: 'fit-content', fontSize: '0.9rem', padding: '0.6rem 1.2rem' }}>Read Article →</a>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* Pagination Controls bar */}
+          {totalPages > 1 && (
+            <nav className="pagination-container" aria-label="Blog pagination" style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginTop: '4rem',
+              flexWrap: 'wrap'
+            }}>
+              {/* Previous Page Button */}
+              <a
+                href={`#blog?page=${currentPage - 1}`}
+                onClick={(e) => currentPage > 1 && handlePageChange(currentPage - 1, e)}
+                style={{
+                  padding: '0.6rem 1.2rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(18, 18, 26, 0.6)',
+                  color: currentPage > 1 ? '#fff' : '#444',
+                  cursor: currentPage > 1 ? 'pointer' : 'not-allowed',
+                  textDecoration: 'none',
+                  fontSize: '0.9rem',
+                  transition: 'all 0.3s ease',
+                  opacity: currentPage > 1 ? 1 : 0.5
+                }}
+              >
+                ← Prev
+              </a>
+
+              {/* Page Numbers */}
+              {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(pageNum => (
+                <a
+                  key={pageNum}
+                  href={`#blog?page=${pageNum}`}
+                  onClick={(e) => handlePageChange(pageNum, e)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    border: '1px solid',
+                    borderColor: currentPage === pageNum ? getCategoryColor(selectedCategory) : 'rgba(255, 255, 255, 0.1)',
+                    background: currentPage === pageNum ? `${getCategoryColor(selectedCategory)}22` : 'rgba(18, 18, 26, 0.6)',
+                    color: currentPage === pageNum ? '#fff' : '#aaa',
+                    fontWeight: currentPage === pageNum ? 'bold' : 'normal',
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  {pageNum}
+                </a>
+              ))}
+
+              {/* Next Page Button */}
+              <a
+                href={`#blog?page=${currentPage + 1}`}
+                onClick={(e) => currentPage < totalPages && handlePageChange(currentPage + 1, e)}
+                style={{
+                  padding: '0.6rem 1.2rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(18, 18, 26, 0.6)',
+                  color: currentPage < totalPages ? '#fff' : '#444',
+                  cursor: currentPage < totalPages ? 'pointer' : 'not-allowed',
+                  textDecoration: 'none',
+                  fontSize: '0.9rem',
+                  transition: 'all 0.3s ease',
+                  opacity: currentPage < totalPages ? 1 : 0.5
+                }}
+              >
+                Next →
+              </a>
+            </nav>
+          )}
+        </>
       )}
     </section>
   );
