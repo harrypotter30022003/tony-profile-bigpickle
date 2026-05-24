@@ -40,6 +40,10 @@ To run the automated blog and secure the database, set up these Environment Vari
 | `KV_REST_API_URL` | Vercel KV Rest Connection URL | Created automatically upon Vercel KV setup |
 | `KV_REST_API_TOKEN` | Vercel KV Rest Connection Token | Created automatically upon Vercel KV setup |
 | `CRON_SECRET` | Secure verification token for Vercel Crons | Generate a random 32-char string |
+| `SENDPULSE_CLIENT_ID` | SendPulse OAuth REST API Client ID | SendPulse Dashboard -> Account Settings -> API |
+| `SENDPULSE_CLIENT_SECRET` | SendPulse OAuth REST API Client Secret | SendPulse Dashboard -> Account Settings -> API |
+| `SENDPULSE_SMTP_FROM` | SendPulse Verified Custom SMTP Sender Address | Set to verified sender (e.g. `contact@tony.do`) |
+| `VITE_CUSDIS_APP_ID` | Your Cusdis secure cloud comments project ID | Create free project on `cusdis.com` to obtain |
 
 ---
 
