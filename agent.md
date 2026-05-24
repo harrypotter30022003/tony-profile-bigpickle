@@ -52,7 +52,7 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
 *   **Strict CDN Bypass**: Added explicit `Cache-Control: no-store, no-cache, must-revalidate` overrides to `/api/data` to stop edge servers and browsers from caching old database states.
 
 ### 2. Password Security (`/admin`)
-*   Password: `Hogwarts011#`
+*   Password: [Securely stored in your Vercel Environment Variables as ADMIN_PASSWORD]
 *   Instead of standard in-memory states (which crash or reset when serverless lambda containers spin down), the system uses a **Stateless HMAC-SHA256 token**.
 *   The token is generated dynamically by salting the `ADMIN_PASSWORD` with a secure hash, allowing login sessions to remain valid across different isolated edge lambdas without database lookups.
 

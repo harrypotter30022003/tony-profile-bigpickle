@@ -35,7 +35,7 @@ To run the automated blog and secure the database, set up these Environment Vari
 
 | Variable Key | Description | Example / Source |
 | :--- | :--- | :--- |
-| `ADMIN_PASSWORD` | Secure password to log into `/admin` | `Hogwarts011#` |
+| `ADMIN_PASSWORD` | Secure password to log into `/admin` | `your_secure_password_here` |
 | `GEMINI_API_KEY` | Google AI Studio Key | `AIzaSy...` |
 | `KV_REST_API_URL` | Vercel KV Rest Connection URL | Created automatically upon Vercel KV setup |
 | `KV_REST_API_TOKEN` | Vercel KV Rest Connection Token | Created automatically upon Vercel KV setup |
