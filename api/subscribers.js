@@ -46,7 +46,37 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ success: true, subscribers });
+    let smtpLimits = null;
+    try {
+      const clientId = process.env.SENDPULSE_CLIENT_ID;
+      const clientSecret = process.env.SENDPULSE_CLIENT_SECRET;
+      if (clientId && clientSecret) {
+        const authRes = await fetch('https://api.sendpulse.com/oauth/access_token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            grant_type: 'client_credentials',
+            client_id: clientId,
+            client_secret: clientSecret
+          })
+        });
+        if (authRes.ok) {
+          const authData = await authRes.json();
+          const token = authData.access_token;
+          const limitsRes = await fetch('https://api.sendpulse.com/smtp/limits', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (limitsRes.ok) {
+            smtpLimits = await limitsRes.json();
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Subscribers API: SendPulse SMTP limit fetch failed:', err);
+    }
+
+    return res.status(200).json({ success: true, subscribers, smtpLimits });
 
   } catch (err) {
     console.error('Subscribers list API error:', err);
