@@ -907,10 +907,10 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   }
 }
 
-/* === BLOG RESPONSIVE 4-COLUMN GRID & PAGINATION OVERRIDES === */
+/* === BLOG RESPONSIVE 3-COLUMN GRID & PAGINATION OVERRIDES === */
 .blog-feed-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr); /* 3 spacious, beautiful columns on desktop */
   gap: 2.5rem;
   max-width: 1200px;
   margin: 0 auto;
@@ -932,9 +932,23 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   z-index: 10 !important;
 }
 
+/* Category Filter Button Glowing Hover Effects */
+.category-filter button {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.category-filter button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 20px var(--glow-color, rgba(0, 245, 212, 0.4)) !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  border-color: var(--glow-color, #00f5d4) !important;
+  color: #fff !important;
+}
+
 @media (max-width: 1024px) {
   .blog-feed-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -945,7 +959,7 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 580px) {
   .blog-feed-grid {
     grid-template-columns: 1fr;
   }
