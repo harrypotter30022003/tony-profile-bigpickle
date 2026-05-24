@@ -29,6 +29,7 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
     - Purged heavy, unused dependencies (`three`, `@react-three/fiber`, `@react-three/drei`, `framer-motion`, `vanilla-tilt`) cleanly from `package.json`.
     - Sanitized and fixed `vercel.json` to resolve configuration errors and unblock Vercel's strict schema validator.
     - Cleaned and sanitized all newly created source and config files (`vercel.json`, `sitemap.js`, `BlogFeed.jsx`, `BlogDetail.jsx`, `blogHelpers.jsx`) to strip invisible Windows Byte Order Marks (BOM), resolving compilation crashes and unblocking Vercel's Linux build containers.
+    - Swapped the Breadcrumb container tag from `<nav>` to `<div>` to avoid CSS selector conflicts with the global header menu style rules, restoring a clean, compact, left-aligned layout row.
 
 ---
 
