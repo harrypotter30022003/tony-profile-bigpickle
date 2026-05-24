@@ -442,7 +442,7 @@ async function sendpulseNewsletterBlaster(newArticles) {
       email: sub.email
     }));
 
-    const fromEmail = process.env.SENDPULSE_SMTP_FROM || 'tonydo.pm@gmail.com';
+    const fromEmail = process.env.SENDPULSE_SMTP_FROM || 'contact@tony.do';
     const base64Html = Buffer.from(emailHtml).toString('base64');
 
     const emailPayload = {

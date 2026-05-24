@@ -8,8 +8,8 @@ export default async function handler(req, res) {
 
   const clientId = process.env.SENDPULSE_CLIENT_ID;
   const clientSecret = process.env.SENDPULSE_CLIENT_SECRET;
-  const fromEmail = process.env.SENDPULSE_SMTP_FROM || 'tonydo.pm@gmail.com';
-  const targetEmail = to || 'tonydo.pm@gmail.com';
+  const fromEmail = process.env.SENDPULSE_SMTP_FROM || 'contact@tony.do';
+  const targetEmail = to || 'tonydo87@gmail.com';
 
   if (!clientId || !clientSecret) {
     return res.status(400).json({
