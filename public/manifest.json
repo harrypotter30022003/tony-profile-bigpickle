@@ -1,0 +1,16 @@
+{
+  "name": "Tony Do - Senior PM & Tech Leader Portfolio",
+  "short_name": "Tony Do",
+  "description": "Portfolio & Tech Insights Blog of Do Minh Tuan (Tony Do) - Senior Project Manager & Tech Leader",
+  "start_url": "/#blog",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

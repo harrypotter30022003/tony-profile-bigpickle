@@ -1,4 +1,6 @@
 import { kv } from '@vercel/kv';
+import fs from 'fs';
+import path from 'path';
 
 // Active RSS Feeds
 const RSS_FEEDS = [
@@ -294,6 +296,15 @@ export default async function handler(req, res) {
     cloudData.blog = cleanBlogList;
     await kv.set('portfolio_data', cloudData);
 
+    // Trigger dynamic SendPulse SMTP Weekly Newsletter blast!
+    if (newArticles.length > 0) {
+      try {
+        await sendpulseNewsletterBlaster(newArticles);
+      } catch (smtpErr) {
+        console.error('Cron: SendPulse Newsletter dispatch failed:', smtpErr);
+      }
+    }
+
     return res.status(200).json({
       success: true,
       message: `Successfully generated and imported ${newArticles.length} new articles across all categories!`,
@@ -303,5 +314,167 @@ export default async function handler(req, res) {
   } catch (e) {
     console.error('Parallel Cron Execution Error:', e);
     return res.status(500).json({ error: 'Internal Server Error', details: e.message });
+  }
+}
+
+// Dynamic SendPulse OAuth REST SMTP Blaster for weekly newsletters
+async function sendpulseNewsletterBlaster(newArticles) {
+  const clientId = process.env.SENDPULSE_CLIENT_ID;
+  const clientSecret = process.env.SENDPULSE_CLIENT_SECRET;
+  
+  if (!clientId || !clientSecret) {
+    console.log('SendPulse SMTP Blaster: Credentials missing from env, skipping blast.');
+    return;
+  }
+
+  try {
+    let subscribers = [];
+    if (process.env.VERCEL && process.env.KV_REST_API_URL) {
+      try {
+        const cloudData = await kv.get('portfolio_subscribers');
+        if (Array.isArray(cloudData)) {
+          subscribers = cloudData;
+        }
+      } catch (kvErr) {
+        console.error('SendPulse Blaster: KV load failed:', kvErr);
+        return;
+      }
+    } else {
+      const DATA_FILE = path.join(process.cwd(), 'src/admin/subscribers.json');
+      if (fs.existsSync(DATA_FILE)) {
+        const fileData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+        if (Array.isArray(fileData)) {
+          subscribers = fileData;
+        }
+      }
+    }
+
+    if (subscribers.length === 0) {
+      console.log('SendPulse SMTP Blaster: No active subscribers, skipping blast.');
+      return;
+    }
+
+    let emailHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tony Do's Weekly Tech Insights</title>
+  <style>
+    body { font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0c0c14; color: #ffffff; padding: 2rem; margin: 0; }
+    .container { max-width: 600px; margin: 0 auto; background: #12121a; border-radius: 12px; border: 1px solid #222; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    .header { padding: 2.5rem; text-align: center; background: linear-gradient(135deg, #12121a 0%, #1a1a2e 100%); border-bottom: 1px solid #222; }
+    .header h1 { font-family: "Orbitron", Arial, sans-serif; font-size: 1.8rem; margin: 0; color: #00f5d4; text-transform: uppercase; letter-spacing: 2px; }
+    .header p { color: #888; font-size: 0.95rem; margin-top: 0.5rem; }
+    .content { padding: 2.5rem; }
+    .intro { font-size: 1.05rem; line-height: 1.6; color: #b0b0b8; margin-bottom: 2rem; }
+    .article-card { margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid #222; }
+    .article-card:last-child { border: none; margin: 0; padding: 0; }
+    .category-badge { display: inline-block; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-weight: bold; border-radius: 20px; text-transform: uppercase; margin-bottom: 0.8rem; }
+    .article-title { font-size: 1.3rem; margin: 0 0 0.8rem 0; font-weight: bold; }
+    .article-title a { color: #ffffff; text-decoration: none; }
+    .article-title a:hover { color: #00f5d4; }
+    .article-summary { color: #b0b0b8; font-size: 0.95rem; line-height: 1.5; margin: 0 0 1.2rem 0; }
+    .btn { display: inline-block; background: #00f5d4; color: #000000; font-weight: bold; padding: 0.6rem 1.5rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; }
+    .footer { padding: 2rem 2.5rem; text-align: center; background: #0c0c14; border-top: 1px solid #222; font-size: 0.8rem; color: #555; }
+    .footer a { color: #00f5d4; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Tony Do</h1>
+      <p>Weekly Tech Insights & Leadership Stream</p>
+    </div>
+    <div class="content">
+      <p class="intro">Hi there,</p>
+      <p class="intro">Here are 4 fresh technical insights, business growth takeaways, and programming tutorials freshly published on Tony Do's portfolio feed this week:</p>
+`;
+
+    newArticles.forEach(post => {
+      let badgeBg = 'rgba(0, 245, 212, 0.1)';
+      let badgeColor = '#00f5d4';
+      if (post.category === 'Business Hackers 🚀') { badgeBg = 'rgba(123, 44, 191, 0.1)'; badgeColor = '#7b2cbf'; }
+      else if (post.category === 'Future Pulse 🔮') { badgeBg = 'rgba(255, 0, 110, 0.1)'; badgeColor = '#ff006e'; }
+      else if (post.category === 'Developer Corner 💻') { badgeBg = 'rgba(58, 134, 255, 0.1)'; badgeColor = '#3a86ff'; }
+
+      emailHtml += `
+      <div class="article-card">
+        <span class="category-badge" style="background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeColor};">${post.category}</span>
+        <h2 class="article-title"><a href="https://me.tony.do/#blog/${post.slug}">${post.title}</a></h2>
+        <p class="article-summary">${post.summary}</p>
+        <a href="https://me.tony.do/#blog/${post.slug}" class="btn" style="background: ${badgeColor};">Read Article →</a>
+      </div>
+      `;
+    });
+
+    emailHtml += `
+    </div>
+    <div class="footer">
+      <p>You received this email because you subscribed to Tony Do's weekly tech newsletter.</p>
+      <p>Want to unsubscribe? <a href="https://me.tony.do/api/unsubscribe?email={{email}}">Click here to safely unsubscribe</a>.</p>
+      <p>&copy; ${new Date().getFullYear()} Tony Do. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const authRes = await fetch('https://api.sendpulse.com/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret
+      })
+    });
+
+    if (!authRes.ok) {
+      const authError = await authRes.text();
+      console.error('SendPulse Blaster: Authentication failed:', authError);
+      return;
+    }
+
+    const authData = await authRes.json();
+    const token = authData.access_token;
+
+    const recipients = subscribers.map(sub => ({
+      name: 'Tech Reader',
+      email: sub.email
+    }));
+
+    const fromEmail = process.env.SENDPULSE_SMTP_FROM || 'tonydo.pm@gmail.com';
+    const base64Html = Buffer.from(emailHtml).toString('base64');
+
+    const emailPayload = {
+      email: {
+        html: base64Html,
+        text: '4 new weekly tech insights published on Tony Do\'s portfolio feed. Read more at https://me.tony.do/#blog',
+        subject: '🎯 Tony Do\'s Weekly Tech Stream - 4 New Insights Published',
+        from: {
+          name: 'Tony Do - Tech Leader',
+          email: fromEmail
+        },
+        to: recipients
+      }
+    };
+
+    const smtpRes = await fetch('https://api.sendpulse.com/smtp/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(emailPayload)
+    });
+
+    if (smtpRes.ok) {
+      console.log(`SendPulse SMTP Blaster: Successfully blasted newsletter to ${recipients.length} subscribers!`);
+    } else {
+      const smtpError = await smtpRes.text();
+      console.error('SendPulse SMTP Blaster: Blasting failed:', smtpError);
+    }
+
+  } catch (err) {
+    console.error('SendPulse SMTP Blaster error:', err);
   }
 }

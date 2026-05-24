@@ -20,6 +20,24 @@ export default function BlogDetail({ cvData, slug }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [slug]);
 
+  // 2. Cusdis Comments Script Injection
+  useEffect(() => {
+    const oldScript = document.getElementById('cusdis-script');
+    if (oldScript) oldScript.remove();
+
+    const script = document.createElement('script');
+    script.id = 'cusdis-script';
+    script.src = 'https://cusdis.com/js/cusdis.es.js';
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+
+    return () => {
+      const s = document.getElementById('cusdis-script');
+      if (s) s.remove();
+    };
+  }, [slug]);
+
   if (!article) {
     return (
       <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
@@ -160,6 +178,31 @@ export default function BlogDetail({ cvData, slug }) {
         </div>
       </div>
 
+      {/* Frosted Glass Newsletter Subscription Widget */}
+      <NewsletterSubscribe />
+
+      {/* Dynamic Privacy-First Comments (Cusdis Integration) */}
+      <section style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid var(--border-color)' }}>
+        <h3 style={{ fontSize: '1.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span>💬</span> Join the Conversation
+        </h3>
+        <div 
+          id="cusdis_thread"
+          data-host="https://cusdis.com"
+          data-app-id={import.meta.env.VITE_CUSDIS_APP_ID || "da67950c-7b00-4f51-b847-f316223d6a45"}
+          data-page-id={article.slug}
+          data-page-url={window.location.href}
+          data-page-title={article.title}
+          style={{
+            background: 'rgba(255, 255, 255, 0.01)',
+            padding: '2rem',
+            borderRadius: '12px',
+            border: '1px solid var(--border-color)',
+            minHeight: '200px'
+          }}
+        ></div>
+      </section>
+
       {/* Related Reads Panel */}
       {relatedPosts.length > 0 && (
         <section style={{ marginTop: '5rem', paddingTop: '3rem', borderTop: '1px solid var(--border-color)' }}>
@@ -224,5 +267,120 @@ export default function BlogDetail({ cvData, slug }) {
       </footer>
 
     </article>
+  );
+}
+
+function NewsletterSubscribe() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('idle'); // idle, loading, success, error
+  const [msg, setMsg] = useState('');
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!email) return;
+    setStatus('loading');
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus('success');
+        setMsg(data.message || 'Successfully subscribed! Welcome aboard.');
+        setEmail('');
+      } else {
+        setStatus('error');
+        setMsg(data.error || 'Something went wrong. Please try again.');
+      }
+    } catch (err) {
+      setStatus('error');
+      setMsg('Network error. Please try again later.');
+    }
+  };
+
+  return (
+    <div style={{
+      margin: '3rem auto',
+      maxWidth: '600px',
+      padding: '2.5rem',
+      borderRadius: '16px',
+      background: 'rgba(255, 255, 255, 0.01)',
+      border: '1px solid var(--border-color)',
+      backdropFilter: 'blur(10px)',
+      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
+      textAlign: 'center',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Decorative background glow */}
+      <div style={{
+        position: 'absolute',
+        top: '-50%',
+        left: '-50%',
+        width: '200%',
+        height: '200%',
+        background: 'radial-gradient(circle, rgba(0, 245, 212, 0.03) 0%, transparent 60%)',
+        zIndex: 0,
+        pointerEvents: 'none'
+      }} />
+
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--text)' }}>📩 Join the Tech Stream</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+          Subscribe to receive a concise weekly newsletter with premium highlights, developer tips, and business growth hacks from the tech feed.
+        </p>
+
+        {status === 'success' ? (
+          <div style={{ color: '#00f5d4', fontWeight: '500', padding: '1rem', background: 'rgba(0, 245, 212, 0.05)', borderRadius: '8px', border: '1px solid rgba(0, 245, 212, 0.1)' }}>
+            🎉 {msg}
+          </div>
+        ) : (
+          <form onSubmit={handleSubscribe} style={{ display: 'flex', gap: '0.8rem', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your professional email..."
+              required
+              disabled={status === 'loading'}
+              style={{
+                flex: '1',
+                minWidth: '240px',
+                padding: '0.8rem 1.2rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                background: 'rgba(10, 10, 15, 0.6)',
+                color: '#fff',
+                fontSize: '0.95rem',
+                outline: 'none',
+                transition: 'border-color 0.2s'
+              }}
+              onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+            />
+            <button
+              type="submit"
+              disabled={status === 'loading'}
+              className="btn btn-primary"
+              style={{
+                padding: '0.8rem 1.8rem',
+                fontSize: '0.95rem',
+                fontWeight: 'bold',
+                borderRadius: '8px',
+                cursor: status === 'loading' ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
+            </button>
+          </form>
+        )}
+
+        {status === 'error' && (
+          <p style={{ color: '#ff006e', fontSize: '0.9rem', marginTop: '1rem', fontWeight: '500' }}>⚠️ {msg}</p>
+        )}
+      </div>
+    </div>
   );
 }

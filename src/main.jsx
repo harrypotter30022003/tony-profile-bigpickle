@@ -9,3 +9,12 @@ createRoot(document.getElementById('root')).render(
     <Analytics />
   </>
 )
+
+// Register Service Worker for PWA Offline Caching
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => console.log('[PWA] Service Worker Registered Successfully!', reg.scope))
+      .catch((err) => console.error('[PWA] Service Worker Registration Failed:', err));
+  });
+}
