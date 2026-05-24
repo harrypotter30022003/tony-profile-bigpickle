@@ -89,6 +89,7 @@ Writing Style Guidelines:
 - Specific Sections:
   1. You MUST include a dedicated section titled "### 👨‍💻 Developer Tip" containing practical programming insights, simple React/Node coding advice, or infrastructure best practices related to the topic.
   2. You MUST include a dedicated section titled "### 💼 Business Growth Takeaway" written in plain, jargon-free English explaining how small-to-medium businesses or beginner founders can use this tech/concept to cut budgets, boost sales, or automate operations.
+- CRITICAL JSON COMPLIANCE: Never use unescaped double quotes ("...") inside your JSON string values (especially inside "title", "summary", or "content"). If you need to write a quote or highlight a term inside your text, always use single quotes ('...') to prevent JSON parsing crashes.
 
 Return your response in this exact JSON schema:
 {
@@ -230,11 +231,28 @@ export default async function handler(req, res) {
     }
 
     console.log(`Spawning ${workers.length} Parallel AI Workers to write fresh posts...`);
-    const results = await Promise.all(workers);
+    // Defensive Execution: wrap each worker in an individual try/catch. If one fails, log it and return null.
+    // This allows successful workers to complete and publish instead of crashing the entire batch!
+    const results = await Promise.all(
+      workers.map(p => p.catch(err => {
+        console.error("Parallel AI Worker failed:", err.message);
+        return null;
+      }))
+    );
+
+    // Filter out any failed workers
+    const successfulResults = results.filter(r => r !== null);
+
+    if (successfulResults.length === 0) {
+      return res.status(500).json({ 
+        error: 'All parallel AI workers failed in this execution.', 
+        message: 'Review Vercel logs or verify feed details.' 
+      });
+    }
 
     // 5. Package imported articles and resolve any slug collisions globally
     const newArticles = [];
-    results.forEach(({ parsed, originalItem }) => {
+    successfulResults.forEach(({ parsed, originalItem }) => {
       const presetImages = coverImagePresets[parsed.category] || coverImagePresets['Tech Made Simple 💡'];
       const randomImage = presetImages[Math.floor(Math.random() * presetImages.length)];
       
