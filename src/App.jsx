@@ -235,7 +235,7 @@ function Skills({ cvData }) {
 }
 
 function Projects({ cvData }) {
-  const icons = ['📊', '📮', '🏥', '🎗️', '🏨'];
+  const icons = ['📊', '📮', '🏥', '🎗️', '💻'];
   
   return (
     <section id="projects">
