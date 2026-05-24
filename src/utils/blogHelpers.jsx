@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 // Utility: Calculate dynamic reading time based on word count
 export const getReadingTime = (content) => {
