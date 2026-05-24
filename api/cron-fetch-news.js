@@ -7,12 +7,19 @@ const RSS_FEEDS = [
   { name: 'TechCrunch Startups', url: 'https://techcrunch.com/feed/' }
 ];
 
+// Target Categories to ensure uniform distribution
+const TARGET_CATEGORIES = [
+  'Tech Made Simple 💡',
+  'Business Hackers 🚀',
+  'Future Pulse 🔮',
+  'Developer Corner 💻'
+];
+
 // Helper to extract tag contents from vanilla RSS XML (handles tag attributes and CDATA)
 const extractTag = (xml, tag) => {
   const openTag = `<${tag}>`;
   const closeTag = `</${tag}>`;
   
-  // Use robust regex to support tags with attributes (e.g. <description type="html">)
   const regex = new RegExp(`<${tag}(?:\\s+[^>]*)?>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${tag}>`, 'i');
   const match = xml.match(regex);
   if (match) {
@@ -40,7 +47,7 @@ const parseRssItems = (xml) => {
   return items;
 };
 
-// Curated high-res cover image presets per category to guarantee visual appeal
+// Curated high-res cover image presets per category
 const coverImagePresets = {
   'Tech Made Simple 💡': [
     'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=1200&q=80',
@@ -64,10 +71,92 @@ const coverImagePresets = {
   ]
 };
 
+// Isolated parallel worker to fetch and rewrite an article for a specific category
+async function generateArticleForCategory(item, category, geminiApiKey) {
+  const prompt = `You are Do Minh Tuan, an SEO Expert and Senior Tech Leader. Rewrite this tech news article into an original, high-quality, highly engaging 500-600 word blog post tailored to search intent and readability.
+
+Source Details:
+- Title: ${item.title}
+- Summary: ${item.desc}
+- Source: ${item.feedSource}
+
+Your target category is: "${category}". You must output your response in this exact category.
+
+Writing Style Guidelines:
+- Tone: Technical Authority yet incredibly friendly, accessible, and exciting for beginners.
+- Formatting: Use structured Markdown headers (###), complete sentences, and clean paragraphs.
+- Vocabulary: If you introduce a technical term (like API, database replication, server scaling, or Docker), immediately explain it using a simple real-world analogy.
+- Specific Sections:
+  1. You MUST include a dedicated section titled "### 👨‍💻 Developer Tip" containing practical programming insights, simple React/Node coding advice, or infrastructure best practices related to the topic.
+  2. You MUST include a dedicated section titled "### 💼 Business Growth Takeaway" written in plain, jargon-free English explaining how small-to-medium businesses or beginner founders can use this tech/concept to cut budgets, boost sales, or automate operations.
+
+Return your response in this exact JSON schema:
+{
+  "title": "A highly catchy, SEO-friendly headline matching search intent",
+  "slug": "seo-friendly-url-slug-all-lowercase-hyphenated",
+  "category": "${category}",
+  "summary": "A rich 2-sentence meta description containing keyword phrases to maximize search engine click-through rates.",
+  "content": "The full blog post body in Markdown..."
+}
+
+JSON Response:`;
+
+  const modelsToTry = [
+    { name: 'gemini-flash-latest', version: 'v1beta' },
+    { name: 'gemini-2.5-flash', version: 'v1beta' },
+    { name: 'gemini-pro-latest', version: 'v1beta' },
+    { name: 'gemini-2.5-flash-lite', version: 'v1beta' }
+  ];
+
+  let geminiData = null;
+  let lastError = null;
+
+  for (const model of modelsToTry) {
+    try {
+      const geminiUrl = `https://generativelanguage.googleapis.com/${model.version}/models/${model.name}:generateContent?key=${geminiApiKey}`;
+      const response = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      if (response.ok) {
+        geminiData = await response.json();
+        break;
+      } else {
+        lastError = await response.text();
+      }
+    } catch (e) {
+      lastError = e.message;
+    }
+  }
+
+  if (!geminiData) {
+    throw new Error(`Failed to generate article for ${category}. Last error: ${lastError}`);
+  }
+
+  if (!geminiData.candidates || !geminiData.candidates[0] || !geminiData.candidates[0].content || !geminiData.candidates[0].content.parts || !geminiData.candidates[0].content.parts[0]) {
+    throw new Error(`Gemini returned invalid structure for ${category}. Response: ${JSON.stringify(geminiData)}`);
+  }
+
+  const rawJsonText = geminiData.candidates[0].content.parts[0].text.trim();
+  let cleanJson = rawJsonText;
+  if (cleanJson.startsWith('```')) {
+    cleanJson = cleanJson.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
+  }
+
+  const parsed = JSON.parse(cleanJson);
+  return {
+    parsed,
+    originalItem: item
+  };
+}
+
 export default async function handler(req, res) {
-  // Log request metadata for easy debugging in Vercel logs
-  console.log('Cron Request UA:', req.headers['user-agent']);
-  console.log('Cron Request Headers keys:', Object.keys(req.headers));
+  // Log request metadata
+  console.log('Cron UA:', req.headers['user-agent']);
 
   // 1. Security Authorization Guard
   const cronSecret = process.env.CRON_SECRET;
@@ -83,207 +172,101 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // Use the secured Gemini Key from Vercel Environment Variables
   const geminiApiKey = process.env.GEMINI_API_KEY;
-
   if (!geminiApiKey) {
-    return res.status(500).json({ error: 'Gemini API Key is not configured in Vercel environment variables.' });
+    return res.status(500).json({ error: 'Gemini API Key is not configured in Vercel.' });
   }
 
   try {
-    // 2. Load current blog data to evaluate category distribution and prevent duplication
+    // 2. Load current blog data
     const cloudData = await kv.get('portfolio_data') || { blog: [] };
     const existingBlog = cloudData.blog || [];
     const existingSlugs = new Set(existingBlog.map(b => b.slug));
 
-    // Calculate category distribution
-    const counts = {
-      'Tech Made Simple 💡': 0,
-      'Business Hackers 🚀': 0,
-      'Future Pulse 🔮': 0,
-      'Developer Corner 💻': 0
-    };
-    existingBlog.forEach(post => {
-      if (counts[post.category] !== undefined) {
-        counts[post.category]++;
-      }
-    });
-
-    // Determine target category with the lowest counts (Self-Balancing Logic)
-    let targetCategory = 'Tech Made Simple 💡';
-    let minCount = Infinity;
-    Object.entries(counts).forEach(([cat, count]) => {
-      if (count < minCount) {
-        minCount = count;
-        targetCategory = cat;
-      }
-    });
-
-    // 3. Fetch from RSS Feeds
-    let chosenItem = null;
-    let feedSource = '';
-    
-    // Shuffle feeds to ensure rotation variety
-    const shuffledFeeds = [...RSS_FEEDS].sort(() => 0.5 - Math.random());
-    
-    for (const feed of shuffledFeeds) {
+    // 3. Crawl XML feeds in parallel to construct a shared un-imported article pool
+    const poolPromises = RSS_FEEDS.map(async (feed) => {
       try {
         const feedRes = await fetch(feed.url, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
           }
         });
-        if (!feedRes.ok) continue;
+        if (!feedRes.ok) return [];
         const xmlText = await feedRes.text();
         const items = parseRssItems(xmlText);
         
-        // Find the first item that we haven't already published
-        for (const item of items) {
-          const possibleSlug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-          if (!existingSlugs.has(possibleSlug) && item.title && item.desc) {
-            chosenItem = item;
-            feedSource = feed.name;
-            break;
-          }
-        }
-        if (chosenItem) break;
-      } catch (e) {
-        console.error(`Error parsing feed ${feed.name}:`, e);
+        return items
+          .filter(item => item.title && item.desc)
+          .map(item => ({
+            ...item,
+            feedSource: feed.name,
+            slugHash: item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+          }))
+          .filter(item => !existingSlugs.has(item.slugHash));
+      } catch (err) {
+        console.error(`Crawl error on ${feed.name}:`, err.message);
+        return [];
       }
-    }
+    });
 
-    if (!chosenItem) {
+    const poolResults = await Promise.all(poolPromises);
+    const unImportedPool = poolResults.flat();
+
+    if (unImportedPool.length === 0) {
       return res.status(200).json({ success: true, message: 'All latest feed items are already published!' });
     }
 
-    // 4. Invoke Google Gemini 1.5 Flash to write original SEO content
-    const prompt = `You are Do Minh Tuan, an SEO Expert and Senior Tech Leader. Rewrite this tech news article into an original, high-quality, highly engaging 500-600 word blog post tailored to search intent and readability.
+    // 4. Pair un-imported pool items to each of our 4 target categories and execute in parallel
+    const workers = [];
+    const processedSlugsThisRun = new Set(existingSlugs);
 
-Source Details:
-- Title: ${chosenItem.title}
-- Summary: ${chosenItem.desc}
-- Source: ${feedSource}
-
-Your target category for self-balancing is: "${targetCategory}". You must output your response in this exact category.
-
-Writing Style Guidelines:
-- Tone: Technical Authority yet incredibly friendly, accessible, and exciting for beginners.
-- Formatting: Use structured Markdown headers (###), complete sentences, and clean paragraphs.
-- Vocabulary: If you introduce a technical term (like API, database replication, server scaling, or Docker), immediately explain it using a simple real-world analogy.
-- Specific Sections:
-  1. You MUST include a dedicated section titled "### 👨‍💻 Developer Tip" containing practical programming insights, simple React/Node coding advice, or infrastructure best practices related to the topic.
-  2. You MUST include a dedicated section titled "### 💼 Business Growth Takeaway" written in plain, jargon-free English explaining how small-to-medium businesses or beginner founders can use this tech/concept to cut budgets, boost sales, or automate operations.
-
-Return your response in this exact JSON schema:
-{
-  "title": "A highly catchy, SEO-friendly headline matching search intent",
-  "slug": "seo-friendly-url-slug-all-lowercase-hyphenated",
-  "category": "${targetCategory}",
-  "summary": "A rich 2-sentence meta description containing keyword phrases to maximize search engine click-through rates.",
-  "content": "The full blog post body in Markdown..."
-}
-
-JSON Response:`;
-
-    // Robust multi-model fallback array mapped to your key's certified Google directory
-    const modelsToTry = [
-      { name: 'gemini-flash-latest', version: 'v1beta' },
-      { name: 'gemini-2.5-flash', version: 'v1beta' },
-      { name: 'gemini-pro-latest', version: 'v1beta' },
-      { name: 'gemini-2.5-flash-lite', version: 'v1beta' }
-    ];
-
-    let geminiData = null;
-    let successfulModel = '';
-    let attemptedErrors = {};
-
-    for (const model of modelsToTry) {
-      const label = `${model.name} (${model.version})`;
-      try {
-        console.log(`Attempting Gemini generation using model: ${label}...`);
-        const geminiUrl = `https://generativelanguage.googleapis.com/${model.version}/models/${model.name}:generateContent?key=${geminiApiKey}`;
-        
-        const geminiResponse = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
-        });
-
-        if (geminiResponse.ok) {
-          geminiData = await geminiResponse.json();
-          successfulModel = model.name;
-          console.log(`Gemini generation succeeded with model: ${model.name}!`);
-          break;
-        } else {
-          const errText = await geminiResponse.text();
-          console.warn(`Model ${label} failed:`, errText);
-          attemptedErrors[label] = errText;
-        }
-      } catch (e) {
-        console.warn(`Model ${label} error:`, e.message);
-        attemptedErrors[label] = e.message;
+    for (let i = 0; i < TARGET_CATEGORIES.length; i++) {
+      const category = TARGET_CATEGORIES[i];
+      // Pick a unique item for each category worker
+      const item = unImportedPool[i % unImportedPool.length];
+      if (item) {
+        workers.push(generateArticleForCategory(item, category, geminiApiKey));
       }
     }
 
-    if (!geminiData) {
-      return res.status(500).json({ 
-        error: 'Gemini API Error after trying all fallback models.', 
-        attempts: attemptedErrors 
+    console.log(`Spawning ${workers.length} Parallel AI Workers to write fresh posts...`);
+    const results = await Promise.all(workers);
+
+    // 5. Package imported articles and resolve any slug collisions globally
+    const newArticles = [];
+    results.forEach(({ parsed, originalItem }) => {
+      const presetImages = coverImagePresets[parsed.category] || coverImagePresets['Tech Made Simple 💡'];
+      const randomImage = presetImages[Math.floor(Math.random() * presetImages.length)];
+      
+      let proposedSlug = (parsed.slug || originalItem.slugHash).trim();
+      let finalSlug = proposedSlug;
+      let counter = 1;
+      
+      // Loop to prevent slug collisions in the existing DB and within this run batch
+      while (processedSlugsThisRun.has(finalSlug)) {
+        finalSlug = `${proposedSlug}-${counter}`;
+        counter++;
+      }
+      processedSlugsThisRun.add(finalSlug);
+
+      newArticles.push({
+        title: parsed.title || originalItem.title,
+        slug: finalSlug,
+        category: parsed.category,
+        image: randomImage,
+        date: new Date().toISOString().split('T')[0],
+        author: 'Do Minh Tuan',
+        summary: parsed.summary || originalItem.desc.substring(0, 150),
+        content: parsed.content || originalItem.desc
       });
-    }
-    
-    // Crash-proofing safety check: verify Gemini returned valid candidate text structure
-    if (!geminiData.candidates || !geminiData.candidates[0] || !geminiData.candidates[0].content || !geminiData.candidates[0].content.parts || !geminiData.candidates[0].content.parts[0]) {
-      console.error('Unexpected Gemini Response Structure:', JSON.stringify(geminiData));
-      return res.status(500).json({ 
-        error: 'Gemini API did not return structured text content.', 
-        details: geminiData 
-      });
-    }
+    });
 
-    const rawJsonText = geminiData.candidates[0].content.parts[0].text.trim();
-    
-    // Safety check: strip any markdown wrapping characters (```json ... ```) that LLMs sometimes generate
-    let cleanJson = rawJsonText;
-    if (cleanJson.startsWith('```')) {
-      cleanJson = cleanJson.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
-    }
-    
-    const generatedArticle = JSON.parse(cleanJson);
-
-    // 5. Populate cover image and fallback defaults
-    const presetImages = coverImagePresets[targetCategory] || coverImagePresets['Tech Made Simple 💡'];
-    const randomImage = presetImages[Math.floor(Math.random() * presetImages.length)];
-    
-    // Resolve any slug collisions to guarantee 100% unique URLs
-    let proposedSlug = (generatedArticle.slug || chosenItem.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')).trim();
-    let finalSlug = proposedSlug;
-    let counter = 1;
-    while (existingSlugs.has(finalSlug)) {
-      finalSlug = `${proposedSlug}-${counter}`;
-      counter++;
-    }
-
-    const newArticle = {
-      title: generatedArticle.title || chosenItem.title,
-      slug: finalSlug,
-      category: generatedArticle.category || targetCategory,
-      image: randomImage,
-      date: new Date().toISOString().split('T')[0],
-      author: 'Do Minh Tuan',
-      summary: generatedArticle.summary || chosenItem.desc.substring(0, 150),
-      content: generatedArticle.content || chosenItem.desc
-    };
-
-    // 6. Prepend new article to the database list and save
-    existingBlog.unshift(newArticle);
-    
-    // Safety check: De-duplicate the entire list by slug to clean up any accidental previous duplicates
+    // 6. Prepend new batch, self-clean database, and save to Vercel KV
+    const mergedBlog = [...newArticles, ...existingBlog];
     const cleanBlogList = [];
     const uniqueSlugs = new Set();
-    existingBlog.forEach(post => {
+    
+    mergedBlog.forEach(post => {
       if (!uniqueSlugs.has(post.slug)) {
         uniqueSlugs.add(post.slug);
         cleanBlogList.push(post);
@@ -295,16 +278,12 @@ JSON Response:`;
 
     return res.status(200).json({
       success: true,
-      message: `Successfully generated and imported new article!`,
-      article: {
-        title: newArticle.title,
-        category: newArticle.category,
-        slug: newArticle.slug
-      }
+      message: `Successfully generated and imported ${newArticles.length} new articles across all categories!`,
+      articles: newArticles.map(a => ({ title: a.title, category: a.category, slug: a.slug }))
     });
 
   } catch (e) {
-    console.error('Cron Execution Error:', e);
+    console.error('Parallel Cron Execution Error:', e);
     return res.status(500).json({ error: 'Internal Server Error', details: e.message });
   }
 }

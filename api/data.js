@@ -58,6 +58,9 @@ const defaultBlogArticles = [
 ];
 
 export default async function handler(req, res) {
+  // Set strict headers to bypass browser, CDN, and edge server caching
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
