@@ -586,6 +586,28 @@ function renderContent(text) {
   });
 }
 
+// Utility: Calculate dynamic reading time based on word count
+const getReadingTime = (content) => {
+  const words = content ? content.trim().split(/\s+/).length : 0;
+  return `⏱️ ${Math.ceil(words / 200)} min read`;
+};
+
+// Utility: Guaranteed valid fallback images (by category) to prevent broken 404 links
+const getFallbackImage = (category) => {
+  switch (category) {
+    case 'Tech Made Simple 💡':
+      return 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=600&q=80';
+    case 'Business Hackers 🚀':
+      return 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80';
+    case 'Future Pulse 🔮':
+      return 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80';
+    case 'Developer Corner 💻':
+      return 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80';
+    default:
+      return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80';
+  }
+};
+
 function BlogFeed({ cvData }) {
   const articles = cvData?.blog || [];
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -661,7 +683,8 @@ function BlogFeed({ cvData }) {
               fontSize: '0.95rem',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
-              backdropFilter: 'blur(5px)'
+              backdropFilter: 'blur(5px)',
+              '--glow-color': getCategoryColor(cat) // Binds active neon color to CSS variables for hover glow
             }}
           >
             {cat}
@@ -687,11 +710,12 @@ function BlogFeed({ cvData }) {
                 background: 'rgba(18, 18, 26, 0.4)'
               }}>
                 <div>
-                  {/* Cover Image */}
+                  {/* Cover Image with 404 Fallback Bound */}
                   <div style={{ width: '100%', height: '200px', overflow: 'hidden', position: 'relative' }}>
                     <img 
-                      src={article.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80'} 
+                      src={article.image || getFallbackImage(article.category)} 
                       alt={article.title} 
+                      onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     {/* Category Badge */}
@@ -713,8 +737,9 @@ function BlogFeed({ cvData }) {
                   </div>
 
                   <div style={{ padding: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#888', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#888', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                       <span>📅 {article.date}</span>
+                      <span>{getReadingTime(article.content)}</span>
                       <span>✍️ {article.author || 'Do Minh Tuan'}</span>
                     </div>
                     <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: 'var(--text-color)', lineHeight: '1.3' }}>{article.title}</h3>
@@ -832,12 +857,32 @@ function BlogDetail({ cvData, slug }) {
   
   return (
     <article className="blog-article-detail" style={{ minHeight: '80vh', paddingTop: '100px', paddingBottom: '100px', maxWidth: '800px', margin: '0 auto', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
+      
+      {/* Semantic Breadcrumbs (SEO & Navigation) */}
+      <div className="breadcrumbs" style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '0.4rem',
+        fontSize: '0.9rem',
+        color: '#888',
+        marginBottom: '1.5rem',
+        flexWrap: 'wrap'
+      }}>
+        <a href="#" style={{ color: '#aaa', textDecoration: 'none', transition: 'color 0.2s' }}>Home</a>
+        <span>›</span>
+        <a href="#blog" style={{ color: '#aaa', textDecoration: 'none', transition: 'color 0.2s' }}>Blog</a>
+        <span>›</span>
+        <span style={{ color: getCategoryColor(article.category), fontWeight: '500' }}>{article.category}</span>
+      </div>
+
       <header style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
         <a href="#blog" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--accent)', marginBottom: '1.5rem', textDecoration: 'none', fontWeight: '500' }}>← Back to All Articles</a>
         <h1 className="gradient-text" style={{ fontSize: '2.5rem', lineHeight: '1.2', marginBottom: '1.5rem' }}>{article.title}</h1>
         
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.95rem', color: '#888' }}>
           <span>📅 Published: {article.date}</span>
+          <span>{getReadingTime(article.content)}</span>
           <span>✍️ Author: {article.author || 'Do Minh Tuan'}</span>
           <span style={{
             border: `1px solid ${getCategoryColor(article.category)}`,
@@ -853,11 +898,12 @@ function BlogDetail({ cvData, slug }) {
         </div>
       </header>
 
-      {/* Hero Cover Image */}
+      {/* Hero Cover Image with 404 Fallback Bound */}
       <div style={{ width: '100%', height: '350px', borderRadius: '16px', overflow: 'hidden', marginBottom: '3rem', border: '1px solid var(--border-color)' }}>
         <img 
-          src={article.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80'} 
+          src={article.image || getFallbackImage(article.category)} 
           alt={article.title} 
+          onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
