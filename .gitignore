@@ -26,3 +26,6 @@ src/admin/data.json.bak
 *.njsproj
 *.sln
 *.sw?
+
+# Environment Secrets
+.env

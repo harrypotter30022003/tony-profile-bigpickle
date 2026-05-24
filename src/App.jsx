@@ -712,6 +712,7 @@ function BlogFeed({ cvData }) {
                     <img 
                       src={article.image || getFallbackImage(article.category)} 
                       alt={article.title} 
+                      loading="lazy"
                       onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
@@ -874,6 +875,7 @@ function BlogDetail({ cvData, slug }) {
         <img 
           src={article.image || getFallbackImage(article.category)} 
           alt={article.title} 
+          loading="lazy"
           onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
@@ -960,17 +962,47 @@ function App() {
       document.head.appendChild(jsonLdScript);
     }
 
-    if (currentView === 'blog-detail' && activeArticle) {
-      document.title = `${activeArticle.title} | Tony Do - Tech Leader`;
-      if (metaDescription) {
-        metaDescription.setAttribute('content', activeArticle.summary || '');
+    // Helper to dynamically inject/update social meta property tags
+    const setMetaTag = (attrName, attrVal, content) => {
+      let element = document.querySelector(`meta[${attrName}="${attrVal}"]`);
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attrName, attrVal);
+        document.head.appendChild(element);
       }
+      element.setAttribute('content', content);
+    };
+
+    if (currentView === 'blog-detail' && activeArticle) {
+      const pageTitle = `${activeArticle.title} | Tony Do - Tech Leader`;
+      const pageDesc = activeArticle.summary || '';
+      const pageImg = activeArticle.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3";
+      const pageUrl = `https://me.tony.do/#blog/${activeSlug}`;
+
+      document.title = pageTitle;
+      if (metaDescription) {
+        metaDescription.setAttribute('content', pageDesc);
+      }
+
+      // Update Facebook/OpenGraph
+      setMetaTag('property', 'og:title', pageTitle);
+      setMetaTag('property', 'og:description', pageDesc);
+      setMetaTag('property', 'og:image', pageImg);
+      setMetaTag('property', 'og:url', pageUrl);
+      setMetaTag('property', 'og:type', 'article');
+
+      // Update Twitter Card
+      setMetaTag('property', 'twitter:title', pageTitle);
+      setMetaTag('property', 'twitter:description', pageDesc);
+      setMetaTag('property', 'twitter:image', pageImg);
+      setMetaTag('property', 'twitter:url', pageUrl);
+      setMetaTag('property', 'twitter:card', 'summary_large_image');
       
       const jsonLdData = {
         "@context": "https://schema.org",
         "@type": "BlogPosting",
         "headline": activeArticle.title,
-        "image": activeArticle.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
+        "image": pageImg,
         "datePublished": activeArticle.date,
         "author": {
           "@type": "Person",
@@ -981,23 +1013,62 @@ function App() {
       };
       jsonLdScript.textContent = JSON.stringify(jsonLdData);
     } else if (currentView === 'blog') {
-      document.title = "Blog & Technical Insights | Tony Do - Tech Leader";
+      const pageTitle = "Blog & Technical Insights | Tony Do - Tech Leader";
+      const pageDesc = "Read beginner-friendly programming tips, everyday technology tutorials, and high-level business growth hacks by Do Minh Tuan.";
+      const pageImg = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3";
+      const pageUrl = "https://me.tony.do/#blog";
+
+      document.title = pageTitle;
       if (metaDescription) {
-        metaDescription.setAttribute('content', "Read beginner-friendly programming tips, everyday technology tutorials, and high-level business growth hacks by Do Minh Tuan.");
+        metaDescription.setAttribute('content', pageDesc);
       }
+
+      // Update Facebook/OpenGraph
+      setMetaTag('property', 'og:title', pageTitle);
+      setMetaTag('property', 'og:description', pageDesc);
+      setMetaTag('property', 'og:image', pageImg);
+      setMetaTag('property', 'og:url', pageUrl);
+      setMetaTag('property', 'og:type', 'website');
+
+      // Update Twitter Card
+      setMetaTag('property', 'twitter:title', pageTitle);
+      setMetaTag('property', 'twitter:description', pageDesc);
+      setMetaTag('property', 'twitter:image', pageImg);
+      setMetaTag('property', 'twitter:url', pageUrl);
+      setMetaTag('property', 'twitter:card', 'summary_large_image');
       
       const jsonLdData = {
         "@context": "https://schema.org",
         "@type": "WebPage",
         "name": "Blog & Technical Insights - Tony Do",
-        "description": "Read beginner-friendly programming tips, everyday technology tutorials, and high-level business growth hacks by Do Minh Tuan."
+        "description": pageDesc
       };
       jsonLdScript.textContent = JSON.stringify(jsonLdData);
     } else {
-      document.title = "Do Minh Tuan - Senior Project Manager & Tech Leader";
+      const pageTitle = "Do Minh Tuan - Senior Project Manager & Tech Leader";
+      const pageDesc = "Portfolio of Do Minh Tuan - Senior Project Manager with 15+ years experience in Web Development, Mobile Apps, and IT Leadership";
+      const pageImg = "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d";
+      const pageUrl = "https://me.tony.do";
+
+      document.title = pageTitle;
       if (metaDescription) {
-        metaDescription.setAttribute('content', "Portfolio of Do Minh Tuan - Senior Project Manager with 15+ years experience in Web Development, Mobile Apps, and IT Leadership");
+        metaDescription.setAttribute('content', pageDesc);
       }
+
+      // Update Facebook/OpenGraph
+      setMetaTag('property', 'og:title', pageTitle);
+      setMetaTag('property', 'og:description', pageDesc);
+      setMetaTag('property', 'og:image', pageImg);
+      setMetaTag('property', 'og:url', pageUrl);
+      setMetaTag('property', 'og:type', 'profile');
+
+      // Update Twitter Card
+      setMetaTag('property', 'twitter:title', pageTitle);
+      setMetaTag('property', 'twitter:description', pageDesc);
+      setMetaTag('property', 'twitter:image', pageImg);
+      setMetaTag('property', 'twitter:url', pageUrl);
+      setMetaTag('property', 'twitter:card', 'summary_large_image');
+
       if (jsonLdScript) {
         jsonLdScript.textContent = '';
       }
