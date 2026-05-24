@@ -37,9 +37,9 @@ export default function BlogFeed({ cvData }) {
 
   return (
     <section className="blog-section" style={{ minHeight: '80vh', paddingTop: '100px', paddingBottom: '100px' }}>
-      <div className="section-header">
-        <h2>📚 Articles & Insights</h2>
-        <p>Simple tech tricks, small business growth hacks, and programming tutorials</p>
+      <div className="section-header" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        <h1 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📚 Articles & Insights</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Simple tech tricks, small business growth hacks, and programming tutorials</p>
       </div>
 
       {/* Category Filter Navigation */}

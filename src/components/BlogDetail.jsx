@@ -114,7 +114,7 @@ export default function BlogDetail({ cvData, slug }) {
       </div>
       
       {/* Blog Post Content Body */}
-      <div className="blog-body-content box" style={{ padding: '2.5rem', borderRadius: '12px', background: 'rgba(18, 18, 26, 0.4)', border: '1px solid var(--border-color)', backdropFilter: 'blur(10px)' }}>
+      <div className="blog-body-content" style={{ padding: '1rem 0', fontSize: '1.1rem', lineHeight: '1.8' }}>
         {renderContent(article.content)}
       </div>
 
@@ -163,9 +163,9 @@ export default function BlogDetail({ cvData, slug }) {
       {/* Related Reads Panel */}
       {relatedPosts.length > 0 && (
         <section style={{ marginTop: '5rem', paddingTop: '3rem', borderTop: '1px solid var(--border-color)' }}>
-          <h3 style={{ fontSize: '1.8rem', marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h2 style={{ fontSize: '1.8rem', marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span>📚</span> Related Reads
-          </h3>
+          </h2>
           <div className="blog-feed-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '2rem' }}>
             {relatedPosts.map((post, i) => (
               <article 
@@ -207,7 +207,7 @@ export default function BlogDetail({ cvData, slug }) {
                   </div>
 
                   <div style={{ padding: '1.5rem' }}>
-                    <h4 style={{ fontSize: '1.15rem', marginBottom: '0.8rem', color: 'var(--text)', lineHeight: '1.4' }}>{post.title}</h4>
+                    <h3 style={{ fontSize: '1.15rem', marginBottom: '0.8rem', color: 'var(--text)', lineHeight: '1.4' }}>{post.title}</h3>
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.5', margin: 0, display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{post.summary}</p>
                   </div>
                 </div>
@@ -219,7 +219,7 @@ export default function BlogDetail({ cvData, slug }) {
       
       {/* CTA Footer */}
       <footer style={{ marginTop: '5rem', borderTop: '1px solid var(--border-color)', paddingTop: '3rem', textAlign: 'center' }}>
-        <h3 style={{ marginBottom: '1.5rem' }}>Interested in working together or discussing tech?</h3>
+        <h2 style={{ marginBottom: '1.5rem' }}>Interested in working together or discussing tech?</h2>
         <a href="#contact" className="btn btn-primary">Connect with Tony</a>
       </footer>
 

@@ -746,8 +746,52 @@ function App() {
       setMetaTag('property', 'twitter:url', pageUrl);
       setMetaTag('property', 'twitter:card', 'summary_large_image');
 
+      const jsonLdData = {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Person",
+            "name": "Do Minh Tuan",
+            "jobTitle": "Senior Project Manager & Tech Leader",
+            "url": "https://me.tony.do",
+            "sameAs": [
+              "http://tony.do/linkedin"
+            ],
+            "description": "Do Minh Tuan is an experienced Senior Project Manager and COO specializing in Agile software development, technical team leadership, and cloud infrastructures with over 15 years of industry experience."
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is Do Minh Tuan's core project management methodology?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Do Minh Tuan specializes in Agile and Scrum methodologies. He breaks down complex software engineering projects into 2-week sprint iterations to maintain strict budget controls, mitigate delivery risks, and ensure high-quality, on-time releases."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What technical platforms and architectures does Tony Do have experience managing?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Tony Do has 15+ years of extensive hands-on experience managing PHP, WordPress, Magento, iOS (Xcode), and AWS cloud architectures, leading technical teams from initial product scoping to high-scale production deployments."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What are Tony Do's notable achievements as COO and Technical Director?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "As COO at Finantaged, Tony built the complete IT engineering and creative teams for an AI Fintech product. As Technical Director at StratAgile, he led complex PHP and Mobile teams, directly managing multi-national client portfolios and timeline budgets."
+                }
+              }
+            ]
+          }
+        ]
+      };
       if (jsonLdScript) {
-        jsonLdScript.textContent = '';
+        jsonLdScript.textContent = JSON.stringify(jsonLdData);
       }
     }
   }, [currentView, activeSlug, activeArticle]);
