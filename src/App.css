@@ -973,8 +973,97 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
 
 /* Category Filter Button Glowing Hover Effects */
 .category-filter button {
-  position: relative;
+  padding: 0.6rem 1.4rem !important;
+  border-radius: 30px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(18, 18, 26, 0.6) !important; /* Dark pill background in both themes */
+  color: #ffffff !important; /* Strict white text in both light & dark themes for inactive */
+  font-size: 0.95rem !important;
+  cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0.85;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-filter button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 20px var(--glow-color, rgba(0, 245, 212, 0.4)) !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  border-color: var(--glow-color, #00f5d4) !important;
+  color: #fff !important;
+  opacity: 1 !important;
+}
+
+.category-filter button.active {
+  border-color: var(--glow-color, var(--accent)) !important;
+  background: var(--active-bg, rgba(255, 255, 255, 0.12)) !important;
+  color: #fff !important; /* White active text in dark mode */
+  opacity: 1 !important;
+  font-weight: 600;
+  box-shadow: 0 0 15px var(--glow-color, rgba(0, 245, 212, 0.3)) !important;
+}
+
+[data-theme="light"] .category-filter button.active {
+  color: #111111 !important; /* Black active text in light mode */
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* === THEME-ADAPTIVE READ ARTICLE BUTTON === */
+[data-theme="light"] .btn-secondary {
+  color: #111111 !important; /* High contrast black text in light mode */
+  border-color: var(--accent) !important;
+}
+
+[data-theme="light"] .btn-secondary:hover {
+  color: var(--accent) !important;
+}
+
+/* === THEME-ADAPTIVE PAGINATION CONTROLS === */
+.pagination-container a {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(18, 18, 26, 0.6) !important; /* Dark pill background in both themes */
+  color: #ffffff !important; /* Strict white text in both light & dark themes for inactive */
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-container a:hover {
+  border-color: var(--accent) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.pagination-container a.active {
+  border-color: var(--glow-color, var(--accent)) !important;
+  background: var(--active-bg, rgba(255, 255, 255, 0.15)) !important;
+  font-weight: bold;
+  color: #ffffff !important; /* White active text in dark mode */
+}
+
+[data-theme="light"] .pagination-container a.active {
+  color: #111111 !important; /* Black active text in light mode */
+  background: rgba(0, 0, 0, 0.06) !important;
+  border-color: var(--accent) !important;
+}
+
+.pagination-container a.disabled {
+  color: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(18, 18, 26, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+  opacity: 0.4;
 }
 
 .category-filter button:hover {

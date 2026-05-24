@@ -765,18 +765,7 @@ function BlogFeed({ cvData }) {
               <a
                 href={`#blog?page=${currentPage - 1}`}
                 onClick={(e) => currentPage > 1 && handlePageChange(currentPage - 1, e)}
-                style={{
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  background: 'rgba(18, 18, 26, 0.6)',
-                  color: currentPage > 1 ? '#fff' : '#444',
-                  cursor: currentPage > 1 ? 'pointer' : 'not-allowed',
-                  textDecoration: 'none',
-                  fontSize: '0.9rem',
-                  transition: 'all 0.3s ease',
-                  opacity: currentPage > 1 ? 1 : 0.5
-                }}
+                className={currentPage === 1 ? 'disabled' : ''}
               >
                 ← Prev
               </a>
@@ -787,21 +776,10 @@ function BlogFeed({ cvData }) {
                   key={pageNum}
                   href={`#blog?page=${pageNum}`}
                   onClick={(e) => handlePageChange(pageNum, e)}
+                  className={currentPage === pageNum ? 'active' : ''}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '8px',
-                    border: '1px solid',
-                    borderColor: currentPage === pageNum ? getCategoryColor(selectedCategory) : 'rgba(255, 255, 255, 0.1)',
-                    background: currentPage === pageNum ? `${getCategoryColor(selectedCategory)}22` : 'rgba(18, 18, 26, 0.6)',
-                    color: currentPage === pageNum ? '#fff' : '#aaa',
-                    fontWeight: currentPage === pageNum ? 'bold' : 'normal',
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
+                    '--glow-color': getCategoryColor(selectedCategory), // Passes active category color to CSS variables for active glows
+                    '--active-bg': currentPage === pageNum ? `${getCategoryColor(selectedCategory)}22` : undefined
                   }}
                 >
                   {pageNum}
@@ -812,18 +790,7 @@ function BlogFeed({ cvData }) {
               <a
                 href={`#blog?page=${currentPage + 1}`}
                 onClick={(e) => currentPage < totalPages && handlePageChange(currentPage + 1, e)}
-                style={{
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  background: 'rgba(18, 18, 26, 0.6)',
-                  color: currentPage < totalPages ? '#fff' : '#444',
-                  cursor: currentPage < totalPages ? 'pointer' : 'not-allowed',
-                  textDecoration: 'none',
-                  fontSize: '0.9rem',
-                  transition: 'all 0.3s ease',
-                  opacity: currentPage < totalPages ? 1 : 0.5
-                }}
+                className={currentPage === totalPages ? 'disabled' : ''}
               >
                 Next →
               </a>
