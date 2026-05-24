@@ -1005,7 +1005,12 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   color: #fff !important; /* White active text in dark mode */
   opacity: 1 !important;
   font-weight: 600;
-  box-shadow: 0 0 15px var(--glow-color, rgba(0, 245, 212, 0.3)) !important;
+  box-shadow: 0 0 20px var(--glow-color, rgba(0, 245, 212, 0.4)) !important; /* Full neon glow identical to hover */
+}
+
+[data-theme="light"] .category-filter button.active {
+  color: #111111 !important; /* High contrast black active text in light mode */
+  background: var(--active-bg) !important; /* Preserves the beautiful category color tint (e.g. turquoise/pink) inside the active pill */
 }
 
 [data-theme="light"] .category-filter button.active {
