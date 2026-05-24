@@ -28,6 +28,7 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
     - Upgraded metadata injection from single schemas to dynamic multi-schema JSON-LD layouts using standard Schema.org `@graph` blocks, injecting both `BlogPosting` and `BreadcrumbList` schemas dynamically.
     - Purged heavy, unused dependencies (`three`, `@react-three/fiber`, `@react-three/drei`, `framer-motion`, `vanilla-tilt`) cleanly from `package.json`.
     - Sanitized and fixed `vercel.json` to resolve configuration errors and unblock Vercel's strict schema validator.
+    - Cleaned and sanitized all newly created source and config files (`vercel.json`, `sitemap.js`, `BlogFeed.jsx`, `BlogDetail.jsx`, `blogHelpers.jsx`) to strip invisible Windows Byte Order Marks (BOM), resolving compilation crashes and unblocking Vercel's Linux build containers.
 
 ---
 
