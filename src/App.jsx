@@ -32,7 +32,7 @@ const cvData = {
     { name: 'Post-a-Card', link: 'https://www.techinasia.com/postacard-app-singapore', desc: 'SingPost postcard app worldwide', tags: ['iOS', 'Android'] },
     { name: 'Symptom Care', link: 'http://www.ncis.com.sg/', desc: 'Cancer symptom monitoring', tags: ['R&D', 'PM'] },
     { name: 'Smile Asia', link: 'http://smileasia.org', desc: 'Charity eCommerce for Ritz-Carlton', tags: ['WordPress'] },
-    { name: 'Le Duy Hotels', link: 'http://leduyhotel.vn', desc: 'Hotel booking platform', tags: ['WordPress'] }
+    { name: 'EZ Fast Tech', link: 'https://ezfasttech.com', desc: 'SEO web design & bespoke software development platform for SMEs', tags: ['WordPress', 'SEO', 'React'] }
   ],
   certifications: [{ name: 'IELTS', score: '7.5', issuer: 'British Council' }]
 };

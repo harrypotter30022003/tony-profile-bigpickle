@@ -74,6 +74,26 @@ export default async function handler(req, res) {
           let merged = { ...cloudData };
           let needsKvSave = false;
 
+          // Auto-upgrade projects: Replace Le Duy Hotels with EZ Fast Tech case study in Vercel KV database
+          if (merged.projects) {
+            let updatedProjects = false;
+            merged.projects = merged.projects.map(proj => {
+              if (proj.name === 'Le Duy Hotels' || proj.link.includes('leduyhotel.vn')) {
+                updatedProjects = true;
+                return {
+                  name: "EZ Fast Tech",
+                  link: "https://ezfasttech.com",
+                  desc: "SEO web design & bespoke software development platform for SMEs",
+                  tags: ["WordPress", "SEO", "React"]
+                };
+              }
+              return proj;
+            });
+            if (updatedProjects) {
+              needsKvSave = true;
+            }
+          }
+
           // Auto-upgrade database schema: Merge our new 5 traffic articles and filter out old categoryless placeholders
           if (!merged.blog || merged.blog.length === 0) {
             merged.blog = defaultBlogArticles;

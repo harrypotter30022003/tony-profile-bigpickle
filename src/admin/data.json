@@ -159,11 +159,13 @@
       ]
     },
     {
-      "name": "Le Duy Hotels",
-      "link": "http://leduyhotel.vn",
-      "desc": "Hotel booking platform",
+      "name": "EZ Fast Tech",
+      "link": "https://ezfasttech.com",
+      "desc": "SEO web design & bespoke software development platform for SMEs",
       "tags": [
-        "WordPress"
+        "WordPress",
+        "SEO",
+        "React"
       ]
     }
   ],
