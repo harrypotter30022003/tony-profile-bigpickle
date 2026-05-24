@@ -76,7 +76,30 @@ export default async function handler(req, res) {
       console.error('Subscribers API: SendPulse SMTP limit fetch failed:', err);
     }
 
-    return res.status(200).json({ success: true, subscribers, smtpLimits });
+    let kvStats = null;
+    try {
+      if (process.env.VERCEL && process.env.KV_REST_API_URL) {
+        const dbsize = await kv.dbsize();
+        const infoText = await kv.info();
+        
+        let usedMemory = '0 B';
+        const lines = infoText.split('\r\n').join('\n').split('\n');
+        for (const line of lines) {
+          if (line.startsWith('used_memory_human:')) {
+            usedMemory = line.split(':')[1].trim();
+          }
+        }
+
+        kvStats = {
+          keys: dbsize,
+          storage: usedMemory
+        };
+      }
+    } catch (kvErr) {
+      console.error('Subscribers API: Vercel KV stats fetch failed:', kvErr);
+    }
+
+    return res.status(200).json({ success: true, subscribers, smtpLimits, kvStats });
 
   } catch (err) {
     console.error('Subscribers list API error:', err);

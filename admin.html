@@ -326,6 +326,14 @@ async function loadSubscribers() {
         html += `</div></div>`;
       }
 
+      if (result.kvStats) {
+        html += `<div style="border-left: 4px solid #ff006e; background: #1a1a2e; border-radius: 8px; padding: 1.2rem; margin-bottom: 1.5rem; border: 1px solid #333; border-left-width: 4px;">`;
+        html += `<h3 style="font-size: 1rem; color: #fff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px; margin-top:0;"><span>📦</span> Live Vercel KV Database Status</h3>`;
+        html += `<span style="font-size: 0.9rem; color: #aaa;">• Active Database Keys: <strong>${result.kvStats.keys}</strong> (portfolio_data, portfolio_subscribers)<br>`;
+        html += `• Database Storage Space: <strong>${result.kvStats.storage}</strong> / 256 MB</span><br>`;
+        html += `</div>`;
+      }
+
       html += '<h2 style="margin-top: 0; margin-bottom: 1rem;">Active Subscribers List</h2>';
       if (subs.length === 0) {
         html += '<p style="color:#888; margin-bottom: 1.5rem;">No subscribers on your list yet. Start collecting emails using the blog widgets!</p>';
