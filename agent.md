@@ -13,6 +13,12 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
 2.  **Whole-Card Click-Routing**: Card navigation was changed from just the 'Read More' link to being clickable anywhere on the card container, using standard `cursor: pointer` hand visualizers and non-colliding React `onClick` hash-updates.
 3.  **Restored Cyberpunk Hover Glows**: Category filter buttons rose dynamically and display a glowing neon border/shadow matching their respective badges (turquoise, pink, purple, blue). 
 4.  **Completed "Le Duy Hotels" Replacement**: Crawled, extracted, and replaced the outdated hotels project across static fallbacks, backup JSON databases, and Vercel KV stores with the new, premium **"EZ Fast Tech"** platform.
+5.  **Completed Tier 1 SEO & Discovery Suite**:
+    - Compiled and deployed `robots.txt` instructing crawlers to read our dynamic map.
+    - Created an automated serverless `sitemap.xml` lambda querying Vercel KV dynamically with CDNs caching.
+    - Upgraded raw HTML and React routers to dynamically control Facebook OpenGraph and Twitter Card meta structures.
+    - Forced native image lazy-loading (`loading="lazy"`) across all card layouts.
+    - Secured workspace by purging `.env` secrets from Git indices.
 
 ---
 
