@@ -673,14 +673,7 @@ function BlogFeed({ cvData }) {
         <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#888', marginTop: '2rem' }}>No articles published in this category yet. Check back soon!</p>
       ) : (
         <>
-          <div className="blog-feed-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: '2.5rem',
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: '0 1.5rem'
-          }}>
+          <div className="blog-feed-grid">
             {currentPosts.map((article, i) => (
               <article key={i} className="project-card" style={{ 
                 display: 'flex', 
@@ -738,14 +731,7 @@ function BlogFeed({ cvData }) {
 
           {/* Pagination Controls bar */}
           {totalPages > 1 && (
-            <nav className="pagination-container" aria-label="Blog pagination" style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginTop: '4rem',
-              flexWrap: 'wrap'
-            }}>
+            <div className="pagination-container" aria-label="Blog pagination">
               {/* Previous Page Button */}
               <a
                 href={`#blog?page=${currentPage - 1}`}
@@ -812,7 +798,7 @@ function BlogFeed({ cvData }) {
               >
                 Next →
               </a>
-            </nav>
+            </div>
           )}
         </>
       )}

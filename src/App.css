@@ -906,3 +906,47 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
     font-size: 1.2rem;
   }
 }
+
+/* === BLOG RESPONSIVE 4-COLUMN GRID & PAGINATION OVERRIDES === */
+.blog-feed-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  position: static !important; /* Absolute guarantee to override global nav position styles */
+  width: auto !important;
+  background: transparent !important;
+  border: none !important;
+  backdrop-filter: none !important;
+  margin-top: 4rem !important;
+  z-index: 10 !important;
+}
+
+@media (max-width: 1024px) {
+  .blog-feed-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .blog-feed-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .blog-feed-grid {
+    grid-template-columns: 1fr;
+  }
+}
