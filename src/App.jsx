@@ -1088,7 +1088,6 @@ function ChessSpotlight() {
                     { c: 'DNS / CDN', t: 'Cloudflare DNS (Proxied with caching)' },
                     { c: 'CI/CD Pipeline', t: 'GitHub Actions → Vercel Auto-deploy on commit' },
                     { c: 'Analytics', t: 'Google Analytics 4 + Vercel Web Analytics' },
-                    { c: 'Monetization', t: 'Google AdSense (Auto Ads Integration)' },
                     { c: 'Typography', t: 'Playfair Display + EB Garamond (Vietnamese optimized)' }
                   ].map((row, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
