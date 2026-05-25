@@ -47,10 +47,13 @@ export default async function handler(req, res) {
     }
 
     let smtpLimits = null;
+    let smtpErrorDetail = null;
     try {
       const clientId = process.env.SENDPULSE_CLIENT_ID;
       const clientSecret = process.env.SENDPULSE_CLIENT_SECRET;
-      if (clientId && clientSecret) {
+      if (!clientId || !clientSecret) {
+        smtpErrorDetail = 'SendPulse API credentials (SENDPULSE_CLIENT_ID or SENDPULSE_CLIENT_SECRET) are not configured inside your Vercel Dashboard.';
+      } else {
         const authRes = await fetch('https://api.sendpulse.com/oauth/access_token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -69,37 +72,56 @@ export default async function handler(req, res) {
           });
           if (limitsRes.ok) {
             smtpLimits = await limitsRes.json();
+          } else {
+            smtpErrorDetail = `SendPulse SMTP limits query failed: ${limitsRes.status} ${limitsRes.statusText}`;
           }
+        } else {
+          const authErrText = await authRes.text();
+          smtpErrorDetail = `SendPulse OAuth authentication failed: ${authErrText}`;
         }
       }
     } catch (err) {
       console.error('Subscribers API: SendPulse SMTP limit fetch failed:', err);
+      smtpErrorDetail = `SendPulse API connection error: ${err.message}`;
     }
 
     let kvStats = null;
+    let kvErrorDetail = null;
     try {
       if (process.env.VERCEL && process.env.KV_REST_API_URL) {
-        const dbsize = await kv.dbsize();
-        const infoText = await kv.info();
+        kvStats = {};
         
-        let usedMemory = '0 B';
-        const lines = infoText.split('\r\n').join('\n').split('\n');
-        for (const line of lines) {
-          if (line.startsWith('used_memory_human:')) {
-            usedMemory = line.split(':')[1].trim();
-          }
+        try {
+          const dbsize = await kv.dbsize();
+          kvStats.keys = dbsize;
+        } catch (keysErr) {
+          console.error('Subscribers API: dbsize failed:', keysErr);
+          kvErrorDetail = `KV keys query failed: ${keysErr.message}`;
         }
 
-        kvStats = {
-          keys: dbsize,
-          storage: usedMemory
-        };
+        try {
+          const infoText = await kv.info();
+          let usedMemory = '0 B';
+          const lines = infoText.split('\r\n').join('\n').split('\n');
+          for (const line of lines) {
+            if (line.startsWith('used_memory_human:')) {
+              usedMemory = line.split(':')[1].trim();
+            }
+          }
+          kvStats.storage = usedMemory;
+        } catch (infoErr) {
+          console.error('Subscribers API: info failed, using fallback:', infoErr);
+          kvStats.storage = 'Under 1 MB'; // Fallback estimate for restricted INFO commands
+        }
+      } else {
+        kvErrorDetail = 'Vercel KV database is not configured or not running on Vercel environment.';
       }
     } catch (kvErr) {
       console.error('Subscribers API: Vercel KV stats fetch failed:', kvErr);
+      kvErrorDetail = `KV connection error: ${kvErr.message}`;
     }
 
-    return res.status(200).json({ success: true, subscribers, smtpLimits, kvStats });
+    return res.status(200).json({ success: true, subscribers, smtpLimits, smtpErrorDetail, kvStats, kvErrorDetail });
 
   } catch (err) {
     console.error('Subscribers list API error:', err);
