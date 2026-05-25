@@ -1014,12 +1014,12 @@ function ChessSpotlight() {
         margin: '0 auto',
         padding: '3rem',
         borderRadius: '16px',
-        background: 'rgba(18, 18, 26, 0.4)',
+        background: 'var(--bg-secondary)',
         border: '1px solid var(--border-color)',
         backdropFilter: 'blur(10px)',
         position: 'relative',
         zIndex: 1,
-        boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+        boxShadow: '0 10px 40px rgba(0,0,0,0.15)'
       }}>
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '3rem' }}>
@@ -1031,22 +1031,22 @@ function ChessSpotlight() {
                 <span style={{ fontSize: '2.5rem' }}>🧙‍♂️</span>
                 <div>
                   <h3 style={{ fontSize: '1.8rem', color: activeColor, margin: 0, fontWeight: '700' }}>Wizard Chess</h3>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Cờ Pháp Thuật Harry Potter</p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Harry Potter Wizard Chess</p>
                 </div>
               </div>
 
               <p style={{ fontSize: '1.05rem', lineHeight: '1.7', color: 'var(--text)', marginBottom: '2rem' }}>
-                Trò chơi cờ vua phong cách Harry Potter đầy mê hoặc với giao diện huyền bí, hiệu ứng phép thuật và âm thanh sống động. Người chơi có thể đấu trí với AI thông minh (tích hợp 3 cấp độ khó) hoặc tỉ thí cùng bạn bè trên cùng thiết bị. Được tối ưu hóa hoàn toàn cho thiết bị di động với khả năng phản hồi mượt mà và giao diện tiếng Việt thân thiện.
+                An enchanting Harry Potter-themed chess game featuring a mysterious interface, magical effects, and immersive audio. Players can challenge a smart AI engine (featuring 3 difficulty levels) or match wits with a friend on the same device. Fully optimized for mobile screens with seamless touch controls and a clean, responsive layout.
               </p>
 
-              <h4 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '1rem', borderBottom: '1px solid #333', paddingBottom: '0.5rem' }}>🧙‍♂️ Tính Năng Nổi Bật:</h4>
+              <h4 style={{ fontSize: '1.1rem', color: 'var(--text)', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>🧙‍♂️ Key Highlight Features:</h4>
               <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}>
                 {[
-                  '🎮 3 Chế độ chơi: Đấu với Cloud AI, Đấu với Local AI, hoặc Chơi 2 người',
-                  '🏆 Thống kê thông minh: Lưu trữ lịch sử trận đấu và thống kê thắng/thua chi tiết',
-                  '🔐 Đăng nhập linh hoạt: Hỗ trợ xác thực qua Email/Password và Google OAuth',
-                  '🎵 Trải nghiệm sống động: Hiệu ứng âm thanh phép thuật và animation bắt quân mảng nhãn',
-                  '📱 Điều khiển chạm (Tap-to-move): Mobile-first, không kéo thả gây lệch ô'
+                  '🎮 3 Play Modes: Battle Cloud AI, challenge Local Offline AI, or play 2-Player Local',
+                  '🏆 Match Statistics: Dynamic storage of match history and detailed win/loss tracking',
+                  '🔐 Secure Authentication: Seamless sign-in via Email/Password and Google OAuth',
+                  '🎵 Immersive Audio & FX: Captivating wizardry sound effects and satisfying piece-capture animations',
+                  '📱 Tap-To-Move: Optimized mobile-first touch controls (no erratic drag-and-drop)'
                 ].map((item, idx) => (
                   <li key={idx} style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '0.6rem', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                     <span style={{ color: activeColor }}>•</span>
@@ -1058,22 +1058,22 @@ function ChessSpotlight() {
 
             <div style={{ display: 'flex', gap: '1rem', marginTop: '2.5rem', flexWrap: 'wrap' }}>
               <a href="https://chess.tony.do" target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ background: activeColor, color: '#000', fontWeight: 'bold', padding: '0.8rem 1.8rem', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                <span>🎮</span> Chơi Ngay
+                <span>🎮</span> PLAY NOW
               </a>
-              <a href="https://github.com/harrypotter30022003/wizard-chess" target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '0.8rem 1.8rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                <span>💻</span> View Source Code
+              <a href="https://github.com/harrypotter30022003/wizard-chess" target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '0.8rem 1.8rem', display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'var(--text)', border: '1px solid var(--border-color)' }}>
+                <span>💻</span> VIEW SOURCE CODE
               </a>
             </div>
           </div>
 
           {/* Right Column: Detailed Tech Stack Table */}
           <div>
-            <h4 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '0.5rem' }}>🛠️ Technical Architecture</h4>
+            <h4 style={{ fontSize: '1.2rem', color: 'var(--text)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>🛠️ Technical Architecture</h4>
             
-            <div style={{ background: 'rgba(10, 10, 15, 0.6)', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ background: 'var(--bg)', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                 <thead>
-                  <tr style={{ borderBottom: '2px solid #333', color: '#888', background: 'rgba(0,0,0,0.2)' }}>
+                  <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.05)' }}>
                     <th style={{ padding: '0.8rem 1rem', width: '30%' }}>Component</th>
                     <th style={{ padding: '0.8rem 1rem' }}>Technologies Used</th>
                   </tr>
@@ -1091,7 +1091,7 @@ function ChessSpotlight() {
                     { c: 'Monetization', t: 'Google AdSense (Auto Ads Integration)' },
                     { c: 'Typography', t: 'Playfair Display + EB Garamond (Vietnamese optimized)' }
                   ].map((row, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid #222' }}>
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
                       <td style={{ padding: '0.8rem 1rem', fontWeight: 'bold', color: activeColor }}>{row.c}</td>
                       <td style={{ padding: '0.8rem 1rem', color: 'var(--text-muted)' }}>{row.t}</td>
                     </tr>
