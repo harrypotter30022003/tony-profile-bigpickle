@@ -171,7 +171,7 @@ function renderExp(){
   el.innerHTML = html;
 }
 
-function addProj(){data.projects.push({name:'',link:'',desc:'',tags:[]});renderProj();}
+function addProj(){data.projects.push({name:'',link:'',desc:'',icon:'💻',tags:[]});renderProj();}
 function deleteProj(i){data.projects.splice(i,1);renderProj();}
 function renderProj(){
   var el = document.getElementById('proj_list');
@@ -179,9 +179,10 @@ function renderProj(){
   for(var i=0; i<data.projects.length; i++){
     var p = data.projects[i];
     html += '<div class="item"><button class="btn-del" onclick="deleteProj('+i+')">X</button>';
-    html += '<input placeholder="Name" value="'+esc(p.name)+'" onchange="data.projects['+i+'].name=this.value">';
-    html += '<textarea placeholder="Description" onchange="data.projects['+i+'].desc=this.value">'+esc(p.desc)+'</textarea>';
-    html += '<input placeholder="Link" value="'+esc(p.link)+'" onchange="data.projects['+i+'].link=this.value"></div>';
+    html += '<label>Project Name</label><input placeholder="Name" value="'+esc(p.name)+'" onchange="data.projects['+i+'].name=this.value">';
+    html += '<label>Icon (Emoji)</label><input placeholder="Icon (e.g. ♟️)" value="'+esc(p.icon || '💻')+'" onchange="data.projects['+i+'].icon=this.value">';
+    html += '<label>Description</label><textarea placeholder="Description" onchange="data.projects['+i+'].desc=this.value">'+esc(p.desc)+'</textarea>';
+    html += '<label>Project URL</label><input placeholder="Link" value="'+esc(p.link)+'" onchange="data.projects['+i+'].link=this.value"></div>';
   }
   el.innerHTML = html;
 }

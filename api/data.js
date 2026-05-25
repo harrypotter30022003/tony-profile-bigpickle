@@ -100,6 +100,7 @@ export default async function handler(req, res) {
             if (!hasChess) {
               merged.projects.push({
                 name: "Wizard Chess",
+                icon: "♟️",
                 link: "https://chess.tony.do",
                 desc: "Harry Potter style wizard chess game built with Firebase Auth, Cloud Firestore, and custom Minimax AI.",
                 tags: ["Firebase", "Firestore", "AI Engine", "CI/CD"]

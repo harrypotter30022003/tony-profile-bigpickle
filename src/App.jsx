@@ -239,7 +239,7 @@ function Skills({ cvData }) {
 }
 
 function Projects({ cvData }) {
-  const icons = ['📊', '📮', '🏥', '🎗️', '💻'];
+  const icons = ['📊', '📮', '🏥', '🎗️', '💻', '♟️'];
   
   return (
     <section id="projects">
@@ -250,7 +250,7 @@ function Projects({ cvData }) {
       <div className="projects-grid">
         {cvData?.projects.map((p, i) => (
           <div key={i} className="project-card">
-            <div className="project-icon">{icons[i]}</div>
+            <div className="project-icon">{p.icon || icons[i] || '💻'}</div>
             <div className="project-info">
               <h3>{p.name}</h3>
               <p>{p.desc}</p>
