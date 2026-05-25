@@ -1060,9 +1060,6 @@ function ChessSpotlight() {
               <a href="https://chess.tony.do" target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ background: activeColor, color: '#000', fontWeight: 'bold', padding: '0.8rem 1.8rem', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                 <span>🎮</span> PLAY NOW
               </a>
-              <a href="https://github.com/harrypotter30022003/wizard-chess" target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '0.8rem 1.8rem', display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'var(--text)', border: '1px solid var(--border-color)' }}>
-                <span>💻</span> VIEW SOURCE CODE
-              </a>
             </div>
           </div>
 
