@@ -167,6 +167,17 @@
         "SEO",
         "React"
       ]
+    },
+    {
+      "name": "Wizard Chess",
+      "link": "https://chess.tony.do",
+      "desc": "Harry Potter style wizard chess game built with Firebase Auth, Cloud Firestore, and custom Minimax AI.",
+      "tags": [
+        "Firebase",
+        "Firestore",
+        "AI Engine",
+        "CI/CD"
+      ]
     }
   ],
   "hiddenMessages": [

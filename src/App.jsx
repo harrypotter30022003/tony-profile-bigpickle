@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { getReadingTime, getFallbackImage, getCategoryColor } from './utils/blogHelpers';
 
 const BlogFeed = lazy(() => import('./components/BlogFeed'));
 const BlogDetail = lazy(() => import('./components/BlogDetail'));
@@ -885,6 +886,8 @@ function App() {
           <Experience cvData={data} />
           <Skills cvData={data} />
           <Projects cvData={data} />
+          <ChessSpotlight />
+          <BlogSpotlight cvData={data} />
           <HiddenWisdomSection />
           <MysteryCards />
           <Contact cvData={data} />
@@ -906,6 +909,202 @@ function App() {
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
     </div>
+  );
+}
+
+
+
+function BlogSpotlight({ cvData }) {
+  const articles = cvData?.blog || [];
+  const latestArticles = articles.slice(0, 3);
+
+  if (latestArticles.length === 0) return null;
+
+  return (
+    <section id="blog-spotlight" style={{ padding: '100px 0', borderTop: '1px solid var(--border-color)' }}>
+      <div className="section-header" style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <h2 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Latest Technical Insights</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Read fresh PM tips, programming tutorials, and business growth hacks by Tony Do</p>
+      </div>
+
+      <div className="blog-feed-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
+        {latestArticles.map((article, i) => (
+          <article 
+            key={i} 
+            className="blog-card" 
+            onClick={() => { window.location.hash = '#blog/' + article.slug; }}
+            style={{
+              cursor: 'pointer',
+              '--glow-color': getCategoryColor(article.category)
+            }}
+          >
+            <div>
+              <div style={{ width: '100%', height: '180px', overflow: 'hidden', position: 'relative' }}>
+                <img 
+                  src={article.image || getFallbackImage(article.category)} 
+                  alt={article.title} 
+                  loading="lazy"
+                  onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <span style={{
+                  position: 'absolute',
+                  top: '0.8rem',
+                  left: '0.8rem',
+                  background: 'rgba(10, 10, 15, 0.85)',
+                  border: '1px solid ' + getCategoryColor(article.category),
+                  color: '#fff',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '20px',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold',
+                  backdropFilter: 'blur(5px)'
+                }}>
+                  {article.category || 'General'}
+                </span>
+              </div>
+
+              <div style={{ padding: '1.5rem' }}>
+                <div className="blog-card-meta" style={{ marginBottom: '0.8rem', fontSize: '0.85rem' }}>
+                  <span>📅 {article.date}</span>
+                  <span>{getReadingTime(article.content)}</span>
+                </div>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '0.8rem', color: 'var(--text)', lineHeight: '1.4' }}>{article.title}</h3>
+                <p className="blog-card-summary" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{article.summary}</p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: '3.5rem' }}>
+        <a href="#blog" className="btn btn-primary" style={{ padding: '0.8rem 2rem', fontWeight: 'bold' }}>
+          Explore Full Blog Stream →
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function ChessSpotlight() {
+  const activeColor = '#ffb703'; // Wizard gold color
+
+  return (
+    <section id="chess-spotlight" style={{ padding: '100px 0', borderTop: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden' }}>
+      
+      {/* Immersive background glow */}
+      <div style={{
+        position: 'absolute',
+        top: '20%',
+        right: '-10%',
+        width: '400px',
+        height: '400px',
+        background: 'radial-gradient(circle, rgba(123, 44, 191, 0.05) 0%, transparent 70%)',
+        zIndex: 0,
+        pointerEvents: 'none'
+      }} />
+
+      <div className="section-header" style={{ textAlign: 'center', marginBottom: '4rem', position: 'relative', zIndex: 1 }}>
+        <h2 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏆 Hobby Spotlight</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Personal development project & interactive wizardry</p>
+      </div>
+
+      <div className="box" style={{
+        maxWidth: '1100px',
+        margin: '0 auto',
+        padding: '3rem',
+        borderRadius: '16px',
+        background: 'rgba(18, 18, 26, 0.4)',
+        border: '1px solid var(--border-color)',
+        backdropFilter: 'blur(10px)',
+        position: 'relative',
+        zIndex: 1,
+        boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+      }}>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '3rem' }}>
+          
+          {/* Left Column: Description & Magical Features */}
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
+                <span style={{ fontSize: '2.5rem' }}>🧙‍♂️</span>
+                <div>
+                  <h3 style={{ fontSize: '1.8rem', color: activeColor, margin: 0, fontWeight: '700' }}>Wizard Chess</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Cờ Pháp Thuật Harry Potter</p>
+                </div>
+              </div>
+
+              <p style={{ fontSize: '1.05rem', lineHeight: '1.7', color: 'var(--text)', marginBottom: '2rem' }}>
+                Trò chơi cờ vua phong cách Harry Potter đầy mê hoặc với giao diện huyền bí, hiệu ứng phép thuật và âm thanh sống động. Người chơi có thể đấu trí với AI thông minh (tích hợp 3 cấp độ khó) hoặc tỉ thí cùng bạn bè trên cùng thiết bị. Được tối ưu hóa hoàn toàn cho thiết bị di động với khả năng phản hồi mượt mà và giao diện tiếng Việt thân thiện.
+              </p>
+
+              <h4 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '1rem', borderBottom: '1px solid #333', paddingBottom: '0.5rem' }}>🧙‍♂️ Tính Năng Nổi Bật:</h4>
+              <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}>
+                {[
+                  '🎮 3 Chế độ chơi: Đấu với Cloud AI, Đấu với Local AI, hoặc Chơi 2 người',
+                  '🏆 Thống kê thông minh: Lưu trữ lịch sử trận đấu và thống kê thắng/thua chi tiết',
+                  '🔐 Đăng nhập linh hoạt: Hỗ trợ xác thực qua Email/Password và Google OAuth',
+                  '🎵 Trải nghiệm sống động: Hiệu ứng âm thanh phép thuật và animation bắt quân mảng nhãn',
+                  '📱 Điều khiển chạm (Tap-to-move): Mobile-first, không kéo thả gây lệch ô'
+                ].map((item, idx) => (
+                  <li key={idx} style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '0.6rem', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <span style={{ color: activeColor }}>•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '2.5rem', flexWrap: 'wrap' }}>
+              <a href="https://chess.tony.do" target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ background: activeColor, color: '#000', fontWeight: 'bold', padding: '0.8rem 1.8rem', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <span>🎮</span> Chơi Ngay
+              </a>
+              <a href="https://github.com/harrypotter30022003/wizard-chess" target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '0.8rem 1.8rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <span>💻</span> View Source Code
+              </a>
+            </div>
+          </div>
+
+          {/* Right Column: Detailed Tech Stack Table */}
+          <div>
+            <h4 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '0.5rem' }}>🛠️ Technical Architecture</h4>
+            
+            <div style={{ background: 'rgba(10, 10, 15, 0.6)', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #333', color: '#888', background: 'rgba(0,0,0,0.2)' }}>
+                    <th style={{ padding: '0.8rem 1rem', width: '30%' }}>Component</th>
+                    <th style={{ padding: '0.8rem 1rem' }}>Technologies Used</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { c: 'Frontend', t: 'Single-page HTML/CSS/JS (Monolithic Architecture)' },
+                    { c: 'Authentication', t: 'Firebase Auth (Email/Password + Google OAuth)' },
+                    { c: 'Database', t: 'Google Cloud Firestore (Match history, user settings)' },
+                    { c: 'AI Engine', t: 'Custom Minimax algorithm (3 difficulty: Easy/Medium/Hard)' },
+                    { c: 'Hosting', t: 'Vercel Platform (Production Environment)' },
+                    { c: 'DNS / CDN', t: 'Cloudflare DNS (Proxied with caching)' },
+                    { c: 'CI/CD Pipeline', t: 'GitHub Actions → Vercel Auto-deploy on commit' },
+                    { c: 'Analytics', t: 'Google Analytics 4 + Vercel Web Analytics' },
+                    { c: 'Monetization', t: 'Google AdSense (Auto Ads Integration)' },
+                    { c: 'Typography', t: 'Playfair Display + EB Garamond (Vietnamese optimized)' }
+                  ].map((row, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #222' }}>
+                      <td style={{ padding: '0.8rem 1rem', fontWeight: 'bold', color: activeColor }}>{row.c}</td>
+                      <td style={{ padding: '0.8rem 1rem', color: 'var(--text-muted)' }}>{row.t}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
   );
 }
 

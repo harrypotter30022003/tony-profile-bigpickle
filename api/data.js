@@ -94,6 +94,20 @@ export default async function handler(req, res) {
             }
           }
 
+          // Auto-upgrade projects: Add Wizard Chess if missing in Vercel KV
+          if (merged.projects) {
+            const hasChess = merged.projects.some(p => p.name === 'Wizard Chess' || p.link.includes('chess.tony.do'));
+            if (!hasChess) {
+              merged.projects.push({
+                name: "Wizard Chess",
+                link: "https://chess.tony.do",
+                desc: "Harry Potter style wizard chess game built with Firebase Auth, Cloud Firestore, and custom Minimax AI.",
+                tags: ["Firebase", "Firestore", "AI Engine", "CI/CD"]
+              });
+              needsKvSave = true;
+            }
+          }
+
           // Auto-upgrade database schema: Merge our new 5 traffic articles and filter out old categoryless placeholders
           if (!merged.blog || merged.blog.length === 0) {
             merged.blog = defaultBlogArticles;
