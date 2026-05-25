@@ -42,6 +42,9 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
     - Embedded Cusdis privacy-first comments threads dynamically underneath blog details with automatic dynamic script loading and cleanup, unburdening serverless databases from spam bots and security vulnerabilities.
     - Integrated Microsoft Clarity tracking tags inside `index.html`'s `<head>` to record scroll depths, clicks, and session playbacks for zero performance overhead.
     - Built a secure, password-protected serverless API `api/subscribers.js` and integrated a beautiful, interactive "Usage & Subscribers" tab inside `admin.html`, letting you securely monitor active mailing list subscriptions, export them to CSV on a single click, and view exact free tier usage limits of SendPulse SMTP, Vercel KV, Gemini API, and Vercel Hosting. (Upgraded to dynamically query live Vercel KV database sizes and active keys count in real-time, fetch SendPulse SMTP email sending balances via secure OAuth APIs, and display reference cards for Firebase Core & Google Analytics 4 user behavior limits).
+    - Implemented a dynamic "Blog Spotlight" section on the Homepage displaying your 3 most recent articles with an "Explore Full Blog" CTA, boosting internal SEO linking.
+    - Integrated an immersive "Wizard Chess Hobby Spotlight" section on the Homepage, highlighting your Harry Potter-themed chess game, its minimax AI, Firestore backend, and GitHub Actions CI/CD pipeline.
+    - Programmed an auto-upgrader inside `api/data.js` to automatically inject the new "Wizard Chess" project into your production Vercel KV databases, maintaining complete schema synchronization.
 
 ---
 
