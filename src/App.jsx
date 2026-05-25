@@ -1083,7 +1083,7 @@ function ChessSpotlight() {
                     { c: 'Frontend', t: 'Single-page HTML/CSS/JS (Monolithic Architecture)' },
                     { c: 'Authentication', t: 'Firebase Auth (Email/Password + Google OAuth)' },
                     { c: 'Database', t: 'Google Cloud Firestore (Match history, user settings)' },
-                    { c: 'AI Engine', t: 'Custom Minimax algorithm (3 difficulty: Easy/Medium/Hard)' },
+                    { c: 'AI Engine', t: 'Stockfish Online API (cloud-based, configurable depth 5/10/15) with random local fallback' },
                     { c: 'Hosting', t: 'Vercel Platform (Production Environment)' },
                     { c: 'DNS / CDN', t: 'Cloudflare DNS (Proxied with caching)' },
                     { c: 'CI/CD Pipeline', t: 'GitHub Actions → Vercel Auto-deploy on commit' },

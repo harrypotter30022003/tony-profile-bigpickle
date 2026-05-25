@@ -102,7 +102,7 @@ export default async function handler(req, res) {
                 name: "Wizard Chess",
                 icon: "♟️",
                 link: "https://chess.tony.do",
-                desc: "Harry Potter style wizard chess game built with Firebase Auth, Cloud Firestore, and custom Minimax AI.",
+                desc: "Harry Potter style wizard chess game built with Firebase Auth, Cloud Firestore, and Stockfish Online API (with random local fallback).",
                 tags: ["Firebase", "Firestore", "AI Engine", "CI/CD"]
               });
               needsKvSave = true;
