@@ -50,6 +50,18 @@ opencode attach http://localhost:4096
 curl http://localhost:4096/health
 ```
 
+### Local Monitoring Dashboard
+
+Open **http://localhost:4097** in your browser to see a real-time dashboard showing:
+- Agent status (active/sleeping/stopped)
+- Last heartbeat and activity
+- Recent agent actions with timestamps
+- Health check results (build, git, logs, site)
+- Log file statistics
+- Recent git commits
+
+The dashboard auto-refreshes every 30 seconds.
+
 ### Agent Logs
 
 All autonomous actions are logged to `.opencode/logs/agent-log.ndjson` (rolling JSON-lines format, max 500 entries).
@@ -198,6 +210,7 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
 *   `.opencode/logs/heartbeat.ndjson`: Agent heartbeat pings (100 max, auto-pruned).
 *   `.opencode/lib/logger.cjs`: Node.js logging utility (`.ndjson` format, auto-pruning).
 *   `.opencode/scripts/health-check.cjs`: Autonomous health verification script.
+*   `.opencode/scripts/dashboard.cjs`: Local monitoring dashboard (http://localhost:4097).
 *   `.opencode/scripts/revert-guide.md`: Instructions for rolling back bad commits.
 *   `.opencode/setup-24-7-agent.ps1`: Windows Task Scheduler installer.
 
