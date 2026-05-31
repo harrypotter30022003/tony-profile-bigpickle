@@ -1,6 +1,92 @@
 # AI Agent Handover & Site Briefing: me.tony.do
 
+> **Agent System Prompt:** Your master persona, goals, and behavioral rules are defined in `~/.config/opencode/agents/personal-brand-pm.md` (agent name: `tony-brand-master`). This handover doc covers project-specific architecture, discoveries, and milestones. Read BOTH documents before making changes.
+>
+> **24/7 Operation:** Task schedules are in `.opencode/tasks/`. Agent logs are in `.opencode/logs/` (rolling JSON-lines, auto-pruned). Monitoring: `node .opencode/scripts/health-check.js`. See "24/7 Autonomous Operation" section below.
+
 Welcome, Agent! This document serves as the absolute source of truth regarding the architecture, discoveries, and milestones completed on the `me.tony.do` portfolio, CMS, and AI blogging engine. Read this carefully to continue seamlessly without breaking existing system patterns.
+
+---
+
+## 🤖 24/7 Autonomous Operation
+
+This agent runs continuously in the background, improving the site autonomously. Here's how it works:
+
+### Architecture
+
+```
+┌─ Your PC / VPS ──────────────────────────────────┐
+│  opencode serve --port 4096                        │
+│  ┌─ tony-brand-master agent ───────────────────┐  │
+│  │  • Always-on monitoring (6AM-10PM: light)    │  │
+│  │  • Deep work (10PM-6AM: heavy tasks)         │  │
+│  │  • Scheduled triggers via task files         │  │
+│  └──────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────┘
+         │ git push
+         ▼
+┌─ Vercel ──────────────────────────────────────────┐
+│  • me.tony.do (production)                         │
+│  • api/cron-fetch-news.js (weekly RSS)             │
+│  • Vercel KV (database)                            │
+└────────────────────────────────────────────────────┘
+```
+
+### Task Schedule (autonomous triggers)
+
+| Task | Time | What It Does |
+|------|------|-------------|
+| `nightly-review.md` | Daily 2:00 AM | Health check, SEO scan, schema validation, link check, freshness check |
+| `weekly-content.md` | Sunday 11:00 PM | Draft 1-2 blog posts, commit, push |
+| `monthly-seo.md` | 1st of month 1:00 AM | Full crawl, schema audit, competitor scan, content calendar |
+
+### Connecting to the Agent
+
+```bash
+# From another terminal window:
+opencode attach http://localhost:4096
+
+# Or check if the server is running:
+curl http://localhost:4096/health
+```
+
+### Agent Logs
+
+All autonomous actions are logged to `.opencode/logs/agent-log.ndjson` (rolling JSON-lines format, max 500 entries).
+Heartbeats are logged to `.opencode/logs/heartbeat.ndjson` (max 100 entries).
+Both auto-prune — no manual cleanup, no unbounded growth.
+
+**To read logs:**
+```powershell
+# Last 10 agent actions:
+node .opencode\lib\logger.js tail agent 10
+
+# Log statistics (size, entries, freshness):
+node .opencode\lib\logger.js stats
+
+# Full health check:
+node .opencode\scripts\health-check.js
+```
+
+### Starting / Stopping
+
+```powershell
+# Start (if not running): run the batch file
+.\.opencode\start-agent.bat
+
+# Stop via Task Scheduler:
+schtasks /End /TN "TonyBrandMaster-Agent"
+
+# Remove the scheduled task entirely:
+schtasks /Delete /TN "TonyBrandMaster-Agent" /F
+```
+
+### Time-Aware Operation
+
+The agent checks the current time before every action:
+- **6 AM - 10 PM (Light Mode):** Monitoring only — broken links, schema validation, typo fixes. No content generation or structural changes.
+- **10 PM - 6 AM (Deep Work):** Full power — content creation, SEO overhauls, code refactoring, batch operations.
+- **Any time (Critical Fix):** If the site is down or a 500 error is detected, fix immediately regardless of schedule.
 
 ---
 
@@ -46,6 +132,12 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
     - Integrated an immersive "Wizard Chess Hobby Spotlight" section on the Homepage, highlighting your Harry Potter-themed chess game, its Stockfish Online API AI, Firestore backend, and GitHub Actions CI/CD pipeline.
     - Programmed an auto-upgrader inside `api/data.js` to automatically inject the new "Wizard Chess" project into your production Vercel KV databases, maintaining complete schema synchronization.
     - Integrated support for dynamic project icons (`p.icon || icons[i] || '💻'`) inside your homepage Projects component, and added a custom **"Icon (Emoji)"** editor field in `/admin` so you can securely edit or change any project's icon on the fly.
+9.  **24/7 Autonomous Agent Setup**:
+    - Transformed `personal-brand-pm.md` into a 24/7 autonomous agent prompt with tiered operating schedule (light monitoring vs deep work).
+    - Created `.opencode/tasks/` with nightly review, weekly content, and monthly SEO audit task definitions.
+    - Created `.opencode/logs/` for autonomous action logging.
+    - Created `.opencode/setup-24-7-agent.ps1` for Windows Task Scheduler integration.
+    - Added time-aware guards: quick fixes anytime, heavy work only at night.
 
 ---
 
@@ -76,17 +168,53 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
 
 ## 🗺️ Key Files & Paths
 
+### Core Application
 *   `tony-portfolio/src/App.jsx`: Main React entry point containing core UI rendering, hash router, and analytics hooks.
 *   `tony-portfolio/src/App.css`: Immersive global style variables, responsive media queries, and themes.
+*   `tony-portfolio/src/utils/blogHelpers.jsx`: Shared blog rendering helpers.
+*   `tony-portfolio/src/components/BlogFeed.jsx`: Blog listing with filters and pagination.
+*   `tony-portfolio/src/components/BlogDetail.jsx`: Blog post detail with progress bar, comments, social share.
 *   `tony-portfolio/admin.html`: Custom SPA admin dashboard for direct content editing.
+
+### API Layer
 *   `tony-portfolio/api/data.js`: Unified cloud/local data loader.
 *   `tony-portfolio/api/save.js`: Stateless HMAC-authenticated content writer.
 *   `tony-portfolio/api/cron-fetch-news.js`: Parallel AI crawler and RSS self-balancing scheduler.
+*   `tony-portfolio/api/subscribe.js` / `api/unsubscribe.js`: Newsletter handlers.
+*   `tony-portfolio/api/subscribers.js`: Subscriber list + usage dashboard.
+*   `tony-portfolio/api/sitemap.js`: Dynamic XML sitemap generator.
+*   `tony-portfolio/api/summary.js`: AI-crawler-friendly JSON summary endpoint.
+
+### Configuration
 *   `tony-portfolio/vercel.json`: Clean URL routing rules and the weekly crons configuration.
+*   `tony-portfolio/public/manifest.json`: PWA manifest.
+*   `tony-portfolio/public/sw.js`: Service worker with offline caching.
+
+### 24/7 Agent
+*   `.opencode/tasks/nightly-review.md`: Daily 2 AM health check and SEO scan.
+*   `.opencode/tasks/weekly-content.md`: Sunday 11 PM content creation cycle.
+*   `.opencode/tasks/monthly-seo.md`: 1st of month deep SEO audit.
+*   `.opencode/logs/agent-log.ndjson`: Rolling agent action log (500 max, auto-pruned).
+*   `.opencode/logs/heartbeat.ndjson`: Agent heartbeat pings (100 max, auto-pruned).
+*   `.opencode/lib/logger.js`: Node.js logging utility (`.ndjson` format, auto-pruning).
+*   `.opencode/scripts/health-check.js`: Autonomous health verification script.
+*   `.opencode/scripts/revert-guide.md`: Instructions for rolling back bad commits.
+*   `.opencode/setup-24-7-agent.ps1`: Windows Task Scheduler installer.
 
 ---
 
 ## ➡️ Next Steps for the Next Agent:
-1.  **Monitor AdSense Review**: Ensure traffic crawls go smoothly. The blog currently houses **25 unique articles**, which exceeds Google's recommended threshold (15-20) for approval.
-2.  **Add RSS Sources**: If Tony requests more niche topics, add them directly inside the `RSS_FEEDS` array at the top of `api/cron-fetch-news.js`.
-3.  **Perform Audits**: Watch Vercel's Cron Execution log inside the dashboard to ensure the Sunday midnight automated trigger completes successfully.
+
+1.  **Run the 24/7 setup** — Execute `.opencode/setup-24-7-agent.ps1` as Administrator to register the agent as a background service, then `opencode attach` to verify it's running.
+2.  **Verify nightly review** — Check logs after 2 AM:
+    ```powershell
+    node .opencode\lib\logger.js tail agent 10
+    node .opencode\scripts\health-check.js
+    ```
+3.  **Monitor agent health** — Run `node .opencode\scripts\health-check.js` anytime to verify the agent is running, the site is healthy, and the build passes. If the heartbeat is stale (>6h), the agent may be down.
+4.  **Monitor AdSense Review** — Ensure traffic crawls go smoothly. The blog currently houses **25+ unique articles**, exceeding Google's recommended threshold (15-20) for approval.
+5.  **Add RSS Sources** — If Tony requests more niche topics, add them directly inside the `RSS_FEEDS` array at the top of `api/cron-fetch-news.js`.
+6.  **Perform Audits** — Watch Vercel's Cron Execution log inside the dashboard to ensure the Sunday midnight automated trigger completes successfully.
+7.  **E-E-A-T Improvement** — Review the monthly audit log and implement suggested improvements to strengthen Experience, Expertise, Authoritativeness, and Trustworthiness signals.
+8.  **LinkedIn Integration** — Draft LinkedIn posts from blog content and save to `.opencode/logs/linkedin-drafts.md` for Tony to review.
+9.  **Log pruning** — Logs auto-prune at 500 entries. If disk space is a concern, run `node .opencode\lib\logger.js prune agent 200` to reduce retention.
