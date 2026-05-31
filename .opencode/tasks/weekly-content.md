@@ -39,13 +39,28 @@ For each post:
 
 ### Step 5: Commit with Tag
 ```bash
+TITLE="[article title]"
 TAG="content-$(date +%Y%m%d)"
 git add -A
-git commit -m "content: [article title]"
+git commit -m "content: $TITLE"
 git tag "$TAG"
 git push origin main --tags
-HASH=$(git log -1 --oneline | cut -d' ' -f1)
-node .opencode/lib/logger.cjs log agent "weekly-content" ok "$HASH" "Published: [article title]"
+HASH=$(git log -1 --oneline | ForEach-Object { $_.Split(' ')[0] })
+
+# Log as agent action (for dashboard activity summary)
+node .opencode/lib/logger.cjs log agent "weekly-content" ok "$HASH" "Published: $TITLE"
+
+# Also log as a content improvement (for dashboard improvement tracking)
+node .opencode/lib/logger.cjs log fix "fix:content" "$HASH" "Published new article: $TITLE"
+```
+
+### Step 6: LinkedIn Draft (Optional)
+- [ ] Draft 150-300 word LinkedIn post version
+- [ ] Save to `.opencode/logs/linkedin-drafts.md`
+
+### Step 7: Final Heartbeat
+```bash
+node .opencode/lib/logger.cjs heartbeat ok "Weekly content complete"
 ```
 
 ### Step 6: LinkedIn Draft (Optional)

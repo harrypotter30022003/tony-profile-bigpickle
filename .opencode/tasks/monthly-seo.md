@@ -53,16 +53,30 @@ Log everything with `node .opencode/lib/logger.cjs`.
 - [ ] Run `npm run build` — MUST pass
 - [ ] If it fails: log error, abort, do NOT commit
 
-### Step 9: Commit Report
+### Step 9: Log Individual Improvements Before Commit
+For EACH fix or improvement made during the audit, log it separately so the
+dashboard can display it as an auto-improvement:
+
+```bash
+# Example fix logs (adjust based on what you actually fixed):
+# node .opencode/lib/logger.cjs log fix "fix:schema" "" "Updated Person schema with missing fields"
+# node .opencode/lib/logger.cjs log fix "fix:content" "" "Refreshed article: [title] with new data"
+# node .opencode/lib/logger.cjs log fix "fix:seo" "" "Added FAQ schema to homepage"
+```
+
+### Step 10: Commit Report with All Fixes
 ```bash
 MONTH=$(date +%Y-%m)
-node .opencode/lib/logger.cjs log audit "monthly-audit-$MONTH" ok - "Full audit complete"
+SUMMARY="Monthly SEO audit: [X] improvements made"
 
-# Commit any fixes made during audit
+# Commit all fixes
 git add -A
-git commit -m "audit: monthly SEO fixes $MONTH"
+git commit -m "audit: $SUMMARY"
 git push origin main
-HASH=$(git log -1 --oneline | cut -d' ' -f1)
-node .opencode/lib/logger.cjs log agent "monthly-seo" ok "$HASH" "Monthly audit complete"
+HASH=$(git log -1 --oneline | ForEach-Object { $_.Split(' ')[0] })
+
+# Log the audit action for dashboard tracking
+node .opencode/lib/logger.cjs log audit "monthly-audit-$MONTH" ok - "$SUMMARY"
+node .opencode/lib/logger.cjs log agent "monthly-seo" ok "$HASH" "$SUMMARY"
 node .opencode/lib/logger.cjs heartbeat ok "Monthly audit done"
 ```

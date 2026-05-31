@@ -203,6 +203,186 @@ function handleCommits(url) {
 }
 
 /**
+ * Handler for /api/summary — returns human-readable activity summary.
+ *
+ * Analyzes agent-log.ndjson and groups entries by day to show:
+ *   - Daily activity summaries (nightly review passed/fixed, content published, fixes)
+ *   - Content status (article count, last publish date)
+ *   - Improvement counts (last 7 days, last 30 days)
+ *   - Recent improvements list with descriptions
+ */
+function handleSummary() {
+  // ── Read all agent log entries ─────────────────────────────────────────────
+  const agentLogPath = path.join(LOG_DIR, 'agent-log.ndjson');
+  const allEntries = readLogFile(agentLogPath, 500); // get up to 500 for good grouping
+
+  // ── Group entries by date ──────────────────────────────────────────────────
+  const byDay = {};
+  for (const entry of allEntries) {
+    if (!entry.ts) continue;
+    const day = entry.ts.substring(0, 10); // "2026-05-31"
+    if (!byDay[day]) byDay[day] = [];
+    byDay[day].push(entry);
+  }
+
+  // ── Build daily summaries (last 14 days) ──────────────────────────────────
+  const days = Object.keys(byDay).sort().reverse().slice(0, 14);
+  const dailySummaries = days.map(day => {
+    const entries = byDay[day];
+    const summary = { date: day, actions: [], hasIssues: false };
+    let hasReview = false, hasContent = false, hasFixes = false, hasAudit = false;
+
+    for (const e of entries) {
+      if (e.action === 'nightly-review') {
+        hasReview = true;
+        if (e.status === 'ok') {
+          summary.reviewStatus = 'passed';
+          summary.reviewDetail = e.message || 'No issues found';
+        } else if (e.status === 'warning') {
+          summary.reviewStatus = 'warnings';
+          summary.reviewDetail = e.message || 'Issues found and fixed';
+          summary.hasIssues = true;
+        } else {
+          summary.reviewStatus = 'failed';
+          summary.reviewDetail = e.message || 'Review had errors';
+          summary.hasIssues = true;
+        }
+      }
+      if (e.action === 'weekly-content') {
+        hasContent = true;
+        summary.contentMessage = e.message || 'Content published';
+        if (e.commit) summary.contentCommit = e.commit;
+      }
+      if (e.action && (e.action.startsWith('fix:') || e.type === 'fix')) {
+        hasFixes = true;
+        if (!summary.fixes) summary.fixes = [];
+        summary.fixes.push({ message: e.message || e.action, commit: e.commit });
+      }
+      if (e.action === 'monthly-seo') {
+        hasAudit = true;
+        summary.auditStatus = e.status;
+        summary.auditMessage = e.message || 'Monthly audit completed';
+      }
+      // Also count "content:" prefix actions (from weekly-content creating articles)
+      if (e.action && e.action.startsWith('content:')) {
+        hasContent = true;
+        summary.contentMessage = e.message || e.action;
+      }
+    }
+
+    // Build action list for this day
+    const actions = [];
+    if (hasReview) actions.push(summary.reviewStatus === 'passed' ? '✅ Nightly review passed' :
+      summary.reviewStatus === 'warnings' ? '⚠️ Nightly review: issues fixed' : '❌ Nightly review failed');
+    if (hasContent) actions.push('📝 ' + (summary.contentMessage || 'Content created'));
+    if (hasFixes) actions.push('🛠️ ' + (summary.fixes ? summary.fixes.length + ' fix(es) applied' : 'Fixes applied'));
+    if (hasAudit) actions.push('📊 Monthly SEO audit completed');
+    if (actions.length === 0) actions.push('💤 Monitoring only — no issues detected');
+    summary.actions = actions;
+    summary.actionCount = entries.length;
+
+    return summary;
+  });
+
+  // ── Improvements count (last 7 and 30 days) ───────────────────────────────
+  const now = Date.now();
+  const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+
+  let fixes7d = 0, fixes30d = 0;
+  let content7d = 0, content30d = 0;
+  let reviews7d = 0, reviews30d = 0;
+
+  for (const entry of allEntries) {
+    if (!entry.ts) continue;
+    const entryTime = new Date(entry.ts).getTime();
+    const age = now - entryTime;
+
+    if (entry.type === 'fix' || (entry.action && entry.action.startsWith('fix'))) {
+      if (age < SEVEN_DAYS) fixes7d++;
+      if (age < THIRTY_DAYS) fixes30d++;
+    }
+    if (entry.action === 'weekly-content') {
+      if (age < SEVEN_DAYS) content7d++;
+      if (age < THIRTY_DAYS) content30d++;
+    }
+    if (entry.action === 'nightly-review') {
+      if (age < SEVEN_DAYS) reviews7d++;
+      if (age < THIRTY_DAYS) reviews30d++;
+    }
+  }
+
+  // ── Content status (read article count from blog data) ─────────────────────
+  let articleCount = 0;
+  let lastArticleDate = null;
+  try {
+    const dataPath = path.resolve(PROJECT_ROOT, 'src', 'admin', 'data.json');
+    if (fs.existsSync(dataPath)) {
+      const raw = fs.readFileSync(dataPath, 'utf-8');
+      const data = JSON.parse(raw);
+      if (data.blog && Array.isArray(data.blog)) {
+        articleCount = data.blog.length;
+        // Find most recent article date
+        const dates = data.blog
+          .map(a => a.date || a.publishedAt || a.createdAt)
+          .filter(Boolean)
+          .sort()
+          .reverse();
+        if (dates.length > 0) lastArticleDate = dates[0];
+      }
+    }
+  } catch {
+    // Blog data might not exist locally
+  }
+
+  // If we couldn't get from blog JSON, try from git log for content commits
+  if (articleCount === 0) {
+    const contentCommits = safeExec('git log --oneline --grep="content:" -5', { cwd: PROJECT_ROOT });
+    if (contentCommits) {
+      articleCount = contentCommits.split('\n').length;
+    }
+  }
+
+  // ── Compute freshness score ────────────────────────────────────────────────
+  let freshnessScore = 'unknown';
+  let freshnessLabel = 'No data';
+  if (lastArticleDate) {
+    const lastPub = new Date(lastArticleDate).getTime();
+    const daysSince = Math.floor((now - lastPub) / (24 * 60 * 60 * 1000));
+    if (daysSince <= 14) { freshnessScore = 'fresh'; freshnessLabel = `📅 ${daysSince} day(s) ago — looking good`; }
+    else if (daysSince <= 30) { freshnessScore = 'stale'; freshnessLabel = `⚠️ ${daysSince} day(s) ago — could use a new post`; }
+    else { freshnessScore = 'critical'; freshnessLabel = `🔴 ${daysSince} day(s) ago — needs content ASAP`; }
+  }
+
+  // ── Recent improvements list ──────────────────────────────────────────────
+  const recentImprovements = allEntries
+    .filter(e => e.type === 'fix' || (e.action && e.action.startsWith('fix')))
+    .sort((a, b) => new Date(b.ts) - new Date(a.ts))
+    .slice(0, 10)
+    .map(e => ({
+      ts: e.ts,
+      message: e.message || e.action || 'Fix applied',
+      commit: e.commit || null,
+    }));
+
+  return JSON.stringify({
+    daily: dailySummaries,
+    improvements: {
+      last7days: { fixes: fixes7d, content: content7d, reviews: reviews7d },
+      last30days: { fixes: fixes30d, content: content30d, reviews: reviews30d },
+      recent: recentImprovements,
+    },
+    content: {
+      articleCount,
+      lastArticleDate,
+      freshnessScore,
+      freshnessLabel,
+    },
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/**
  * Returns the complete HTML dashboard page.
  */
 function getDashboardHTML() {
@@ -292,6 +472,55 @@ function getDashboardHTML() {
   .commit-list { font-family: 'SF Mono', Consolas, monospace; font-size: 0.8rem; }
   .commit-list .commit { padding: 4px 0; }
   .commit-list .hash { color: var(--blue); margin-right: 8px; }
+
+  /* ── Activity Summary ─────────────────────────────────────────────────── */
+  .summary-day {
+    background: rgba(255,255,255,0.02); border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;
+    border-left: 3px solid var(--border);
+  }
+  .summary-day.passed { border-left-color: var(--green); }
+  .summary-day.issues { border-left-color: var(--yellow); }
+  .summary-day.failed { border-left-color: var(--red); }
+  .summary-day .day-header {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.85rem; margin-bottom: 6px;
+  }
+  .summary-day .day-date { font-weight: 600; color: var(--text); }
+  .summary-day .day-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .summary-day .day-action {
+    font-size: 0.78rem; padding: 2px 8px; border-radius: 10px;
+    background: rgba(255,255,255,0.04); color: var(--muted);
+  }
+  .summary-day .day-action.fix { color: var(--yellow); }
+  .summary-day .day-action.content { color: var(--blue); }
+  .summary-day .day-action.review-ok { color: var(--green); }
+  .summary-day .day-action.review-issue { color: var(--yellow); }
+  .summary-day .day-detail { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+  /* ── Content Status ────────────────────────────────────────────────────── */
+  .content-fresh { color: var(--green); }
+  .content-stale { color: var(--yellow); }
+  .content-critical { color: var(--red); }
+
+  /* ── Improvements List ─────────────────────────────────────────────────── */
+  .improvement-item {
+    padding: 6px 10px; margin-bottom: 3px; border-radius: 4px; font-size: 0.8rem;
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.02);
+  }
+  .improvement-item:hover { background: rgba(255,255,255,0.05); }
+  .improvement-item .imp-msg { color: var(--text); }
+  .improvement-item .imp-ts { color: var(--muted); font-size: 0.72rem; }
+  .improvement-item .imp-commit { color: var(--blue); font-size: 0.72rem; font-family: monospace; }
+  .imp-counter {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;
+  }
+  .imp-counter.fixes { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .imp-counter.content { background: rgba(88,166,255,0.15); color: var(--blue); }
+  .imp-counter.reviews { background: rgba(63,185,80,0.15); color: var(--green); }
+  .empty-state { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 20px; }
+
   @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -306,6 +535,13 @@ function getDashboardHTML() {
   </div>
 </div>
 
+<!-- Activity Summary (top section, before grid) -->
+<div class="card" style="margin-bottom:20px;">
+  <h3>📋 Activity Summary <span style="font-weight:400;color:var(--muted);font-size:0.75rem;">— last 14 days</span></h3>
+  <div id="activitySummary"><div class="empty-state">Loading...</div></div>
+  <div class="timestamp" id="summaryTimestamp"></div>
+</div>
+
 <div class="grid">
   <!-- Agent Status Card -->
   <div class="card">
@@ -316,7 +552,25 @@ function getDashboardHTML() {
     <div class="stat-row"><span class="label">Last Commit</span><span class="value" id="lastCommit" style="font-size:0.8rem;font-family:monospace">—</span></div>
   </div>
 
-  <!-- Log Stats Card -->
+  <!-- Content Status Card -->
+  <div class="card">
+    <h3>📄 Content Status</h3>
+    <div class="stat-row"><span class="label">Total Articles</span><span class="value" id="articleCount">—</span></div>
+    <div class="stat-row"><span class="label">Last Published</span><span class="value" id="lastArticleDate">—</span></div>
+    <div class="stat-row"><span class="label">Freshness</span><span class="value" id="contentFreshness">—</span></div>
+    <div class="stat-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+      <span class="label">Improvements (7d / 30d)</span>
+      <span class="value" id="improvementCounts" style="font-size:0.78rem;">—</span>
+    </div>
+  </div>
+
+  <!-- Auto-Improvements Card (left column) -->
+  <div class="card">
+    <h3>🛠️ Auto-Improvements <span style="font-weight:400;color:var(--muted);font-size:0.75rem;">— recent fixes & changes</span></h3>
+    <div id="recentImprovements"><div class="empty-state">Loading...</div></div>
+  </div>
+
+  <!-- Log Stats Card (right column) -->
   <div class="card">
     <h3>📊 Log Storage</h3>
     <div class="stat-row"><span class="label">Agent Log</span><span class="value" id="logStats-agent">—</span></div>
@@ -463,9 +717,96 @@ function getDashboardHTML() {
     });
   }
 
+  // ── Activity Summary ─────────────────────────────────────────────────────
+  async function refreshSummary() {
+    const data = await fetchJSON('/api/summary');
+    if (!data) return;
+
+    // Daily summaries
+    const container = document.getElementById('activitySummary');
+    container.innerHTML = '';
+    if (data.daily && data.daily.length > 0) {
+      let hasAnyActivity = false;
+      data.daily.forEach(day => {
+        const div = document.createElement('div');
+        const cssClass = day.hasIssues ? 'issues' : (day.reviewStatus === 'failed' ? 'failed' : 'passed');
+        div.className = 'summary-day ' + cssClass;
+
+        const dateObj = new Date(day.date + 'T00:00:00');
+        const dateStr = dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+
+        let actionsHtml = '';
+        day.actions.forEach(a => {
+          let cls = 'day-action';
+          if (a.includes('✅') || a.includes('Nightly')) cls += ' review-ok';
+          if (a.includes('⚠️') || a.includes('issues')) cls += ' review-issue';
+          if (a.includes('📝')) cls += ' content';
+          if (a.includes('🛠️')) cls += ' fix';
+          actionsHtml += '<span class="' + cls + '">' + a + '</span>';
+        });
+
+        const detailHtml = day.reviewDetail && day.reviewStatus !== 'passed'
+          ? '<div class="day-detail">' + day.reviewDetail + '</div>' : '';
+
+        if (actionsHtml) hasAnyActivity = true;
+        div.innerHTML = '<div class="day-header"><span class="day-date">' + dateStr + '</span>' +
+          '<span style="color:var(--muted);font-size:0.72rem;">' + day.actionCount + ' log entries</span></div>' +
+          '<div class="day-actions">' + actionsHtml + '</div>' + detailHtml;
+        container.appendChild(div);
+      });
+      if (!hasAnyActivity) {
+        container.innerHTML = '<div class="empty-state">No agent activity recorded yet — check back after the next cycle</div>';
+      }
+    } else {
+      container.innerHTML = '<div class="empty-state">No agent activity recorded yet — check back after the next cycle</div>';
+    }
+
+    // Content status
+    if (data.content) {
+      document.getElementById('articleCount').textContent = data.content.articleCount || '0';
+      document.getElementById('lastArticleDate').textContent = data.content.lastArticleDate
+        ? new Date(data.content.lastArticleDate).toLocaleDateString() : '—';
+
+      const freshnessEl = document.getElementById('contentFreshness');
+      const freshnessScore = data.content.freshnessScore || 'unknown';
+      if (freshnessScore === 'fresh') freshnessEl.className = 'value content-fresh';
+      else if (freshnessScore === 'stale') freshnessEl.className = 'value content-stale';
+      else freshnessEl.className = 'value content-critical';
+      freshnessEl.textContent = data.content.freshnessLabel || '—';
+    }
+
+    // Improvement counts
+    if (data.improvements) {
+      const imp = data.improvements;
+      const html = '<span class="imp-counter fixes">🛠️ ' + imp.last7days.fixes + '/' + imp.last30days.fixes + '</span> ' +
+        '<span class="imp-counter content">📝 ' + imp.last7days.content + '/' + imp.last30days.content + '</span> ' +
+        '<span class="imp-counter reviews">✅ ' + imp.last7days.reviews + '/' + imp.last30days.reviews + '</span>';
+      document.getElementById('improvementCounts').innerHTML = html;
+    }
+
+    // Recent improvements list
+    const impContainer = document.getElementById('recentImprovements');
+    if (data.improvements && data.improvements.recent && data.improvements.recent.length > 0) {
+      impContainer.innerHTML = '';
+      data.improvements.recent.slice(0, 8).forEach(imp => {
+        const div = document.createElement('div');
+        div.className = 'improvement-item';
+        const ts = imp.ts ? new Date(imp.ts).toLocaleString() : '—';
+        div.innerHTML = '<span class="imp-msg">' + (imp.message || 'Fix applied') + '</span>' +
+          (imp.commit ? ' <span class="imp-commit">(' + imp.commit + ')</span>' : '') +
+          ' <span class="imp-ts">' + ts + '</span>';
+        impContainer.appendChild(div);
+      });
+    } else {
+      impContainer.innerHTML = '<div class="empty-state">No fixes or improvements recorded yet</div>';
+    }
+
+    document.getElementById('summaryTimestamp').textContent = 'Updated: ' + new Date(data.timestamp).toLocaleString();
+  }
+
   async function refreshAll() {
     document.getElementById('lastRefresh').textContent = new Date().toLocaleString();
-    await Promise.all([refreshStatus(), refreshHealth(), refreshLogs(), refreshCommits()]);
+    await Promise.all([refreshStatus(), refreshHealth(), refreshLogs(), refreshCommits(), refreshSummary()]);
   }
 
   // Log type filter buttons
@@ -507,6 +848,9 @@ const server = http.createServer((req, res) => {
     } else if (url === '/api/health') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(handleHealth());
+    } else if (url === '/api/summary') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(handleSummary());
     } else if (url.startsWith('/api/commits')) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(handleCommits(url));
