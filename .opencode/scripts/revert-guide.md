@@ -22,7 +22,7 @@ Every agent commit includes the commit hash in the log file (`.opencode/logs/age
 
 ```powershell
 # Find the commit hash of a specific action:
-node .opencode\lib\logger.js tail agent 20
+node .opencode\lib\logger.cjs tail agent 20
 
 # Then revert it:
 git revert <commit-hash>

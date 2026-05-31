@@ -7,11 +7,11 @@
  * One file per log type: agent-log.ndjson, heartbeat.ndjson, audit.ndjson
  *
  * Usage:
- *   node .opencode/lib/logger.js log <type> <action> <status> [details...]
- *   node .opencode/lib/logger.js heartbeat
- *   node .opencode/lib/logger.js tail <type> [lines=10]
- *   node .opencode/lib/logger.js stats
- *   node .opencode/lib/logger.js prune <type> [max=500]
+ *   node .opencode/lib/logger.cjs log <type> <action> <status> [details...]
+ *   node .opencode/lib/logger.cjs heartbeat
+ *   node .opencode/lib/logger.cjs tail <type> [lines=10]
+ *   node .opencode/lib/logger.cjs stats
+ *   node .opencode/lib/logger.cjs prune <type> [max=500]
  */
 
 const fs = require('fs');
@@ -40,10 +40,10 @@ function appendLog(filePath, entry) {
   const line = JSON.stringify(entry) + '\n';
   fs.appendFileSync(filePath, line, 'utf-8');
   // Prune if over limit
-  pruneFile(filePath, MAX_ENTRIES);
+  doPruneFile(filePath, MAX_ENTRIES);
 }
 
-function pruneFile(filePath, maxLines) {
+function doPruneFile(filePath, maxLines) {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
     const lines = content.trim().split('\n');
@@ -106,7 +106,7 @@ switch (command) {
     const hbMax = 100;
     const hbFile = LOG_FILES.heartbeat;
     appendLog(hbFile, entry);
-    pruneFile(hbFile, hbMax);
+    doPruneFile(hbFile, hbMax);
     console.log(JSON.stringify(entry));
     break;
   }
@@ -158,18 +158,18 @@ switch (command) {
   case 'prune': {
     // node logger.js prune <type> [max=500]
     const [pruneType, pruneMax] = args;
-    const pruneFile = LOG_FILES[pruneType];
-    if (!pruneFile) {
+    const pruneFilePath = LOG_FILES[pruneType];
+    if (!pruneFilePath) {
       console.error(`Unknown log type: ${pruneType}. Valid: ${Object.keys(LOG_FILES).join(', ')}`);
       process.exit(1);
     }
     const max = parseInt(pruneMax, 10) || MAX_ENTRIES;
-    const before = fs.existsSync(pruneFile)
-      ? fs.readFileSync(pruneFile, 'utf-8').trim().split('\n').filter(Boolean).length
+    const before = fs.existsSync(pruneFilePath)
+      ? fs.readFileSync(pruneFilePath, 'utf-8').trim().split('\n').filter(Boolean).length
       : 0;
-    pruneFile(pruneFile, max);
-    const after = fs.existsSync(pruneFile)
-      ? fs.readFileSync(pruneFile, 'utf-8').trim().split('\n').filter(Boolean).length
+    doPruneFile(pruneFilePath, max);
+    const after = fs.existsSync(pruneFilePath)
+      ? fs.readFileSync(pruneFilePath, 'utf-8').trim().split('\n').filter(Boolean).length
       : 0;
     console.log(`Pruned ${pruneType}: ${before} → ${after} entries (max ${max})`);
     break;

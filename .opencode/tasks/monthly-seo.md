@@ -6,7 +6,7 @@
 
 ## Instructions
 
-Log everything with `node .opencode/lib/logger.js`.
+Log everything with `node .opencode/lib/logger.cjs`.
 
 ### Step 1: Full Site Crawl
 - [ ] Fetch all known routes: `/`, `/blog`, `/blog/*`, `/admin`, `/api/*`
@@ -56,13 +56,13 @@ Log everything with `node .opencode/lib/logger.js`.
 ### Step 9: Commit Report
 ```bash
 MONTH=$(date +%Y-%m)
-node .opencode/lib/logger.js log audit "monthly-audit-$MONTH" ok - "Full audit complete"
+node .opencode/lib/logger.cjs log audit "monthly-audit-$MONTH" ok - "Full audit complete"
 
 # Commit any fixes made during audit
 git add -A
 git commit -m "audit: monthly SEO fixes $MONTH"
 git push origin main
 HASH=$(git log -1 --oneline | cut -d' ' -f1)
-node .opencode/lib/logger.js log agent "monthly-seo" ok "$HASH" "Monthly audit complete"
-node .opencode/lib/logger.js heartbeat ok "Monthly audit done"
+node .opencode/lib/logger.cjs log agent "monthly-seo" ok "$HASH" "Monthly audit complete"
+node .opencode/lib/logger.cjs heartbeat ok "Monthly audit done"
 ```

@@ -7,14 +7,14 @@
 ## Instructions
 
 Log this file path before starting: `.opencode/logs/agent-log.ndjson`
-Use `node .opencode/lib/logger.js` for all logging.
+Use `node .opencode/lib/logger.cjs` for all logging.
 
 ### Step 1: Health Check
 - [ ] Fetch `https://me.tony.do` — confirm 200 OK
 - [ ] Fetch `https://me.tony.do/blog` — confirm blog loads
 - [ ] Run `npm run build` — verify success
 - [ ] Check `git status` for uncommitted changes
-- [ ] Log heartbeat: `node .opencode/lib/logger.js heartbeat nightly-start ok`
+- [ ] Log heartbeat: `node .opencode/lib/logger.cjs heartbeat nightly-start ok`
 
 ### Step 2: SEO Scan
 - [ ] Review `<title>` tags on homepage and blog pages
@@ -48,13 +48,13 @@ Use `node .opencode/lib/logger.js` for all logging.
   git add -A
   git commit -m "nightly: [summary of changes]"
   git push origin main
-  git log -1 --oneline | node .opencode/lib/logger.js log agent "nightly-review" ok -
+  git log -1 --oneline | node .opencode/lib/logger.cjs log agent "nightly-review" ok -
   ```
 - [ ] If no fixes needed:
   ```bash
-  node .opencode/lib/logger.js log agent "nightly-review" ok - "No issues found"
+  node .opencode/lib/logger.cjs log agent "nightly-review" ok - "No issues found"
   ```
 - [ ] Final heartbeat:
   ```bash
-  node .opencode/lib/logger.js heartbeat ok "Nightly review complete"
+  node .opencode/lib/logger.cjs heartbeat ok "Nightly review complete"
   ```

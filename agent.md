@@ -2,7 +2,7 @@
 
 > **Agent System Prompt:** Your master persona, goals, and behavioral rules are defined in `~/.config/opencode/agents/personal-brand-pm.md` (agent name: `tony-brand-master`). This handover doc covers project-specific architecture, discoveries, and milestones. Read BOTH documents before making changes.
 >
-> **24/7 Operation:** Task schedules are in `.opencode/tasks/`. Agent logs are in `.opencode/logs/` (rolling JSON-lines, auto-pruned). Monitoring: `node .opencode/scripts/health-check.js`. See "24/7 Autonomous Operation" section below.
+> **24/7 Operation:** Task schedules are in `.opencode/tasks/`. Agent logs are in `.opencode/logs/` (rolling JSON-lines, auto-pruned). Monitoring: `node .opencode/scripts/health-check.cjs`. See "24/7 Autonomous Operation" section below.
 
 Welcome, Agent! This document serves as the absolute source of truth regarding the architecture, discoveries, and milestones completed on the `me.tony.do` portfolio, CMS, and AI blogging engine. Read this carefully to continue seamlessly without breaking existing system patterns.
 
@@ -59,13 +59,13 @@ Both auto-prune — no manual cleanup, no unbounded growth.
 **To read logs:**
 ```powershell
 # Last 10 agent actions:
-node .opencode\lib\logger.js tail agent 10
+node .opencode\lib\logger.cjs tail agent 10
 
 # Log statistics (size, entries, freshness):
-node .opencode\lib\logger.js stats
+node .opencode\lib\logger.cjs stats
 
 # Full health check:
-node .opencode\scripts\health-check.js
+node .opencode\scripts\health-check.cjs
 ```
 
 ### Starting / Stopping
@@ -196,8 +196,8 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
 *   `.opencode/tasks/monthly-seo.md`: 1st of month deep SEO audit.
 *   `.opencode/logs/agent-log.ndjson`: Rolling agent action log (500 max, auto-pruned).
 *   `.opencode/logs/heartbeat.ndjson`: Agent heartbeat pings (100 max, auto-pruned).
-*   `.opencode/lib/logger.js`: Node.js logging utility (`.ndjson` format, auto-pruning).
-*   `.opencode/scripts/health-check.js`: Autonomous health verification script.
+*   `.opencode/lib/logger.cjs`: Node.js logging utility (`.ndjson` format, auto-pruning).
+*   `.opencode/scripts/health-check.cjs`: Autonomous health verification script.
 *   `.opencode/scripts/revert-guide.md`: Instructions for rolling back bad commits.
 *   `.opencode/setup-24-7-agent.ps1`: Windows Task Scheduler installer.
 
@@ -208,13 +208,13 @@ We have successfully built, tested, and deployed an autonomous, self-balancing b
 1.  **Run the 24/7 setup** — Execute `.opencode/setup-24-7-agent.ps1` as Administrator to register the agent as a background service, then `opencode attach` to verify it's running.
 2.  **Verify nightly review** — Check logs after 2 AM:
     ```powershell
-    node .opencode\lib\logger.js tail agent 10
-    node .opencode\scripts\health-check.js
+    node .opencode\lib\logger.cjs tail agent 10
+    node .opencode\scripts\health-check.cjs
     ```
-3.  **Monitor agent health** — Run `node .opencode\scripts\health-check.js` anytime to verify the agent is running, the site is healthy, and the build passes. If the heartbeat is stale (>6h), the agent may be down.
+3.  **Monitor agent health** — Run `node .opencode\scripts\health-check.cjs` anytime to verify the agent is running, the site is healthy, and the build passes. If the heartbeat is stale (>6h), the agent may be down.
 4.  **Monitor AdSense Review** — Ensure traffic crawls go smoothly. The blog currently houses **25+ unique articles**, exceeding Google's recommended threshold (15-20) for approval.
 5.  **Add RSS Sources** — If Tony requests more niche topics, add them directly inside the `RSS_FEEDS` array at the top of `api/cron-fetch-news.js`.
 6.  **Perform Audits** — Watch Vercel's Cron Execution log inside the dashboard to ensure the Sunday midnight automated trigger completes successfully.
 7.  **E-E-A-T Improvement** — Review the monthly audit log and implement suggested improvements to strengthen Experience, Expertise, Authoritativeness, and Trustworthiness signals.
 8.  **LinkedIn Integration** — Draft LinkedIn posts from blog content and save to `.opencode/logs/linkedin-drafts.md` for Tony to review.
-9.  **Log pruning** — Logs auto-prune at 500 entries. If disk space is a concern, run `node .opencode\lib\logger.js prune agent 200` to reduce retention.
+9.  **Log pruning** — Logs auto-prune at 500 entries. If disk space is a concern, run `node .opencode\lib\logger.cjs prune agent 200` to reduce retention.

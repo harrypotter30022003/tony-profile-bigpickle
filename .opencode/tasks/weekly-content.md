@@ -6,7 +6,7 @@
 
 ## Instructions
 
-Log with `node .opencode/lib/logger.js` throughout.
+Log with `node .opencode/lib/logger.cjs` throughout.
 
 ### Step 1: Content Gap Analysis
 - [ ] Count total articles in blog
@@ -33,7 +33,7 @@ For each post:
 - [ ] Run `npm run build`
 - [ ] If build FAILS: **DO NOT COMMIT**. Log error and abort.
   ```bash
-  node .opencode/lib/logger.js log agent "weekly-content" failed - "Build failed after content creation"
+  node .opencode/lib/logger.cjs log agent "weekly-content" failed - "Build failed after content creation"
   ```
 - [ ] If build passes: proceed to commit
 
@@ -45,7 +45,7 @@ git commit -m "content: [article title]"
 git tag "$TAG"
 git push origin main --tags
 HASH=$(git log -1 --oneline | cut -d' ' -f1)
-node .opencode/lib/logger.js log agent "weekly-content" ok "$HASH" "Published: [article title]"
+node .opencode/lib/logger.cjs log agent "weekly-content" ok "$HASH" "Published: [article title]"
 ```
 
 ### Step 6: LinkedIn Draft (Optional)
@@ -54,5 +54,5 @@ node .opencode/lib/logger.js log agent "weekly-content" ok "$HASH" "Published: [
 
 ### Step 7: Final Heartbeat
 ```bash
-node .opencode/lib/logger.js heartbeat ok "Weekly content complete"
+node .opencode/lib/logger.cjs heartbeat ok "Weekly content complete"
 ```
