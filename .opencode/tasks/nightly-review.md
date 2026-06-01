@@ -32,17 +32,30 @@ Use `node .opencode/lib/logger.cjs` for all logging.
 - [ ] Check external links in blog posts
 - [ ] Verify sitemap.xml returns valid XML
 
-### Step 5: Content Freshness
+### Step 5: CI/CD Deployment Check
+- [ ] Check Vercel deployment status via `https://me.tony.do/api/verify-deployment`
+- [ ] If deployment is degraded or failed:
+  ```bash
+  # Log the issue for agent investigation
+  node .opencode/lib/logger.cjs log fix "fix:deployment" warning "" "CI/CD pipeline issue detected - check /api/verify-deployment on production"
+  ```
+- [ ] If build failed (Step 6): check error log and categorize:
+  - Module not found → `npm install`
+  - Syntax error → review recent file changes
+  - Vercel config error → check vercel.json
+  - Other → read error log and self-fix
+
+### Step 6: Content Freshness
 - [ ] Count articles — check last publish date
 - [ ] If stale (>14 days): flag for content creation
 - [ ] If very stale (>21 days): create 1 blog post outline
 
-### Step 6: Build & Verify
+### Step 7: Build & Verify
 - [ ] Run `npm run build` — MUST pass before any commit
 - [ ] If build fails: log the error, do NOT commit, abort the task
 - [ ] If build passes: proceed
 
-### Step 7: Log Individual Fixes (IMPORTANT for Dashboard Tracking)
+### Step 8: Log Individual Fixes (IMPORTANT for Dashboard Tracking)
 For EACH fix you make, log it separately with type "fix" so the dashboard
 can count and display it as an auto-improvement:
 
@@ -55,7 +68,7 @@ node .opencode/lib/logger.cjs log fix "fix:heading" ok "<commit-hash>" "Fixed H1
 node .opencode/lib/logger.cjs log fix "fix:typo" ok "<commit-hash>" "Fixed typo in article Z"
 ```
 
-### Step 8: Commit with Summary
+### Step 9: Commit with Summary
 - [ ] If fixes were made:
   ```bash
   # Build a summary message listing what was fixed

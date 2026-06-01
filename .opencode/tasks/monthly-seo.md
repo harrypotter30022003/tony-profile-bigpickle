@@ -8,13 +8,25 @@
 
 Log everything with `node .opencode/lib/logger.cjs`.
 
-### Step 1: Full Site Crawl
+### Step 1: Analytics Review (GA4 + Search Console)
+- [ ] Call `https://me.tony.do/api/analytics?report=summary&period=30d` to get combined GA4 + Search Console data
+- [ ] Review traffic trends: total users, sessions, page views vs last month
+- [ ] Review search performance: impressions, clicks, CTR, avg position vs last month
+- [ ] Identify top pages by traffic and top search queries
+- [ ] Check for any analytics configuration issues
+- [ ] Log findings:
+  ```bash
+  node .opencode/lib/logger.cjs log audit monthly-ga4 $(date +%Y-%m) - "GA4: X users, Y sessions, Z page views (30d)"
+  node .opencode/lib/logger.cjs log audit monthly-sc $(date +%Y-%m) - "Search Console: X impressions, Y clicks, Z% CTR (30d)"
+  ```
+
+### Step 2: Full Site Crawl
 - [ ] Fetch all known routes: `/`, `/blog`, `/blog/*`, `/admin`, `/api/*`
 - [ ] Verify all return 200
 - [ ] Check `robots.txt`
 - [ ] Check `sitemap.xml` includes all slugs
 
-### Step 2: Schema Audit
+### Step 3: Schema Audit
 - [ ] Validate all JSON-LD against schema.org
 - [ ] Check `Person` completeness (name, jobTitle, knowsAbout, url)
 - [ ] Check `BlogPosting` on articles (author, datePublished, dateModified)
@@ -22,38 +34,46 @@ Log everything with `node .opencode/lib/logger.cjs`.
 - [ ] Check `FAQPage` if sections exist
 - [ ] Validate syntax (no trailing commas, valid JSON)
 
-### Step 3: Content Freshness
+### Step 4: Content Freshness
 - [ ] List all blog posts with dates
 - [ ] Identify top 3 oldest articles needing updates
 - [ ] For each: suggest improvements
 
-### Step 4: Page Speed
+### Step 5: Page Speed
 - [ ] Review bundle sizes from `npm run build` output
 - [ ] Check for heavy new dependencies
 - [ ] Verify lazy loading is intact
 
-### Step 5: E-E-A-T Assessment
+### Step 6: E-E-A-T Assessment
 - [ ] Does homepage show Experience? (15+ years, specific projects)
 - [ ] Does site show Expertise? (technical depth)
 - [ ] Authoritativeness? (LinkedIn, speaking, mentions)
 - [ ] Trustworthiness? (realistic claims, no fluff)
 - [ ] Score 1-10
 
-### Step 6: Competitor Scan
+### Step 7: Competitor Scan
 - [ ] Check 2-3 peer personal brand sites
 - [ ] Note what they do better
 - [ ] Note what Tony does better
 
-### Step 7: Content Calendar (Next 30 Days)
-- [ ] Generate 4-6 article ideas
-- [ ] Align with Tony's expertise and trends
-- [ ] Prioritize by SEO potential + audience value
+### Step 7: Analytics-Driven Content Calendar (Next 30 Days)
+- [ ] Review analytics data from Step 1:
+  - Which pages get the most traffic? → Create more content on those topics
+  - Which search queries drive impressions? → Optimize existing pages, create deeper content
+  - Which channels drive users? → Double down on what works
+  - Any pages with high bounce rate? → Improve content quality or CTAs
+- [ ] Generate 4-6 article ideas based on:
+  - High-performing topics (from GA4 top pages)
+  - Keyword opportunities (from Search Console queries with high impressions, low CTR)
+  - Topics with rising search interest
+  - Alignment with Tony's expertise and brand pillars
+- [ ] Prioritize by: SEO potential × Audience value × Effort
 
-### Step 8: Build & Verify
+### Step 9: Build & Verify
 - [ ] Run `npm run build` — MUST pass
 - [ ] If it fails: log error, abort, do NOT commit
 
-### Step 9: Log Individual Improvements Before Commit
+### Step 10: Log Individual Improvements Before Commit
 For EACH fix or improvement made during the audit, log it separately so the
 dashboard can display it as an auto-improvement:
 
@@ -64,7 +84,7 @@ dashboard can display it as an auto-improvement:
 # node .opencode/lib/logger.cjs log fix "fix:seo" "" "Added FAQ schema to homepage"
 ```
 
-### Step 10: Commit Report with All Fixes
+### Step 11: Commit Report with All Fixes
 ```bash
 MONTH=$(date +%Y-%m)
 SUMMARY="Monthly SEO audit: [X] improvements made"
