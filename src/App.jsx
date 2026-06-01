@@ -882,12 +882,12 @@ function App() {
       {currentView === 'home' && (
         <>
           <Hero cvData={data} />
+          <BlogSpotlight cvData={data} />
           <About cvData={data} />
           <Experience cvData={data} />
           <Skills cvData={data} />
           <Projects cvData={data} />
           <ChessSpotlight />
-          <BlogSpotlight cvData={data} />
           <HiddenWisdomSection />
           <MysteryCards />
           <Contact cvData={data} />
@@ -916,68 +916,169 @@ function App() {
 
 function BlogSpotlight({ cvData }) {
   const articles = cvData?.blog || [];
-  const latestArticles = articles.slice(0, 3);
+  const sortedArticles = [...articles].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const latestArticles = sortedArticles.slice(0, 3);
+  const featured = latestArticles[0];
+  const remaining = latestArticles.slice(1);
 
   if (latestArticles.length === 0) return null;
 
   return (
-    <section id="blog-spotlight" style={{ padding: '100px 0', borderTop: '1px solid var(--border-color)' }}>
-      <div className="section-header" style={{ textAlign: 'center', marginBottom: '4rem' }}>
+    <section id="blog-spotlight" style={{ padding: '80px 0 100px', borderTop: '1px solid var(--border-color)' }}>
+      <div className="section-header" style={{ textAlign: 'center', marginBottom: '3rem' }}>
         <h2 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Latest Technical Insights</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Read fresh PM tips, programming tutorials, and business growth hacks by Tony Do</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto' }}>
+          Project management deep-dives, developer tutorials, and tech trends — written for Vietnamese tech teams by Tony Do
+        </p>
       </div>
 
-      <div className="blog-feed-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-        {latestArticles.map((article, i) => (
-          <article 
-            key={i} 
-            className="blog-card" 
-            onClick={() => { window.location.hash = '#blog/' + article.slug; }}
-            style={{
-              cursor: 'pointer',
-              '--glow-color': getCategoryColor(article.category)
-            }}
-          >
-            <div>
-              <div style={{ width: '100%', height: '180px', overflow: 'hidden', position: 'relative' }}>
-                <img 
-                  src={article.image || getFallbackImage(article.category)} 
-                  alt={article.title} 
-                  loading="lazy"
-                  onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <span style={{
-                  position: 'absolute',
-                  top: '0.8rem',
-                  left: '0.8rem',
-                  background: 'rgba(10, 10, 15, 0.85)',
-                  border: '1px solid ' + getCategoryColor(article.category),
-                  color: '#fff',
-                  padding: '0.2rem 0.6rem',
-                  borderRadius: '20px',
-                  fontSize: '0.75rem',
-                  fontWeight: 'bold',
-                  backdropFilter: 'blur(5px)'
-                }}>
-                  {article.category || 'General'}
-                </span>
-              </div>
-
-              <div style={{ padding: '1.5rem' }}>
-                <div className="blog-card-meta" style={{ marginBottom: '0.8rem', fontSize: '0.85rem' }}>
-                  <span>📅 {article.date}</span>
-                  <span>{getReadingTime(article.content)}</span>
-                </div>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '0.8rem', color: 'var(--text)', lineHeight: '1.4' }}>{article.title}</h3>
-                <p className="blog-card-summary" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{article.summary}</p>
+      {/* Featured Article Hero */}
+      {featured && (
+        <div 
+          onClick={() => { window.location.hash = '#blog/' + featured.slug; }}
+          style={{
+            cursor: 'pointer',
+            maxWidth: '1100px',
+            margin: '0 auto 3rem',
+            padding: '0 1.5rem',
+          }}
+        >
+          <article className="blog-card" style={{
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            overflow: 'hidden',
+            '--glow-color': getCategoryColor(featured.category)
+          }}>
+            <div style={{
+              flex: '1 1 380px',
+              minHeight: '280px',
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <img 
+                src={featured.image || getFallbackImage(featured.category)} 
+                alt={featured.title} 
+                loading="eager"
+                onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(featured.category); }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
+              />
+              <span style={{
+                position: 'absolute',
+                top: '1rem',
+                left: '1rem',
+                background: 'rgba(10, 10, 15, 0.85)',
+                border: '1px solid ' + getCategoryColor(featured.category),
+                color: '#fff',
+                padding: '0.3rem 0.8rem',
+                borderRadius: '20px',
+                fontSize: '0.8rem',
+                fontWeight: 'bold',
+                backdropFilter: 'blur(5px)'
+              }}>
+                {featured.category || 'General'}
+              </span>
+              <div style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: getCategoryColor(featured.category),
+                color: '#000',
+                padding: '0.25rem 0.7rem',
+                borderRadius: '6px',
+                fontSize: '0.7rem',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                letterSpacing: '1px'
+              }}>
+                Featured
               </div>
             </div>
+            <div style={{
+              flex: '1 1 380px',
+              padding: '2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center'
+            }}>
+              <div className="blog-card-meta" style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
+                <span>📅 {featured.date}</span>
+                <span>{getReadingTime(featured.content)}</span>
+              </div>
+              <h3 style={{ fontSize: '1.6rem', marginBottom: '1rem', color: 'var(--text)', lineHeight: '1.3' }}>{featured.title}</h3>
+              <p style={{ fontSize: '1rem', color: 'var(--text-muted)', lineHeight: '1.6', margin: '0 0 1.5rem 0' }}>{featured.summary}</p>
+              <span className="btn" style={{
+                alignSelf: 'flex-start',
+                padding: '0.7rem 1.8rem',
+                background: getCategoryColor(featured.category),
+                color: '#000',
+                fontWeight: 'bold',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '0.95rem'
+              }}>
+                Read Full Article →
+              </span>
+            </div>
           </article>
-        ))}
-      </div>
+        </div>
+      )}
 
-      <div style={{ textAlign: 'center', marginTop: '3.5rem' }}>
+      {/* Remaining Articles Grid */}
+      {remaining.length > 0 && (
+        <div className="blog-feed-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1100px', margin: '0 auto', padding: '0 1.5rem' }}>
+          {remaining.map((article, i) => (
+            <article 
+              key={i} 
+              className="blog-card" 
+              onClick={() => { window.location.hash = '#blog/' + article.slug; }}
+              style={{
+                cursor: 'pointer',
+                '--glow-color': getCategoryColor(article.category)
+              }}
+            >
+              <div>
+                <div style={{ width: '100%', height: '180px', overflow: 'hidden', position: 'relative' }}>
+                  <img 
+                    src={article.image || getFallbackImage(article.category)} 
+                    alt={article.title} 
+                    loading="lazy"
+                    onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <span style={{
+                    position: 'absolute',
+                    top: '0.8rem',
+                    left: '0.8rem',
+                    background: 'rgba(10, 10, 15, 0.85)',
+                    border: '1px solid ' + getCategoryColor(article.category),
+                    color: '#fff',
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    backdropFilter: 'blur(5px)'
+                  }}>
+                    {article.category || 'General'}
+                  </span>
+                </div>
+
+                <div style={{ padding: '1.5rem' }}>
+                  <div className="blog-card-meta" style={{ marginBottom: '0.8rem', fontSize: '0.85rem' }}>
+                    <span>📅 {article.date}</span>
+                    <span>{getReadingTime(article.content)}</span>
+                  </div>
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: '0.8rem', color: 'var(--text)', lineHeight: '1.4' }}>{article.title}</h3>
+                  <p className="blog-card-summary" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{article.summary}</p>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      <div style={{ textAlign: 'center', marginTop: '3rem' }}>
         <a href="#blog" className="btn btn-primary" style={{ padding: '0.8rem 2rem', fontWeight: 'bold' }}>
           Explore Full Blog Stream →
         </a>
