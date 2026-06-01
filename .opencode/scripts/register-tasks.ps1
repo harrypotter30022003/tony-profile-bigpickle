@@ -96,8 +96,25 @@ Write-Host "  Nightly       - 2:00 AM daily" -ForegroundColor Green
 Write-Host "  WeeklyContent - Sundays at 11:00 PM" -ForegroundColor Green
 Write-Host "  MonthlySEO    - 1st of month at 1:00 AM" -ForegroundColor Green
 Write-Host ""
+
+# ── Persist OPENCODE_SERVER_PASSWORD as user env var ──────────────────
+# Scheduled tasks don't inherit interactive session env vars. The task
+# scripts can read the password from .opencode\.opencode-server-password,
+# but we ALSO persist it as a user env var for convenience.
+$passwordFile = Join-Path $ProjectRoot ".opencode\.opencode-server-password"
+if (Test-Path $passwordFile) {
+  $password = (Get-Content $passwordFile -Raw).Trim()
+  if ($password) {
+    [Environment]::SetEnvironmentVariable("OPENCODE_SERVER_PASSWORD", $password, "User")
+    [Environment]::SetEnvironmentVariable("OPENCODE_SERVER_USERNAME", "opencode", "User")
+    Write-Host "Persisted OPENCODE_SERVER_PASSWORD to user environment." -ForegroundColor Green
+  }
+}
+
+Write-Host ""
 Write-Host "Verification command:" -ForegroundColor Gray
 Write-Host "  schtasks /query /tn `"TonyBrandMaster`" /v" -ForegroundColor Gray
+Write-Host "  powershell -File .opencode\scripts\verify-setup.ps1" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Start the dashboard right now:" -ForegroundColor Gray
 Write-Host "  .opencode\start-now.bat" -ForegroundColor Gray

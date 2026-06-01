@@ -1,81 +1,123 @@
 <#
 .SYNOPSIS
   Monthly SEO Audit Task — runs 1st of every month at 1:00 AM.
-  Fetches 30-day analytics, checks trends, logs findings.
+  Triggers the agent to do a deep 30-day SEO review.
 #>
 
 $ProjectRoot = "P:\OpenCode_Projects\Tony-cv-cloud\tony-portfolio"
+
+# CRITICAL: Always run from the project root, not from C:\Windows\System32
+Set-Location $ProjectRoot
+
 $LogFile = Join-Path $ProjectRoot ".opencode\logs\monthly-seo-task.log"
 $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-"[$Timestamp] ====== MONTHLY SEO AUDIT STARTED ======" | Out-File -FilePath $LogFile -Append
+$LogDir = Split-Path $LogFile -Parent
+if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
 
-# Step 1: Fetch 30-day analytics
-"[$Timestamp] Fetching 30-day analytics..." | Out-File -FilePath $LogFile -Append
-try {
-  $analytics = Invoke-RestMethod -Uri "https://me.tony.do/api/analytics?report=summary&period=30d" -TimeoutSec 30
-  "GA4 configured: $($analytics.configured.ga4)" | Out-File -FilePath $LogFile -Append
-  "SC configured: $($analytics.configured.searchConsole)" | Out-File -FilePath $LogFile -Append
-  if ($analytics.traffic) {
-    "Traffic (30d): $($analytics.traffic.totalUsers) users, $($analytics.traffic.totalSessions) sessions, $($analytics.traffic.totalPageViews) page views" | Out-File -FilePath $LogFile -Append
-  }
-  if ($analytics.recommendations.Count -gt 0) {
-    "Recommendations:" | Out-File -FilePath $LogFile -Append
-    $analytics.recommendations | ForEach-Object { "  - $_" | Out-File -FilePath $LogFile -Append }
-  }
-} catch {
-  "Analytics error: $_" | Out-File -FilePath $LogFile -Append
+function Write-Log {
+  param([string]$Message)
+  $entry = "[$Timestamp] $Message"
+  $entry | Out-File -FilePath $LogFile -Append
+  Write-Host $entry
 }
 
-# Step 2: Fetch individual reports
-"[$Timestamp] Fetching individual reports..." | Out-File -FilePath $LogFile -Append
+Write-Log "====== MONTHLY SEO AUDIT STARTED ======"
+
+# ── Build prompt with deep context ──────────────────────────────────────
+$promptLines = @()
+$promptLines += "You are running the MONTHLY SEO AUDIT task for me.tony.do (Tony Brand Master)."
+$promptLines += ""
+$promptLines += "Current time: $Timestamp (1st of month)"
+$promptLines += ""
+
+# Fetch 30-day analytics
+Write-Log "Fetching 30-day analytics..."
+try {
+  $summary = Invoke-RestMethod -Uri "https://me.tony.do/api/analytics?report=summary&period=30d" -TimeoutSec 30
+  if ($summary.traffic) {
+    $promptLines += "30d traffic: $($summary.traffic.totalUsers) users, $($summary.traffic.totalSessions) sessions, $($summary.traffic.totalPageViews) page views"
+  }
+  if ($summary.recommendations -and $summary.recommendations.Count -gt 0) {
+    $promptLines += "System recommendations:"
+    $summary.recommendations | ForEach-Object { $promptLines += "  - $_" }
+  }
+  Write-Log "30-day summary loaded."
+} catch {
+  Write-Log "Summary fetch failed: $_"
+}
+
+# Fetch top pages
+Write-Log "Fetching top pages..."
 try {
   $ga4 = Invoke-RestMethod -Uri "https://me.tony.do/api/analytics?report=ga4&period=30d" -TimeoutSec 30
   if ($ga4.rows) {
-    "Top pages:" | Out-File -FilePath $LogFile -Append
-    $ga4.rows | Select-Object -First 5 | ForEach-Object {
-      "  [$($_.sessions) sessions] $($_.pageTitle) - $($_.pagePath)" | Out-File -FilePath $LogFile -Append
+    $promptLines += "Top pages (30d):"
+    $ga4.rows | Select-Object -First 10 | ForEach-Object {
+      $promptLines += "  - [$($_.sessions) sessions] $($_.pageTitle) - $($_.pagePath)"
     }
   }
 } catch {
-  "GA4 detail error: $_" | Out-File -FilePath $LogFile -Append
+  Write-Log "GA4 detail fetch failed: $_"
 }
 
+# Fetch top queries
+Write-Log "Fetching top search queries..."
 try {
   $sc = Invoke-RestMethod -Uri "https://me.tony.do/api/analytics?report=sc&period=30d" -TimeoutSec 30
   if ($sc.rows) {
-    "Top search queries:" | Out-File -FilePath $LogFile -Append
-    $sc.rows | Select-Object -First 5 | ForEach-Object {
-      "  [$($_.impressions) impressions / $($_.clicks) clicks] $($_.query)" | Out-File -FilePath $LogFile -Append
+    $promptLines += "Top search queries (30d):"
+    $sc.rows | Select-Object -First 10 | ForEach-Object {
+      $promptLines += "  - [$($_.impressions) imp / $($_.clicks) clk] $($_.query)"
     }
   }
 } catch {
-  "SC detail error: $_" | Out-File -FilePath $LogFile -Append
+  Write-Log "SC detail fetch failed: $_"
 }
 
-# Step 3: Verify site reachability
-"[$Timestamp] Checking site status..." | Out-File -FilePath $LogFile -Append
+# Check site reachability
+Write-Log "Checking site..."
 try {
-  $resp = Invoke-WebRequest -Uri "https://me.tony.do" -TimeoutSec 15 -UseBasicParsing
-  "Homepage: $($resp.StatusCode) ($($resp.Headers.'Content-Length' ?? 'unknown') bytes)" | Out-File -FilePath $LogFile -Append
-
+  $home = Invoke-WebRequest -Uri "https://me.tony.do" -TimeoutSec 15 -UseBasicParsing
+  $promptLines += "Homepage: HTTP $($home.StatusCode)"
   $sitemap = Invoke-WebRequest -Uri "https://me.tony.do/sitemap.xml" -TimeoutSec 15 -UseBasicParsing
-  "Sitemap: $($sitemap.StatusCode)" | Out-File -FilePath $LogFile -Append
-
-  $analyticsEndpoint = Invoke-WebRequest -Uri "https://me.tony.do/api/analytics?report=summary&period=7d" -TimeoutSec 15 -UseBasicParsing
-  "Analytics API: $($analyticsEndpoint.StatusCode)" | Out-File -FilePath $LogFile -Append
+  $promptLines += "Sitemap: HTTP $($sitemap.StatusCode)"
 } catch {
-  "Site check error: $_" | Out-File -FilePath $LogFile -Append
+  Write-Log "Site check failed: $_"
+  $promptLines += "Site check FAILED: $_"
 }
 
-# Step 4: Build verification
-"[$Timestamp] Build check..." | Out-File -FilePath $LogFile -Append
-try {
-  $build = & npm run build 2>&1
-  if ($LASTEXITCODE -eq 0) { "Build: OK" | Out-File -FilePath $LogFile -Append }
-  else { "Build: FAILED`n$build" | Out-File -FilePath $LogFile -Append }
-} catch {
-  "Build error: $_" | Out-File -FilePath $LogFile -Append
+$promptLines += ""
+$promptLines += "Your tasks:"
+$promptLines += "1. Read the monthly-seo task instructions: .opencode/tasks/monthly-seo.md"
+$promptLines += "2. Analyze the 30-day analytics data above."
+$promptLines += "3. Identify trends, opportunities, and issues."
+$promptLines += "4. Take conservative action if clear issues found (broken pages, missing meta tags, etc)."
+$promptLines += "5. Generate a brief monthly SEO report and save it to .opencode/logs/monthly-seo-report-YYYY-MM.md"
+$promptLines += "6. Commit any changes with a clear message."
+$promptLines += "7. Be CONCISE in your final reply. Use under 400 words."
+
+$fullPrompt = $promptLines -join "`n"
+Write-Log "Prompt prepared: $($fullPrompt.Length) chars"
+
+# ── Trigger the agent ──────────────────────────────────────────────────
+Write-Log "Triggering agent..."
+$triggerScript = Join-Path $ProjectRoot ".opencode\scripts\trigger-agent.ps1"
+
+if (-not $env:OPENCODE_SERVER_PASSWORD) {
+  $passwordFile = Join-Path $ProjectRoot ".opencode\.opencode-server-password"
+  if (Test-Path $passwordFile) {
+    $env:OPENCODE_SERVER_PASSWORD = (Get-Content $passwordFile -Raw).Trim()
+    Write-Log "Loaded password from file"
+  } else {
+    Write-Log "ERROR: No OPENCODE_SERVER_PASSWORD available." "ERROR"
+    exit 1
+  }
 }
 
-"[$Timestamp] ====== MONTHLY SEO AUDIT COMPLETE ======" | Out-File -FilePath $LogFile -Append
+& $triggerScript -Prompt $fullPrompt -TimeoutSeconds 1200
+
+$exitCode = $LASTEXITCODE
+Write-Log "Trigger exit code: $exitCode"
+Write-Log "====== MONTHLY SEO AUDIT COMPLETE ======"
+exit $exitCode

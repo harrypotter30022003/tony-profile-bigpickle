@@ -33,3 +33,7 @@ src/admin/data.json.bak
 
 # Environment Secrets
 .env
+
+# Agent server password (machine-local secret)
+.opencode/.opencode-server-password
+
