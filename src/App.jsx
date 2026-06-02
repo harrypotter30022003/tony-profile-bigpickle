@@ -656,8 +656,26 @@ function App() {
     if (currentView === 'blog-detail' && activeArticle) {
       const pageTitle = `${activeArticle.title} | Tony Do - Tech Leader`;
       const pageDesc = activeArticle.summary || '';
-      const pageImg = activeArticle.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3";
+      // Prefer pre-rendered branded OG image; runtime-fallback to source image if missing
+      const brandedOgImg = `https://me.tony.do/og/blog/${activeSlug}.png`;
+      const pageImgFallback = activeArticle.image || "https://me.tony.do/og-image.png";
       const pageUrl = `https://me.tony.do/#blog/${activeSlug}`;
+
+      // Probe: does the branded image exist? Use HEAD to avoid download.
+      // Default to branded; replace with fallback if HEAD returns 404.
+      let pageImg = brandedOgImg;
+      try {
+        if (typeof fetch === 'function') {
+          fetch(brandedOgImg, { method: 'HEAD' })
+            .then(r => {
+              if (!r.ok && r.status === 404) {
+                setMetaTag('property', 'og:image', pageImgFallback);
+                setMetaTag('property', 'twitter:image', pageImgFallback);
+              }
+            })
+            .catch(() => {});
+        }
+      } catch { /* ignore */ }
 
       document.title = pageTitle;
       if (metaDescription) {

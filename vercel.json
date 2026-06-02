@@ -95,6 +95,10 @@
     {
       "source": "/moderation-panel",
       "destination": "/moderation-panel"
+    },
+    {
+      "source": "/og/blog/:slug",
+      "destination": "/og/blog/:slug"
     }
   ],
   "crons": [
