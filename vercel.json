@@ -7,8 +7,20 @@
       "destination": "/api/sitemap"
     },
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
+      "source": "/rss.xml",
+      "destination": "/api/data?type=rss"
+    },
+    {
+      "source": "/api/rss",
+      "destination": "/api/data?type=rss"
+    },
+    {
+      "source": "/api/comments",
+      "destination": "/api/data?type=comments"
+    },
+    {
+      "source": "/api/reactions",
+      "destination": "/api/data?type=reactions"
     },
     {
       "source": "/admin",

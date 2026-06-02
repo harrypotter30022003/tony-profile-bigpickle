@@ -1,6 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { kv } from '@vercel/kv';
+import {
+  loadBlogArticles,
+  handleRss,
+  handleCommentsGet,
+  handleCommentsPost,
+  handleCommentsModerate,
+  handleReactionsGet,
+  handleReactionsPost,
+} from './_lib.js';
 
 const DATA_FILE = path.join(process.cwd(), 'src/admin/data.json');
 
@@ -71,6 +80,44 @@ export default async function handler(req, res) {
   // Set strict headers to bypass browser, CDN, and edge server caching
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
 
+  // Sub-endpoint routing via ?type= (saves us Vercel serverless function slots)
+  // Each ?type= maps to a handler in _lib.js; URL paths /api/rss, /api/comments, /api/reactions
+  // are rewrites in vercel.json -> /api/data?type=...
+  const type = req.query.type;
+  if (type === 'rss') return handleRss(req, res);
+  if (type === 'comments') {
+    if (req.query.action === 'moderate' && req.method === 'POST') return handleCommentsModerate(req, res);
+    if (req.method === 'POST') return handleCommentsPost(req, res);
+    return handleCommentsGet(req, res);
+  }
+  if (type === 'reactions') {
+    if (req.method === 'POST') return handleReactionsPost(req, res);
+    return handleReactionsGet(req, res);
+  }
+
+  // Default: portfolio data (backwards compatible)
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Comments (rewrite target from /api/comments)
+  if (type === 'comments') {
+    if (req.method === 'POST') return handleCommentsPost(req, res);
+    return handleCommentsGet(req, res);
+  }
+
+  // Reactions (rewrite target from /api/reactions)
+  if (type === 'reactions') {
+    if (req.method === 'POST') return handleReactionsPost(req, res);
+    return handleReactionsGet(req, res);
+  }
+
+  // Admin moderation: ?type=comments&action=moderate (uses HMAC auth header)
+  if (type === 'comments' && req.query.action === 'moderate' && req.method === 'POST') {
+    return handleCommentsModerate(req, res);
+  }
+
+  // Default: portfolio data (backwards compatible)
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
