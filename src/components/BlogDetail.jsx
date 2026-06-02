@@ -221,7 +221,7 @@ export default function BlogDetail({ cvData, slug }) {
             padding: '2rem',
             borderRadius: '12px',
             border: '1px solid var(--border-color)',
-            minHeight: '200px'
+            minHeight: '520px'
           }}
         ></div>
       </section>

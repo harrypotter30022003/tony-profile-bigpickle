@@ -1106,3 +1106,27 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* ===== Comments (Native + Cusdis) ===== */
+
+/* Cusdis iframe area needs breathing room to render the full form */
+#cusdis_thread {
+  min-height: 520px;
+}
+#cusdis_thread iframe {
+  width: 100% !important;
+  min-height: 480px;
+}
+
+/* Native comments: stack the name/email inputs on mobile */
+@media (max-width: 580px) {
+  .native-comments .nc-row {
+    grid-template-columns: 1fr !important;
+  }
+  .native-comments {
+    padding: 1.2rem !important;
+  }
+  .native-comments textarea.nc-textarea {
+    min-height: 140px;
+  }
+}

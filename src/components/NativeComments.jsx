@@ -150,7 +150,7 @@ export default function NativeComments({ slug }) {
 
       {/* Form */}
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+        <div className="nc-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
           <input
             type="text"
             placeholder="Your name"
@@ -185,13 +185,14 @@ export default function NativeComments({ slug }) {
           />
         </div>
         <textarea
+          className="nc-textarea"
           placeholder="Share your thoughts..."
           value={content}
           onChange={e => setContent(e.target.value)}
           required
           minLength={3}
           maxLength={2000}
-          rows={4}
+          rows={6}
           style={{
             padding: '0.7rem 1rem',
             background: 'rgba(255, 255, 255, 0.04)',
@@ -200,7 +201,8 @@ export default function NativeComments({ slug }) {
             color: 'var(--text-primary, #fff)',
             fontSize: '0.95rem',
             resize: 'vertical',
-            fontFamily: 'inherit'
+            fontFamily: 'inherit',
+            minHeight: '140px'
           }}
         />
         {/* Honeypot - hidden from real users */}
