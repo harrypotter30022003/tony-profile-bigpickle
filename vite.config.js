@@ -8,7 +8,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
-        admin: 'admin.html'
+        tonyCmsPortal: 'tony-cms-portal.html'
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',

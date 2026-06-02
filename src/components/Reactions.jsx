@@ -19,7 +19,9 @@ function setUserReaction(slug, type) {
     if (!all[slug]) all[slug] = [];
     if (!all[slug].includes(type)) all[slug].push(type);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  } catch {}
+  } catch {
+    // localStorage unavailable (private mode, quota, etc.) — silently skip dedup
+  }
 }
 
 const REACTIONS = [
@@ -31,20 +33,22 @@ const REACTIONS = [
 export default function Reactions({ slug }) {
   const [counts, setCounts] = useState({ like: 0, insightful: 0, inspired: 0 });
   const [myReactions, setMyReactions] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!slug) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is client-only and must be read after mount to avoid hydration mismatch
     setMyReactions(getUserReactions(slug));
 
+    let cancelled = false;
     fetch(`/api/reactions?slug=${encodeURIComponent(slug)}`)
       .then(r => r.json())
       .then(data => {
+        if (cancelled) return;
         if (data.reactions) setCounts(data.reactions);
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
   }, [slug]);
 
   const handleReact = async (type) => {
@@ -73,7 +77,7 @@ export default function Reactions({ slug }) {
       });
       const data = await resp.json();
       if (data.reactions) setCounts(data.reactions);
-    } catch (err) {
+    } catch {
       // Roll back optimistic update on failure
       setCounts(counts);
       setMyReactions(myReactions.filter(r => r !== type));

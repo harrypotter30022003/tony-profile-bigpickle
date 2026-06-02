@@ -1,14 +1,28 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { getReadingTime, getFallbackImage, getCategoryColor } from './utils/blogHelpers';
 import HeroNewsletter from './components/HeroNewsletter';
+import LoadingSkeleton from './components/LoadingSkeleton';
+import NotFound from './components/NotFound';
 
 const BlogFeed = lazy(() => import('./components/BlogFeed'));
 const BlogDetail = lazy(() => import('./components/BlogDetail'));
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import './App.css';
 
-gsap.registerPlugin(ScrollTrigger);
+// Lazy-load GSAP only when needed (it's ~50KB and only used after first scroll/interaction)
+let gsapRef = null;
+let ScrollTriggerRef = null;
+async function loadGsap() {
+  if (!gsapRef) {
+    const [gsapModule, stModule] = await Promise.all([
+      import('gsap'),
+      import('gsap/ScrollTrigger'),
+    ]);
+    gsapRef = gsapModule.default || gsapModule.gsap;
+    ScrollTriggerRef = stModule.ScrollTrigger;
+    gsapRef.registerPlugin(ScrollTriggerRef);
+  }
+  return { gsap: gsapRef, ScrollTrigger: ScrollTriggerRef };
+}
+import './App.css';
 
 const cvData = {
   name: 'Do Minh Tuan',
@@ -122,25 +136,39 @@ function About({ cvData }) {
   const statsRef = useRef(null);
 
   useEffect(() => {
-    const stats = statsRef.current.querySelectorAll('.stat-num');
-    stats.forEach(stat => {
-      const target = parseInt(stat.getAttribute('data-target'));
-      if (isNaN(target)) return;
-      
-      gsap.fromTo(stat, 
-        { innerText: 0 },
-        { 
-          innerText: target, 
-          duration: 2, 
-          snap: { innerText: 1 },
-          ease: 'power1.out',
-          scrollTrigger: {
-            trigger: stat,
-            start: 'top 90%',
+    let observer;
+    const initGsap = async () => {
+      const { gsap, ScrollTrigger } = await loadGsap();
+      if (!statsRef.current) return;
+      const stats = statsRef.current.querySelectorAll('.stat-num');
+      stats.forEach(stat => {
+        const target = parseInt(stat.getAttribute('data-target'));
+        if (isNaN(target)) return;
+
+        gsap.fromTo(stat,
+          { innerText: 0 },
+          {
+            innerText: target,
+            duration: 2,
+            snap: { innerText: 1 },
+            ease: 'power1.out',
+            scrollTrigger: {
+              trigger: stat,
+              start: 'top 90%',
+            }
           }
-        }
-      );
+        );
+      });
+    };
+    // Load GSAP when the about section enters viewport
+    observer = new IntersectionObserver((entries) => {
+      if (entries.some(e => e.isIntersecting)) {
+        initGsap();
+        observer.disconnect();
+      }
     });
+    if (statsRef.current) observer.observe(statsRef.current);
+    return () => observer && observer.disconnect();
   }, [cvData]);
 
   return (
@@ -589,18 +617,17 @@ function PrivacyPolicy() {
 function App() {
   const [data, setData] = useState(cvData);
   const [loaded, setLoaded] = useState(false);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'dark';
+    return localStorage.getItem('tony-theme') || 'dark';
+  });
   const [currentView, setCurrentView] = useState('home'); // 'home', 'blog', 'blog-detail', 'privacy-policy'
   const [activeSlug, setActiveSlug] = useState('');
-  const [activeArticle, setActiveArticle] = useState(null);
-
-  useEffect(() => {
+  const activeArticle = useMemo(() => {
     if (currentView === 'blog-detail' && activeSlug) {
-      const art = (data?.blog || []).find(a => a.slug === activeSlug);
-      setActiveArticle(art || null);
-    } else {
-      setActiveArticle(null);
+      return (data?.blog || []).find(a => a.slug === activeSlug) || null;
     }
+    return null;
   }, [currentView, activeSlug, data]);
 
   // SEO & Meta Tag Management (Dynamic Header Injection & JSON-LD Rich Snippets)
@@ -771,18 +798,80 @@ function App() {
       setMetaTag('property', 'twitter:url', pageUrl);
       setMetaTag('property', 'twitter:card', 'summary_large_image');
 
+      const portfolioUrl = 'https://me.tony.do';
+      const personSchema = {
+        "@type": "Person",
+        "@id": `${portfolioUrl}#person`,
+        "name": "Do Minh Tuan",
+        "alternateName": "Tony Do",
+        "jobTitle": "Senior Project Manager & Tech Leader",
+        "url": portfolioUrl,
+        "image": `${portfolioUrl}/og-image.png`,
+        "sameAs": [
+          "http://tony.do/linkedin"
+        ].filter(Boolean),
+        "description": "Do Minh Tuan is an experienced Senior Project Manager and COO specializing in Agile software development, technical team leadership, and cloud infrastructures with over 15 years of industry experience.",
+        "knowsAbout": [
+          "Agile Methodologies", "Scrum", "Project Management", "Team Leadership",
+          "PHP", "WordPress", "Magento", "iOS Development", "AWS Cloud", "Mobile Apps",
+          "IT Recruitment", "Budget Control", "Vietnam Tech Ecosystem"
+        ],
+        "alumniOf": {
+          "@type": "CollegeOrUniversity",
+          "name": "University of Wollongong"
+        },
+        "worksFor": data?.experience?.[0] ? {
+          "@type": "Organization",
+          "name": data.experience[0].company
+        } : undefined,
+        "hasOccupation": {
+          "@type": "Occupation",
+          "name": "Senior Project Manager",
+          "occupationLocation": {
+            "@type": "Country",
+            "name": "Vietnam"
+          },
+          "skills": "Agile, Scrum, PHP, WordPress, iOS, AWS, Team Leadership"
+        }
+      };
+
+      const projectSchemas = (data?.projects || []).map(p => ({
+        "@type": "CreativeWork",
+        "name": p.name,
+        "description": p.desc,
+        "url": p.link,
+        "creator": { "@id": `${portfolioUrl}#person` },
+        "keywords": (p.tags || []).join(', ')
+      }));
+
+      const experienceSchemas = (data?.experience || []).map(exp => ({
+        "@type": "WorkExperience",
+        "name": `${exp.position} at ${exp.company}`,
+        "description": (exp.highlights || []).join(' '),
+        "startDate": (exp.period || '').split('-')[0]?.trim() || undefined,
+        "endDate": (exp.period || '').split('-')[1]?.trim() || undefined,
+        "memberOf": { "@type": "Organization", "name": exp.company },
+        "jobTitle": exp.position
+      }));
+
       const jsonLdData = {
         "@context": "https://schema.org",
         "@graph": [
+          personSchema,
+          ...projectSchemas,
+          ...experienceSchemas,
           {
-            "@type": "Person",
-            "name": "Do Minh Tuan",
-            "jobTitle": "Senior Project Manager & Tech Leader",
-            "url": "https://me.tony.do",
-            "sameAs": [
-              "http://tony.do/linkedin"
-            ],
-            "description": "Do Minh Tuan is an experienced Senior Project Manager and COO specializing in Agile software development, technical team leadership, and cloud infrastructures with over 15 years of industry experience."
+            "@type": "WebSite",
+            "@id": `${portfolioUrl}#website`,
+            "url": portfolioUrl,
+            "name": "Tony Do Portfolio",
+            "description": "Senior Project Manager & Tech Leader Portfolio",
+            "inLanguage": "en-US",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": `${portfolioUrl}/#blog?q={search_term_string}`,
+              "query-input": "required name=search_term_string"
+            }
           },
           {
             "@type": "FAQPage",
@@ -826,6 +915,16 @@ function App() {
       const hash = window.location.hash;
       if (hash.startsWith('#blog/')) {
         const slug = hash.replace('#blog/', '');
+        // Verify slug exists (after data loads)
+        if (data && data.blog && data.blog.length > 0) {
+          const exists = data.blog.some(a => a.slug === slug);
+          if (!exists) {
+            setCurrentView('not-found');
+            setActiveSlug(slug);
+            window.scrollTo(0, 0);
+            return;
+          }
+        }
         setCurrentView('blog-detail');
         setActiveSlug(slug);
         window.scrollTo(0, 0);
@@ -837,6 +936,11 @@ function App() {
         setCurrentView('privacy-policy');
         setActiveSlug('');
         window.scrollTo(0, 0);
+      } else if (hash && hash.length > 1) {
+        // Unknown hash route → 404
+        setCurrentView('not-found');
+        setActiveSlug(hash);
+        window.scrollTo(0, 0);
       } else {
         setCurrentView('home');
         setActiveSlug('');
@@ -847,7 +951,7 @@ function App() {
     handleHashChange(); // Run on mount
 
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [data]);
 
   // Page View analytics on Hash Route change
   useEffect(() => {
@@ -870,15 +974,21 @@ function App() {
   }, [currentView, activeSlug]);
 
   useEffect(() => {
-    // Load theme preference
-    const savedTheme = localStorage.getItem('tony-theme') || 'dark';
-    setTheme(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    // Theme is read lazily in useState; just apply it to <html> on mount
+    document.documentElement.setAttribute('data-theme', theme);
 
+    let cancelled = false;
     fetch('/api/data')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setData(d); setLoaded(true); })
-      .catch(() => setLoaded(true));
+      .then(d => {
+        if (cancelled) return;
+        if (d) setData(d);
+        setLoaded(true);
+      })
+      .catch(() => {
+        if (!cancelled) setLoaded(true);
+      });
+    return () => { cancelled = true; };
   }, []);
 
   const toggleTheme = () => {
@@ -890,40 +1000,55 @@ function App() {
 
   useEffect(() => {
     if (loaded) {
-      setTimeout(() => {
+      // Load GSAP on idle so it doesn't block initial render
+      const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500));
+      idle(async () => {
+        const { gsap } = await loadGsap();
         gsap.fromTo('.hero-content', { opacity: 0, y: 100 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.3 });
         gsap.fromTo('.hero-orb', { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.5, stagger: 0.3, delay: 0.5 });
-      }, 100);
+      });
     }
   }, [loaded]);
 
-  if (!loaded) return <div style={{background:'#0a0a0f',height:'100vh'}}></div>;
+  if (!loaded) {
+    return (
+      <div className="app">
+        <Navigation cvData={data} currentView="home" />
+        <main id="main-content">
+          <LoadingSkeleton type="home" />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
       <Navigation cvData={data} currentView={currentView} />
       
-      {currentView === 'home' && (
-        <>
-          <Hero cvData={data} />
-          <BlogSpotlight cvData={data} />
-          <About cvData={data} />
-          <Experience cvData={data} />
-          <Skills cvData={data} />
-          <Projects cvData={data} />
-          <ChessSpotlight />
-          <HiddenWisdomSection />
-          <MysteryCards />
-          <Contact cvData={data} />
-        </>
-      )}
+      <main id="main-content">
+        {currentView === 'home' && (
+          <>
+            <Hero cvData={data} />
+            <BlogSpotlight cvData={data} />
+            <About cvData={data} />
+            <Experience cvData={data} />
+            <Skills cvData={data} />
+            <Projects cvData={data} />
+            <ChessSpotlight />
+            <HiddenWisdomSection />
+            <MysteryCards />
+            <Contact cvData={data} />
+          </>
+        )}
 
-      <Suspense fallback={<BlogLoadingSpinner />}>
-        {currentView === 'blog' && <BlogFeed cvData={data} />}
-        {currentView === 'blog-detail' && <BlogDetail cvData={data} slug={activeSlug} />}
-      </Suspense>
-      
-      {currentView === 'privacy-policy' && <PrivacyPolicy />}
+        <Suspense fallback={<LoadingSkeleton type="blog" />}>
+          {currentView === 'blog' && <BlogFeed cvData={data} />}
+          {currentView === 'blog-detail' && <BlogDetail cvData={data} slug={activeSlug} />}
+        </Suspense>
+        
+        {currentView === 'privacy-policy' && <PrivacyPolicy />}
+        {currentView === 'not-found' && <NotFound requestedPath={activeSlug} />}
+      </main>
 
       <Footer cvData={data} />
       <WhatsAppWidget cvData={data} />

@@ -6,10 +6,20 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+deploy.log
 
 # Agent operational logs (not tracked in git)
 .opencode/logs/
 .opencode/*.ndjson
+
+# Editor / scratch / debug files
+*.bak
+*.stable_dark
+*.stable_light
+test-browser.mjs
+debug-test.mjs
+scratch-*.js
+scratch-*.mjs
 
 node_modules
 dist
@@ -19,6 +29,7 @@ dist-ssr
 # CMS Data - keep private
 src/admin/data.json
 src/admin/data.json.bak
+src/admin/comments.json
 
 # Editor directories and files
 .vscode/*
@@ -33,7 +44,7 @@ src/admin/data.json.bak
 
 # Environment Secrets
 .env
+.env.local
 
 # Agent server password (machine-local secret)
 .opencode/.opencode-server-password
-

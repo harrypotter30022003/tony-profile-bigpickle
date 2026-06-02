@@ -1,22 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { getReadingTime, getFallbackImage, getCategoryColor } from '../utils/blogHelpers';
 
 export default function BlogFeed({ cvData }) {
   const articles = cvData?.blog || [];
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, _setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 12;
 
-  // Reset page back to 1 when changing categories
-  useEffect(() => {
+  // Change handler that resets pagination atomically (avoids setState-in-effect)
+  const setCategory = (cat) => {
+    _setSelectedCategory(cat);
     setCurrentPage(1);
-  }, [selectedCategory]);
+  };
+  const setQuery = (q) => {
+    setSearchQuery(q);
+    setCurrentPage(1);
+  };
   
   const categories = ['All', 'Tech Made Simple 💡', 'Business Hackers 🚀', 'Future Pulse 🔮', 'Developer Corner 💻'];
-  
-  const filteredArticles = selectedCategory === 'All' 
-    ? articles 
-    : articles.filter(a => a.category === selectedCategory);
+
+  const filteredArticles = useMemo(() => {
+    let result = articles;
+    if (selectedCategory !== 'All') {
+      result = result.filter(a => a.category === selectedCategory);
+    }
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      result = result.filter(a =>
+        (a.title || '').toLowerCase().includes(q) ||
+        (a.summary || '').toLowerCase().includes(q) ||
+        (a.content || '').toLowerCase().includes(q) ||
+        (a.tags || []).some(t => t.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [articles, selectedCategory, searchQuery]);
 
   const totalPages = Math.ceil(filteredArticles.length / postsPerPage);
   const indexOfLastPost = currentPage * postsPerPage;
@@ -42,6 +61,54 @@ export default function BlogFeed({ cvData }) {
         <p style={{ color: 'var(--text-muted)' }}>Simple tech tricks, small business growth hacks, and programming tutorials</p>
       </div>
 
+      {/* Search Box */}
+      <div style={{
+        maxWidth: '520px',
+        margin: '0 auto 1.5rem',
+        position: 'relative'
+      }}>
+        <label htmlFor="blog-search" className="sr-only">Search articles</label>
+        <input
+          id="blog-search"
+          type="search"
+          value={searchQuery}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="🔍 Search articles by title, tag, or content..."
+          aria-label="Search articles"
+          style={{
+            width: '100%',
+            padding: '0.8rem 1.2rem',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '30px',
+            color: 'var(--text-primary, #fff)',
+            fontSize: '0.95rem',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setQuery('')}
+            aria-label="Clear search"
+            style={{
+              position: 'absolute',
+              right: '0.8rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'transparent',
+              border: 'none',
+              color: '#888',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              padding: '0.2rem 0.5rem',
+            }}
+          >
+            ×
+          </button>
+        )}
+      </div>
+
       {/* Category Filter Navigation */}
       <div className="category-filter" style={{
         display: 'flex',
@@ -54,7 +121,7 @@ export default function BlogFeed({ cvData }) {
         {categories.map(cat => (
           <button
             key={cat}
-            onClick={() => setSelectedCategory(cat)}
+            onClick={() => setCategory(cat)}
             style={{
               padding: '0.6rem 1.2rem',
               borderRadius: '30px',
@@ -75,9 +142,36 @@ export default function BlogFeed({ cvData }) {
       </div>
       
       {currentPosts.length === 0 ? (
-        <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#888', marginTop: '2rem' }}>No articles published in this category yet. Check back soon!</p>
+        <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+          <p style={{ fontSize: '3rem', margin: '0 0 0.5rem' }} aria-hidden="true">🔍</p>
+          <p style={{ fontSize: '1.2rem', color: '#888', margin: 0 }}>
+            {searchQuery
+              ? <>No articles match "<strong style={{ color: '#fff' }}>{searchQuery}</strong>"</>
+              : 'No articles published in this category yet. Check back soon!'}
+          </p>
+          {(searchQuery || selectedCategory !== 'All') && (
+            <button
+              onClick={() => { setQuery(''); setCategory('All'); }}
+              style={{
+                marginTop: '1rem',
+                padding: '0.5rem 1.2rem',
+                background: 'rgba(0, 245, 212, 0.1)',
+                border: '1px solid #00f5d4',
+                borderRadius: '20px',
+                color: '#00f5d4',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+              }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       ) : (
         <>
+          <p style={{ textAlign: 'center', color: '#666', fontSize: '0.9rem', margin: '0 0 1rem' }} aria-live="polite">
+            Showing {indexOfFirstPost + 1}–{Math.min(indexOfLastPost, filteredArticles.length)} of {filteredArticles.length} article{filteredArticles.length !== 1 ? 's' : ''}
+          </p>
           <div className="blog-feed-grid">
             {currentPosts.map((article, i) => (
               <article 

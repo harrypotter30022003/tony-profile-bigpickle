@@ -2,17 +2,60 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a0a0f" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="alternate" type="application/json" href="/api/summary" title="LLM-friendly Portfolio JSON Summary" />
-    <link rel="alternate" type="application/rss+xml" href="/api/rss" title="Tony Do — Blog RSS Feed" />
+    <link rel="canonical" href="https://me.tony.do/" />
     <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Do Minh Tuan - Senior Project Manager & Tech Leader</title>
-    <meta name="description" content="Portfolio of Do Minh Tuan - Senior Project Manager with 15+ years experience in Web Development, Mobile Apps, and IT Leadership" />
-    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="application-name" content="Tony Do Portfolio" />
+    <meta name="author" content="Do Minh Tuan" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="googlebot" content="index, follow" />
+
+    <link rel="alternate" type="application/json" href="/api/summary" title="LLM-friendly Portfolio JSON Summary" />
+    <link rel="alternate" type="application/rss+xml" href="/rss.xml" title="Tony Do — Blog RSS Feed" />
+
+    <title>Do Minh Tuan - Senior Project Manager & Tech Leader | Tony Do Portfolio</title>
+    <meta name="description" content="Portfolio of Do Minh Tuan (Tony Do) - Senior Project Manager with 15+ years experience in Web Development, Mobile Apps, Agile teams, and IT Leadership across Southeast Asia." />
+    <meta name="keywords" content="Do Minh Tuan, Tony Do, Project Manager, Tech Leader, Vietnam, Agile, Scrum, Web Development, Mobile Apps, IT Leadership, Senior PM" />
+
+    <meta name="geo.region" content="VN" />
+    <meta name="geo.placename" content="Ho Chi Minh City" />
+    <meta name="language" content="English" />
+
+    <!-- Preload critical font + hero assets for LCP -->
+    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://images.unsplash.com">
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="preconnect" href="https://cusdis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="profile" />
+    <meta property="og:url" content="https://me.tony.do/" />
+    <meta property="og:title" content="Do Minh Tuan - Senior Project Manager & Tech Leader" />
+    <meta property="og:description" content="Senior Project Manager with 15+ years experience in Web Development, Mobile Apps, and IT Leadership." />
+    <meta property="og:image" content="https://me.tony.do/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="profile:first_name" content="Do Minh Tuan" />
+    <meta property="profile:last_name" content="Tony" />
+    <meta property="profile:username" content="tonydo" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://me.tony.do/" />
+    <meta name="twitter:title" content="Do Minh Tuan - Senior Project Manager & Tech Leader" />
+    <meta name="twitter:description" content="Senior Project Manager with 15+ years experience in Web Development, Mobile Apps, and IT Leadership." />
+    <meta name="twitter:image" content="https://me.tony.do/og-image.png" />
+    <meta name="twitter:creator" content="@tonydo_pm" />
+    <meta name="twitter:site" content="@tonydo_pm" />
 
     <!-- Microsoft Clarity (Heatmaps & Behavior Analytics) -->
     <script type="text/javascript">
@@ -23,24 +66,9 @@
         })(window, document, "clarity", "script", "pxvqy7b7sh");
     </script>
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://me.tony.do" />
-    <meta property="og:title" content="Do Minh Tuan - Senior Project Manager & Tech Leader" />
-    <meta property="og:description" content="Portfolio of Do Minh Tuan - Senior Project Manager with 15+ years experience in Web Development, Mobile Apps, and IT Leadership" />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d" />
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://me.tony.do" />
-    <meta property="twitter:title" content="Do Minh Tuan - Senior Project Manager & Tech Leader" />
-    <meta property="twitter:description" content="Portfolio of Do Minh Tuan - Senior Project Manager with 15+ years experience in Web Development, Mobile Apps, and IT Leadership" />
-    <meta property="twitter:image" content="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1471589681114517"
      crossorigin="anonymous"></script>
+
     <!-- Google tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-1417QXB4PX"></script>
     <script>
@@ -51,8 +79,19 @@
         send_page_view: false // We will track page views manually inside React to properly support Hash Routing
       });
     </script>
+
+    <!-- Apply theme before paint to prevent FOUC -->
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('tony-theme') || 'dark';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
   </head>
   <body>
+    <a href="#main-content" class="skip-to-content">Skip to main content</a>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

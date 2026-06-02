@@ -1,17 +1,20 @@
-const CACHE_NAME = 'tony-do-v1';
+// Service Worker with version-based cache strategy
+// Cache version is bumped on every deploy so old assets are auto-cleaned.
+const CACHE_VERSION = 'v1.0.1';
+const CACHE_NAME = `tony-do-${CACHE_VERSION}`;
 const ASSETS_TO_CACHE = [
   '/',
-  '/#blog',
-  '/index.html',
   '/favicon.svg',
-  'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap'
+  '/og-image.png',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Pre-caching Core Assets');
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(ASSETS_TO_CACHE).catch(() => {
+        // Some assets might not exist on first install; not fatal
+      });
     }).then(() => self.skipWaiting())
   );
 });
@@ -22,7 +25,6 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[Service Worker] Cleaning Old Cache:', key);
             return caches.delete(key);
           }
         })
@@ -31,27 +33,42 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Network-first for HTML, cache-first for assets
 self.addEventListener('fetch', (event) => {
-  if (!event.request.url.startsWith('http')) return;
+  const req = event.request;
+  if (req.method !== 'GET') return;
 
-  if (event.request.url.includes('/api/save') || event.request.url.includes('/api/login') || event.request.method !== 'GET') {
+  const url = new URL(req.url);
+  if (url.origin !== location.origin) return;
+
+  // Never cache API responses
+  if (url.pathname.startsWith('/api/')) return;
+
+  // HTML: network-first
+  if (req.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(req)
+        .then((resp) => {
+          const copy = resp.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+          return resp;
+        })
+        .catch(() => caches.match(req).then((r) => r || caches.match('/')))
+    );
     return;
   }
 
+  // Static assets: cache-first
   event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          if (networkResponse.status === 200) {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        }).catch(() => {
-          return cachedResponse;
-        });
-
-        return cachedResponse || fetchPromise;
-      });
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((resp) => {
+        if (resp.ok && (resp.type === 'basic' || resp.type === 'default')) {
+          const copy = resp.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        }
+        return resp;
+      }).catch(() => cached);
     })
   );
 });

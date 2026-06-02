@@ -1,6 +1,7 @@
 import { kv } from '@vercel/kv';
 import fs from 'fs';
 import path from 'path';
+import { handleBackup, handleBackupList } from './_lib.js';
 
 // Active RSS Feeds
 const RSS_FEEDS = [
@@ -160,6 +161,11 @@ JSON Response:`;
 export default async function handler(req, res) {
   // Log request metadata
   console.log('Cron UA:', req.headers['user-agent']);
+
+  // Sub-endpoint routing for backup (does not require Gemini key)
+  if (req.query.action === 'backup-daily') return handleBackup(req, res, 'daily');
+  if (req.query.action === 'backup-weekly') return handleBackup(req, res, 'weekly');
+  if (req.query.action === 'backup-list') return handleBackupList(req, res);
 
   // 1. Security Authorization Guard
   const cronSecret = process.env.CRON_SECRET;

@@ -47,7 +47,7 @@ export default function HeroNewsletter() {
         setStatus('error');
         setMessage(data.error || 'Subscription failed. Please try again.');
       }
-    } catch (err) {
+    } catch {
       setStatus('error');
       setMessage('Network error. Please try again.');
     }

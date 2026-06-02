@@ -428,3 +428,258 @@ export async function handleReactionsPost(req, res) {
     return res.status(500).json({ error: 'Failed to save reaction' });
   }
 }
+
+// ===== GITHUB BACKUP =====
+// Backs up portfolio data + comments + reactions + subscribers to a dedicated
+// `data-backups` branch in the GitHub repo. Daily snapshots kept for 30 days,
+// weekly snapshots for 30 weeks. Uses GitHub Contents API + a classic PAT.
+//
+// Required env var: GITHUB_BACKUP_TOKEN (classic PAT, scope: repo)
+// Optional: GITHUB_REPO_OWNER (default: harrypotter30022003)
+//           GITHUB_REPO_NAME  (default: tony-profile-bigpickle)
+
+const GH_API = 'https://api.github.com';
+const GH_OWNER = process.env.GITHUB_REPO_OWNER || 'harrypotter30022003';
+const GH_REPO = process.env.GITHUB_REPO_NAME || 'tony-profile-bigpickle';
+const GH_BRANCH = 'data-backups';
+const GH_BASE = process.env.GITHUB_REPO_BASE_BRANCH || 'main';
+
+function ghHeaders() {
+  const token = process.env.GITHUB_BACKUP_TOKEN;
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'tony-portfolio-backup-bot',
+  };
+}
+
+async function gh(path, options = {}) {
+  const token = process.env.GITHUB_BACKUP_TOKEN;
+  if (!token) throw new Error('GITHUB_BACKUP_TOKEN missing');
+  const url = `${GH_API}/repos/${GH_OWNER}/${GH_REPO}${path}`;
+  const resp = await fetch(url, {
+    ...options,
+    headers: { ...ghHeaders(), ...(options.headers || {}) },
+  });
+  const text = await resp.text();
+  if (!resp.ok) {
+    throw new Error(`GitHub ${resp.status} on ${path}: ${text.slice(0, 200)}`);
+  }
+  return text ? JSON.parse(text) : null;
+}
+
+async function ensureBranch() {
+  try {
+    await gh(`/branches/${GH_BRANCH}`);
+  } catch {
+    const mainRef = await gh(`/git/ref/heads/${GH_BASE}`);
+    await gh('/git/refs', {
+      method: 'POST',
+      body: JSON.stringify({
+        ref: `refs/heads/${GH_BRANCH}`,
+        sha: mainRef.object.sha,
+      }),
+    });
+  }
+}
+
+async function getFileSha(filePath) {
+  try {
+    const file = await gh(`/contents/${encodeURIComponent(filePath)}?ref=${GH_BRANCH}`);
+    return file.sha;
+  } catch {
+    return null;
+  }
+}
+
+async function commitFile(filePath, contentObj, message) {
+  await ensureBranch();
+  const sha = await getFileSha(filePath);
+  const body = {
+    message,
+    content: Buffer.from(JSON.stringify(contentObj, null, 2)).toString('base64'),
+    branch: GH_BRANCH,
+  };
+  if (sha) body.sha = sha;
+  return gh(`/contents/${encodeURIComponent(filePath)}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+}
+
+async function listDir(dirPath) {
+  try {
+    const items = await gh(`/contents/${encodeURIComponent(dirPath)}?ref=${GH_BRANCH}`);
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
+}
+
+async function deleteFile(filePath, sha, message) {
+  return gh(`/contents/${encodeURIComponent(filePath)}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ message, sha, branch: GH_BRANCH }),
+  });
+}
+
+async function pruneOld(dirPath, maxAgeMs) {
+  const files = await listDir(dirPath);
+  const now = Date.now();
+  let removed = 0;
+  for (const f of files) {
+    if (f.type !== 'file') continue;
+    const dateMatch = f.name.match(/(\d{4}-\d{2}-\d{2})/);
+    if (!dateMatch) continue;
+    const fileTime = new Date(dateMatch[1]).getTime();
+    if (now - fileTime > maxAgeMs) {
+      try {
+        await deleteFile(f.path, f.sha, `chore: prune expired backup ${f.name}`);
+        removed++;
+      } catch (e) {
+        console.error('Prune error for', f.path, e.message);
+      }
+    }
+  }
+  return removed;
+}
+
+async function gatherAllData() {
+  const portfolio = (process.env.VERCEL && process.env.KV_REST_API_URL)
+    ? ((await kv.get('portfolio_data')) || {})
+    : null;
+
+  // Comments
+  const comments = {};
+  if (process.env.VERCEL && process.env.KV_REST_API_URL) {
+    let cursor = '0';
+    do {
+      const [next, keys] = await kv.scan(cursor, { match: 'comments:*', count: 100 });
+      cursor = next;
+      for (const k of keys) {
+        const slug = k.replace('comments:', '');
+        comments[slug] = (await kv.get(k)) || [];
+      }
+    } while (cursor !== '0');
+  }
+
+  // Reactions
+  const reactions = {};
+  if (process.env.VERCEL && process.env.KV_REST_API_URL) {
+    let cursor = '0';
+    do {
+      const [next, keys] = await kv.scan(cursor, { match: 'reactions:*', count: 100 });
+      cursor = next;
+      for (const k of keys) {
+        const slug = k.replace('reactions:', '');
+        reactions[slug] = (await kv.get(k)) || { like: 0, insightful: 0, inspired: 0 };
+      }
+    } while (cursor !== '0');
+  }
+
+  // Subscribers (just the count, not PII for security)
+  let subscribers = [];
+  if (process.env.VERCEL && process.env.KV_REST_API_URL) {
+    try {
+      subscribers = (await kv.get('subscribers')) || [];
+    } catch { /* ignore */ }
+  }
+
+  return {
+    portfolio,
+    comments,
+    reactions,
+    subscriberCount: subscribers.length,
+    // Include list (emails are PII; redact in case repo becomes public)
+    subscribers: subscribers.map(s => ({
+      email: s.email ? s.email.replace(/(?<=.).(?=[^@]*?@)/g, '*') : '',
+      createdAt: s.createdAt || null,
+    })),
+  };
+}
+
+// Run a backup snapshot. type = 'daily' | 'weekly'
+export async function handleBackup(req, res, type) {
+  if (!process.env.GITHUB_BACKUP_TOKEN) {
+    return res.status(200).json({
+      ok: false,
+      skipped: true,
+      reason: 'GITHUB_BACKUP_TOKEN not set. Create a classic PAT (scope: repo) and add as Vercel env var to enable backups.',
+      help: 'https://github.com/settings/tokens/new?scopes=repo',
+    });
+  }
+
+  try {
+    const data = await gatherAllData();
+    const now = new Date();
+    const ts = now.toISOString();
+
+    let filePath, label, pruned;
+    if (type === 'daily') {
+      const date = now.toISOString().split('T')[0];
+      filePath = `backups/daily/${date}.json`;
+      label = date;
+      const payload = { type: 'daily', date, timestamp: ts, ...data };
+      await commitFile(filePath, payload, `backup(daily): ${date}`);
+      pruned = await pruneOld('backups/daily', 30 * 24 * 60 * 60 * 1000);
+    } else if (type === 'weekly') {
+      // ISO week label: YYYY-Wxx
+      const target = new Date(now.valueOf());
+      const dayNr = (target.getDay() + 6) % 7;
+      target.setDate(target.getDate() - dayNr + 3);
+      const firstThursday = target.valueOf();
+      target.setMonth(0, 1);
+      if (target.getDay() !== 4) {
+        target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+      }
+      const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+      const weekId = `${now.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+      filePath = `backups/weekly/${weekId}.json`;
+      label = weekId;
+      const payload = { type: 'weekly', weekId, timestamp: ts, ...data };
+      await commitFile(filePath, payload, `backup(weekly): ${weekId}`);
+      pruned = await pruneOld('backups/weekly', 30 * 7 * 24 * 60 * 60 * 1000);
+    } else {
+      return res.status(400).json({ error: 'type must be daily or weekly' });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      type,
+      label,
+      path: filePath,
+      pruned,
+      stats: {
+        comments: Object.keys(data.comments).length,
+        reactions: Object.keys(data.reactions).length,
+        subscribers: data.subscriberCount,
+        blogPosts: (data.portfolio?.blog || []).length,
+      },
+    });
+  } catch (e) {
+    console.error('Backup error:', e);
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+}
+
+// List available backups (for the admin UI to show)
+export async function handleBackupList(req, res) {
+  if (!process.env.GITHUB_BACKUP_TOKEN) {
+    return res.status(200).json({ ok: false, skipped: true, daily: [], weekly: [] });
+  }
+  try {
+    const [daily, weekly] = await Promise.all([
+      listDir('backups/daily'),
+      listDir('backups/weekly'),
+    ]);
+    const toInfo = f => ({ name: f.name, size: f.size, sha: f.sha, path: f.path });
+    return res.status(200).json({
+      ok: true,
+      daily: daily.filter(f => f.type === 'file').map(toInfo).sort((a, b) => b.name.localeCompare(a.name)),
+      weekly: weekly.filter(f => f.type === 'file').map(toInfo).sort((a, b) => b.name.localeCompare(a.name)),
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+}

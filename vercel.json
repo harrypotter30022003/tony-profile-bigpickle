@@ -1,6 +1,64 @@
 {
   "version": 2,
   "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.js$",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.css$",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",
@@ -23,18 +81,26 @@
       "destination": "/api/data?type=reactions"
     },
     {
-      "source": "/admin",
-      "destination": "/admin.html"
+      "source": "/tony-cms-portal",
+      "destination": "/tony-cms-portal"
     },
     {
-      "source": "/admin.html",
-      "destination": "/admin.html"
+      "source": "/moderation-panel",
+      "destination": "/moderation-panel"
     }
   ],
   "crons": [
     {
       "path": "/api/cron-fetch-news",
       "schedule": "0 0 * * 0"
+    },
+    {
+      "path": "/api/cron-fetch-news?action=backup-weekly",
+      "schedule": "30 0 * * 0"
+    },
+    {
+      "path": "/api/cron-fetch-news?action=backup-daily",
+      "schedule": "0 1 * * *"
     }
   ]
 }

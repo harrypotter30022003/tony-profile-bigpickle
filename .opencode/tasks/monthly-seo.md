@@ -21,7 +21,7 @@ Log everything with `node .opencode/lib/logger.cjs`.
   ```
 
 ### Step 2: Full Site Crawl
-- [ ] Fetch all known routes: `/`, `/blog`, `/blog/*`, `/admin`, `/api/*`
+- [ ] Fetch all known routes: `/`, `/blog`, `/blog/*`, `/tony-cms-portal` (admin), `/api/*`
 - [ ] Verify all return 200
 - [ ] Check `robots.txt`
 - [ ] Check `sitemap.xml` includes all slugs

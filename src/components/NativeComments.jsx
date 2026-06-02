@@ -70,7 +70,7 @@ export default function NativeComments({ slug }) {
         setMessage(data.error || 'Failed to submit comment.');
         setMessageType('error');
       }
-    } catch (err) {
+    } catch {
       setMessage('Network error. Please try again.');
       setMessageType('error');
     } finally {
