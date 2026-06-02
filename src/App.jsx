@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { getReadingTime, getFallbackImage, getCategoryColor } from './utils/blogHelpers';
+import HeroNewsletter from './components/HeroNewsletter';
 
 const BlogFeed = lazy(() => import('./components/BlogFeed'));
 const BlogDetail = lazy(() => import('./components/BlogDetail'));
@@ -111,6 +112,7 @@ function Hero({ cvData }) {
           <a href="#projects" className="btn btn-primary">{cvData?.hero?.ctaPrimary || 'View Projects'}</a>
           <a href="#contact" className="btn btn-secondary">{cvData?.hero?.ctaSecondary || 'Contact Me'}</a>
         </div>
+        <HeroNewsletter />
       </div>
     </section>
   );
@@ -657,12 +659,34 @@ function App() {
             "headline": activeArticle.title,
             "image": pageImg,
             "datePublished": activeArticle.date,
+            "dateModified": activeArticle.date,
             "author": {
               "@type": "Person",
               "name": activeArticle.author || "Do Minh Tuan",
-              "url": "https://me.tony.do"
+              "url": "https://me.tony.do",
+              "sameAs": [
+                "https://www.linkedin.com/in/dominhtuan/",
+                "https://me.tony.do"
+              ]
             },
-            "description": activeArticle.summary
+            "publisher": {
+              "@type": "Person",
+              "name": "Do Minh Tuan (Tony)",
+              "url": "https://me.tony.do",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://me.tony.do/favicon-v3.svg"
+              }
+            },
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": pageUrl
+            },
+            "url": pageUrl,
+            "description": activeArticle.summary,
+            "articleSection": activeArticle.category || "Technology",
+            "keywords": activeArticle.category || "tech, product management, AI",
+            "inLanguage": "en-US"
           },
           {
             "@type": "BreadcrumbList",

@@ -69,6 +69,12 @@ export default async function handler(req, res) {
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
+  <url>
+    <loc>https://me.tony.do/api/rss</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
 `;
 
   blogArticles.forEach(post => {

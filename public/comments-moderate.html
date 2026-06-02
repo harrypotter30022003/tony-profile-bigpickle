@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Comment Moderation — Tony Do</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0a0a0f; color: #e0e0e0; margin: 0; padding: 2rem; }
+    h1 { color: #00f5d4; margin-bottom: 0.5rem; }
+    .login-box { max-width: 400px; margin: 4rem auto; padding: 2rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; }
+    input { width: 100%; padding: 0.7rem 1rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.95rem; margin-bottom: 0.8rem; }
+    button { padding: 0.7rem 1.5rem; background: #00f5d4; color: #000; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .filters { display: flex; gap: 0.5rem; margin: 1.5rem 0; flex-wrap: wrap; }
+    .filters button { background: rgba(255,255,255,0.04); color: #fff; border: 1px solid rgba(255,255,255,0.1); }
+    .filters button.active { background: #00f5d4; color: #000; }
+    .comment { padding: 1.2rem; margin-bottom: 1rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; }
+    .comment .meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+    .comment .author { font-weight: 600; color: #fff; }
+    .comment .date { color: #888; font-size: 0.85rem; }
+    .comment .content { white-space: pre-wrap; line-height: 1.5; margin-bottom: 0.8rem; }
+    .comment .meta-extra { font-size: 0.8rem; color: #888; margin-bottom: 0.8rem; }
+    .comment .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .comment .actions button { padding: 0.4rem 0.9rem; font-size: 0.85rem; }
+    .btn-approve { background: #00f5d4 !important; color: #000 !important; }
+    .btn-reject { background: #ff8800 !important; color: #000 !important; }
+    .btn-spam { background: #ff006e !important; color: #fff !important; }
+    .btn-delete { background: #555 !important; color: #fff !important; }
+    .status-pending { color: #ff8800; }
+    .status-approved { color: #00f5d4; }
+    .status-spam { color: #ff006e; }
+    .status-rejected { color: #888; }
+    .empty { padding: 3rem; text-align: center; color: #888; }
+    .error { padding: 1rem; background: rgba(255, 0, 110, 0.1); border: 1px solid #ff006e; border-radius: 6px; color: #ff006e; margin: 1rem 0; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>💬 Comment Moderation</h1>
+
+  <div id="loginBox" class="login-box">
+    <p>Sign in with your admin token (the same one used for the CMS).</p>
+    <input id="token" type="password" placeholder="Admin token" />
+    <button onclick="login()">Sign In</button>
+    <p id="loginError" class="error hidden" style="margin-top: 1rem;"></p>
+  </div>
+
+  <div id="mainView" class="hidden">
+    <div class="filters">
+      <button class="active" data-filter="pending" onclick="setFilter('pending')">⏳ Pending</button>
+      <button data-filter="approved" onclick="setFilter('approved')">✅ Approved</button>
+      <button data-filter="rejected" onclick="setFilter('rejected')">❌ Rejected</button>
+      <button data-filter="spam" onclick="setFilter('spam')">🚫 Spam</button>
+      <button data-filter="" onclick="setFilter('')">📋 All</button>
+    </div>
+    <div id="comments"></div>
+  </div>
+
+  <script>
+    let currentToken = null;
+    let currentFilter = 'pending';
+
+    async function login() {
+      const token = document.getElementById('token').value.trim();
+      if (!token) return;
+      currentToken = token;
+      // Verify by listing
+      try {
+        const r = await fetch(`/api/comments-moderate?token=${encodeURIComponent(token)}&status=pending`);
+        if (r.status === 401) {
+          document.getElementById('loginError').textContent = 'Invalid token.';
+          document.getElementById('loginError').classList.remove('hidden');
+          currentToken = null;
+          return;
+        }
+        document.getElementById('loginBox').classList.add('hidden');
+        document.getElementById('mainView').classList.remove('hidden');
+        loadComments();
+      } catch (err) {
+        document.getElementById('loginError').textContent = 'Network error: ' + err.message;
+        document.getElementById('loginError').classList.remove('hidden');
+        currentToken = null;
+      }
+    }
+
+    function setFilter(f) {
+      currentFilter = f;
+      document.querySelectorAll('.filters button').forEach(b => {
+        b.classList.toggle('active', (b.dataset.filter || '') === f);
+      });
+      loadComments();
+    }
+
+    async function loadComments() {
+      const el = document.getElementById('comments');
+      el.innerHTML = '<p class="empty">Loading...</p>';
+      const url = `/api/comments-moderate?token=${encodeURIComponent(currentToken)}${currentFilter ? '&status=' + currentFilter : ''}`;
+      try {
+        const r = await fetch(url);
+        const data = await r.json();
+        if (!r.ok) {
+          el.innerHTML = `<p class="error">Error: ${data.error || 'Failed to load'}</p>`;
+          return;
+        }
+        if (!data.comments || data.comments.length === 0) {
+          el.innerHTML = '<p class="empty">No comments in this view. 🎉</p>';
+          return;
+        }
+        el.innerHTML = data.comments.map(c => `
+          <div class="comment">
+            <div class="meta">
+              <div>
+                <span class="author">${escapeHtml(c.author)}</span>
+                <span class="status-${c.status}"> [${c.status}]</span>
+              </div>
+              <span class="date">${new Date(c.createdAt).toLocaleString()}</span>
+            </div>
+            <div class="meta-extra">
+              📧 ${escapeHtml(c.email)} • 📄 /${escapeHtml(c.slug)} • IP: ${escapeHtml((c.ip || '').slice(0, 20))}
+            </div>
+            <div class="content">${escapeHtml(c.content)}</div>
+            <div class="actions">
+              ${c.status !== 'approved' ? '<button class="btn-approve" onclick="moderate(\'' + c.slug + '\', \'' + c.id + '\', \'approve\')">✅ Approve</button>' : ''}
+              ${c.status !== 'rejected' ? '<button class="btn-reject" onclick="moderate(\'' + c.slug + '\', \'' + c.id + '\', \'reject\')">❌ Reject</button>' : ''}
+              ${c.status !== 'spam' ? '<button class="btn-spam" onclick="moderate(\'' + c.slug + '\', \'' + c.id + '\', \'spam\')">🚫 Spam</button>' : ''}
+              <button class="btn-delete" onclick="moderate('${c.slug}', '${c.id}', 'delete')">🗑️ Delete</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        el.innerHTML = `<p class="error">Network error: ${err.message}</p>`;
+      }
+    }
+
+    async function moderate(slug, id, action) {
+      if (action === 'delete' && !confirm('Delete this comment permanently?')) return;
+      try {
+        const r = await fetch(`/api/comments-moderate?token=${encodeURIComponent(currentToken)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, slug, id })
+        });
+        if (r.ok) {
+          loadComments();
+        } else {
+          const data = await r.json();
+          alert('Error: ' + (data.error || 'Failed'));
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // Allow Enter key in login
+    document.getElementById('token').addEventListener('keypress', e => {
+      if (e.key === 'Enter') login();
+    });
+  </script>
+</body>
+</html>

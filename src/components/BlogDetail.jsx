@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getReadingTime, getFallbackImage, getCategoryColor, renderContent } from '../utils/blogHelpers';
+import { getReadingTime, getFallbackImage, getCategoryColor, renderContent, getTableOfContents } from '../utils/blogHelpers';
+import NativeComments from './NativeComments';
+import TableOfContents from './TableOfContents';
+import Reactions from './Reactions';
 
 export default function BlogDetail({ cvData, slug }) {
   const articles = cvData?.blog || [];
@@ -131,10 +134,30 @@ export default function BlogDetail({ cvData, slug }) {
         />
       </div>
       
-      {/* Blog Post Content Body */}
-      <div className="blog-body-content" style={{ padding: '1rem 0', fontSize: '1.1rem', lineHeight: '1.8' }}>
-        {renderContent(article.content)}
+      {/* Blog Post Content Body — with TOC sidebar on desktop */}
+      <div className="blog-body-wrapper" style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) 240px',
+        gap: '3rem',
+        alignItems: 'start'
+      }}>
+        <div className="blog-body-content" style={{ padding: '1rem 0', fontSize: '1.1rem', lineHeight: '1.8' }}>
+          {renderContent(article.content)}
+        </div>
+        <aside className="blog-toc-aside" style={{ display: 'block' }}>
+          <TableOfContents items={getTableOfContents(article.content)} />
+        </aside>
       </div>
+      {/* Responsive: hide TOC on mobile via inline media query */}
+      <style>{`
+        @media (max-width: 900px) {
+          .blog-body-wrapper { grid-template-columns: 1fr !important; }
+          .blog-toc-aside { display: none !important; }
+        }
+      `}</style>
+
+      {/* Reactions (likes / insightful / inspired) */}
+      <Reactions slug={slug} />
 
       {/* Social Share Bar */}
       <div style={{
@@ -189,7 +212,7 @@ export default function BlogDetail({ cvData, slug }) {
         <div 
           id="cusdis_thread"
           data-host="https://cusdis.com"
-          data-app-id={import.meta.env.VITE_CUSDIS_APP_ID || "da67950c-7b00-4f51-b847-f316223d6a45"}
+          data-app-id={import.meta.env.VITE_CUSDIS_APP_ID || "f352cc20-7e9d-41e2-91d6-c2f968712e56"}
           data-page-id={article.slug}
           data-page-url={window.location.href}
           data-page-title={article.title}
@@ -202,6 +225,9 @@ export default function BlogDetail({ cvData, slug }) {
           }}
         ></div>
       </section>
+
+      {/* Native Comments — self-hosted fallback (works even if Cusdis is down) */}
+      <NativeComments slug={slug} />
 
       {/* Related Reads Panel */}
       {relatedPosts.length > 0 && (

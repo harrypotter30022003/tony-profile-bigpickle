@@ -6,6 +6,32 @@ export const getReadingTime = (content) => {
   return `⏱️ ${Math.ceil(words / 200)} min read`;
 };
 
+// Utility: Extract table of contents from article content (### headers only)
+export const getTableOfContents = (content) => {
+  if (!content) return [];
+  const blocks = content.split('\n\n');
+  const toc = [];
+  blocks.forEach((block) => {
+    const trimmed = block.trim();
+    if (trimmed.startsWith('### ')) {
+      // Skip special tip sections (they're callouts, not main sections)
+      if (trimmed.startsWith('### 👨‍💻') || trimmed.startsWith('### 💼')) return;
+      const text = trimmed.replace(/^###\s+/, '').trim();
+      // Only include substantial headers (>10 chars)
+      if (text.length > 3) {
+        const slug = text
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+        toc.push({ text, slug });
+      }
+    }
+  });
+  return toc;
+};
+
 // Utility: Guaranteed valid fallback images (by category) to prevent broken 404 links
 export const getFallbackImage = (category) => {
   switch (category) {
@@ -37,6 +63,7 @@ export const getCategoryColor = (cat) => {
 export function renderContent(text) {
   if (!text) return null;
   const blocks = text.split('\n\n');
+  const slugify = (s) => String(s).toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
   return blocks.map((block, i) => {
     const trimmed = block.trim();
     if (trimmed.startsWith('### ')) {
@@ -61,7 +88,7 @@ export function renderContent(text) {
           </div>
         );
       }
-      
+
       if (trimmed.startsWith('### 💼 Business Growth Takeaway') || trimmed.startsWith('### 💼 Business Takeaway')) {
         const contentLines = block.split('\n');
         const header = contentLines[0].replace('### ', '');
@@ -84,13 +111,19 @@ export function renderContent(text) {
         );
       }
 
-      return <h3 key={i} style={{ marginTop: '1.8rem', marginBottom: '0.8rem', color: 'var(--accent)' }}>{trimmed.replace('### ', '')}</h3>;
+      const headerText = trimmed.replace(/^###\s+/, '').trim();
+      const headerSlug = slugify(headerText);
+      return <h3 key={i} id={`toc-${headerSlug}`} style={{ marginTop: '1.8rem', marginBottom: '0.8rem', color: 'var(--accent)' }}>{headerText}</h3>;
     }
     if (trimmed.startsWith('## ')) {
-      return <h2 key={i} style={{ marginTop: '2.2rem', marginBottom: '1rem', color: 'var(--accent)' }}>{trimmed.replace('## ', '')}</h2>;
+      const headerText = trimmed.replace(/^##\s+/, '').trim();
+      const headerSlug = slugify(headerText);
+      return <h2 key={i} id={`toc-${headerSlug}`} style={{ marginTop: '2.2rem', marginBottom: '1rem', color: 'var(--accent)' }}>{headerText}</h2>;
     }
     if (trimmed.startsWith('# ')) {
-      return <h1 key={i} style={{ marginTop: '2.8rem', marginBottom: '1.2rem', color: 'var(--accent)' }}>{trimmed.replace('# ', '')}</h1>;
+      const headerText = trimmed.replace(/^#\s+/, '').trim();
+      const headerSlug = slugify(headerText);
+      return <h1 key={i} id={`toc-${headerSlug}`} style={{ marginTop: '2.8rem', marginBottom: '1.2rem', color: 'var(--accent)' }}>{headerText}</h1>;
     }
     if (trimmed.startsWith('- ')) {
       const items = trimmed.split('\n').map(item => item.replace('- ', '').trim());
