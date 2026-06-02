@@ -51,3 +51,6 @@ src/admin/comments.json
 
 # Lighthouse reports
 lighthouse-report*.json
+
+# Vercel project link (machine-local)
+.vercel

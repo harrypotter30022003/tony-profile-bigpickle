@@ -3,6 +3,7 @@ import { getReadingTime, getFallbackImage, getCategoryColor } from './utils/blog
 import HeroNewsletter from './components/HeroNewsletter';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import NotFound from './components/NotFound';
+import ChatWidget from './components/ChatWidget';
 
 const BlogFeed = lazy(() => import('./components/BlogFeed'));
 const BlogDetail = lazy(() => import('./components/BlogDetail'));
@@ -1082,6 +1083,8 @@ function App() {
       <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme">
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
+
+      <ChatWidget />
     </div>
   );
 }

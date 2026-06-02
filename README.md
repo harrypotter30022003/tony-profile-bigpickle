@@ -32,12 +32,21 @@ An elite, high-performance, and responsive portfolio website for **Do Minh Tuan 
 - **Canonical, preconnect, preload** for LCP optimization
 - **E-E-A-T optimization** — Real author, real dates, real content
 
+### AI Chat & Avatar
+- **Floating AI assistant** — Click-to-chat floating widget (Intercom-style) on every page
+- **3D avatar** — TalkingHead-based lip-syncing 3D avatar (generated from photo via DECA on local GPU)
+- **Multi-layer anti-spam** — Honeypot + time check + KV rate limiting + math CAPTCHA (no Google reCAPTCHA)
+- **Visitor registration** — Name + email required once per session; HMAC-signed session token
+- **Multilingual** — Gemini 2.5 Flash auto-detects visitor language, responds in same language
+- **Optional TTS** — Google Cloud TTS (free tier, 1M chars/mo) drives avatar lip-sync via viseme timestamps
+- **Mute toggle** — Users can disable avatar voice and just read text
+
 ### Admin & Security
 - **Obscure admin URL** — `/tony-cms-portal` (not `/admin`); old URL returns 404
 - **Comment moderation** at `/moderation-panel` (not `/comments-moderate`); old URL returns 404
 - **HMAC-SHA256 stateless auth** for admin actions (token = `HMAC-SHA256(password, "cms-session")`)
 - **Security headers** — HSTS preload, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
-- **Serverless function budget** — 11/12 (Hobby plan limit) with shared `_lib.js` for RSS/comments/reactions/views/backups
+- **Serverless function budget** — 12/12 (Hobby plan limit) with shared `_lib.js` for RSS/comments/reactions/views/backups/TTS
 
 ### Data & Backup
 - **Hybrid cloud persistence** — Vercel KV (Upstash Redis) with local `data.json` fallback
@@ -51,7 +60,9 @@ An elite, high-performance, and responsive portfolio website for **Do Minh Tuan 
 - **Frontend:** React 19, Vite 8, GSAP (lazy-loaded), Vanilla CSS
 - **Serverless APIs:** Node.js lambdas in `/api` (11 functions; shared helpers in `_lib.js`)
 - **Database:** Vercel KV (Upstash Redis) & static JSON fallback
-- **AI Models:** Google Gemini 1.5 (`gemini-flash-latest`)
+- **AI Chat:** Google Gemini 2.5 Flash (API key from AI Studio)
+- **AI Avatar:** DECA (photo→3D, local GPU) + Qwen3-TTS (voice clone, local GPU) + Google Cloud TTS (runtime, free tier)
+- **3D Rendering:** Three.js + TalkingHead (MIT, browser-based)
 - **Backup:** GitHub Contents API (classic PAT, `repo` scope)
 - **Analytics:** GA4 (`G-1417QXB4PX`) + Microsoft Clarity + Google AdSense
 - **Comments:** Cusdis (hosted) + native (Vercel KV fallback)
@@ -93,6 +104,11 @@ Set these in your **Vercel Project Dashboard → Settings → Environment Variab
 | Variable | Description | Source |
 |:---|:---|:---|
 | `VITE_CUSDIS_APP_ID` | Cusdis project app ID | https://cusdis.com dashboard |
+
+### Chat & Avatar TTS
+| Variable | Description | Source |
+|:---|:---|:---|
+| `GCP_TTS_API_KEY` | Google Cloud Text-to-Speech API key | Google Cloud Console → APIs → Text-to-Speech |
 
 ### Analytics
 | Variable | Description | Source |
@@ -186,7 +202,8 @@ curl "https://me.tony.do/api/cron-fetch-news?action=backup-list"
 ```
 tony-portfolio/
 ├── api/                          # Vercel serverless functions (11 total)
-│   ├── _lib.js                   # Shared module (RSS, comments, reactions, views, backups)
+│   ├── _lib.js                   # Shared module (RSS, comments, reactions, views, backups, TTS)
+│   ├── chat.js                   # AI chat with anti-spam + Gemini 2.5 Flash
 │   ├── data.js                   # Main data + sub-routes (?type=)
 │   ├── login.js                  # HMAC auth token generator
 │   ├── save.js                   # Admin save to KV
@@ -214,6 +231,10 @@ tony-portfolio/
 │   ├── App.jsx                   # Main app (1363 lines: routing, JSON-LD, theme, GSAP)
 │   ├── App.css                   # Theme variables, responsive styles, print stylesheet
 │   ├── components/
+│   │   ├── ChatWidget.jsx       # Floating chat + avatar container (Intercom-style)
+│   │   ├── ChatEntryForm.jsx    # Name/email/captcha entry
+│   │   ├── ChatThread.jsx       # Message display + input + AvatarScene
+│   │   ├── AvatarScene.jsx      # Three.js + TalkingHead 3D avatar renderer
 │   │   ├── BlogFeed.jsx          # Blog listing with search + category filter
 │   │   ├── BlogDetail.jsx        # Single article view (Cusdis + native comments + reactions + TOC)
 │   │   ├── HeroNewsletter.jsx    # Above-the-fold email signup
@@ -224,7 +245,8 @@ tony-portfolio/
 │   │   ├── LoadingSkeleton.jsx   # Shimmer loading state
 │   │   └── NotFound.jsx          # 404 page
 │   ├── hooks/
-│   │   └── useArticleView.js     # View counter + GA4 tracking
+│   │   ├── useArticleView.js     # View counter + GA4 tracking
+│   │   └── useChat.js           # Chat state machine (entry, messages, mute, anti-spam)
 │   ├── utils/
 │   │   └── blogHelpers.jsx       # Content rendering, reading time, TOC
 │   └── admin/
@@ -251,7 +273,7 @@ tony-portfolio/
 
 ---
 
-## 🔌 API Endpoints (11 of 12 Hobby plan limit)
+## 🔌 API Endpoints (12 of 12 Hobby plan limit)
 
 | Path | Methods | Purpose |
 |:---|:---|:---|
@@ -261,6 +283,8 @@ tony-portfolio/
 | `/api/data?type=reactions` | GET/POST | Reactions (GET = counts, POST = increment) |
 | `/api/data?type=views` | GET | View counts (all slugs or one with `?slug=`) |
 | `/api/data?type=view` | POST | Increment view (with sessionId dedup) |
+| `/api/data?type=tts` | POST | Google Cloud TTS synthesis (returns base64 audio + viseme timestamps) |
+| `/api/chat` | POST | AI chat (Gemini 2.5 Flash, anti-spam, session token) |
 | `/api/login` | POST | Returns HMAC token for admin |
 | `/api/save` | POST | Save portfolio data to KV (HMAC auth required) |
 | `/api/cron-fetch-news` | GET | Weekly news + backup actions (`?action=backup-daily|weekly|list`) |

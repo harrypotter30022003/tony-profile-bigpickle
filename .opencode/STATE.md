@@ -1,7 +1,7 @@
 # Project State — Tony Portfolio
 
 **Last updated:** 2026-06-02
-**Status:** All systems green (100/100 health, all endpoints live, 11/12 functions)
+**Status:** All systems green (100/100 health, all endpoints live, 12/12 functions) | AI Chat Widget live
 
 ## Active Goal
 Maintain and improve the personal portfolio site at https://me.tony.do with autonomous SEO/content improvements driven by GA4 + Search Console analytics.
@@ -21,7 +21,7 @@ Maintain and improve the personal portfolio site at https://me.tony.do with auto
 - `5f057d2` content: Improvement Cycle #1 (BlogSpotlight repositioned, Vietnam teams article)
 
 ## Critical Constraints
-- **Vercel Hobby plan: max 12 serverless functions per deployment** — must consolidate before adding any new endpoint
+- **Vercel Hobby plan: max 12 serverless functions per deployment** — maxed at 12/12. Any new endpoint requires consolidating an existing one.
 - Cusdis app ID: `f352cc20-7e9d-41e2-91d6-c2f968712e56` (hosted, not self-hosted, not Giscus)
 - `OPENCODE_SERVER_PASSWORD` in user env (32-char random, gitignored at `.opencode/.opencode-server-password`)
 - OpenCode HTTP API: `http://127.0.0.1:4096` with Basic Auth (`opencode:$OPENCODE_SERVER_PASSWORD`)
@@ -60,8 +60,9 @@ Maintain and improve the personal portfolio site at https://me.tony.do with auto
 9. `/api/subscribers` — Admin list subscribers
 10. `/api/verify-deployment` — Health check for cron
 11. `/api/analytics` — GA4 + Search Console (`?report=ga4|sc|summary`)
+12. `/api/chat` — AI chat (Gemini 2.5 Flash, anti-spam, session token)
 
-`api/_lib.js` is a shared module (not a function, just an import). **One function slot free.**
+`api/_lib.js` + `api/data.js` are NOT separate functions (shared imports). **All 12 slots full — no room for new endpoints.**
 
 ## URL Rewrites (vercel.json)
 - `/sitemap.xml` → `/api/sitemap`
@@ -73,6 +74,7 @@ Maintain and improve the personal portfolio site at https://me.tony.do with auto
 - `/api/view` → `/api/data?type=view`
 - `/tony-cms-portal` → `/tony-cms-portal` (cleanUrls)
 - `/moderation-panel` → `/moderation-panel` (cleanUrls)
+- `/api/tts` → `/api/data?type=tts`
 - `/og/blog/:slug` → `/og/blog/:slug` (cleanUrls)
 
 ## Security Headers (vercel.json, all routes)
@@ -146,6 +148,10 @@ Maintain and improve the personal portfolio site at https://me.tony.do with auto
 - `NativeComments` (self-hosted with anti-spam: rate limit + honeypot + disposable email + patterns; minHeight 520px, rows=6)
 - `Reactions` (like/insightful/inspired with localStorage dedup)
 - `TableOfContents` (sticky sidebar with scroll-spy)
+- `ChatWidget` (floating AI assistant, Intercom-style, bottom-right)
+- `ChatEntryForm` (name + email + math CAPTCHA + honeypot + time check)
+- `ChatThread` (message bubbles + input + send + mute toggle ↔ AvatarScene)
+- `AvatarScene` (TalkingHead + Three.js, lazy-loaded, renders `/avatars/tony.glb`)
 
 ## Scheduled Tasks (Windows)
 All under `\TonyBrandMaster\` task path:
@@ -162,6 +168,8 @@ All under `\TonyBrandMaster\` task path:
 
 ## Next Steps
 - **User action:** Create GitHub PAT (classic, `repo` scope) at https://github.com/settings/tokens/new?scopes=repo → add as `GITHUB_BACKUP_TOKEN` Vercel env var
+- **User action:** Create Google Cloud TTS API key → add `GCP_TTS_API_KEY` to Vercel env vars
+- **User action:** Run DECA locally (RTX 2060) on a front-facing photo → export `tony.glb` → deploy to `public/avatars/`
 - Verify daily + weekly backup fires correctly after token added
 - Add view counter sorting (most-viewed articles section)
 - Add email unsubscribe link to actual email template

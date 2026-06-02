@@ -36,7 +36,6 @@ export default async function handler(req, res) {
   }
   if (type === 'views') return handleViewsGet(req, res);
   if (type === 'view' && req.method === 'POST') return handleViewIncrement(req, res);
-
   // Default: portfolio data (backwards compatible)
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
