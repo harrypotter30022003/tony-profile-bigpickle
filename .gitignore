@@ -48,3 +48,6 @@ src/admin/comments.json
 
 # Agent server password (machine-local secret)
 .opencode/.opencode-server-password
+
+# Lighthouse reports
+lighthouse-report*.json

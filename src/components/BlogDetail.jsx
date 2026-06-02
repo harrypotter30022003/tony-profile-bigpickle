@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getReadingTime, getFallbackImage, getCategoryColor, renderContent, getTableOfContents } from '../utils/blogHelpers';
+import { useArticleView, trackBlogViewGA4, formatViewCount } from '../hooks/useArticleView';
 import NativeComments from './NativeComments';
 import TableOfContents from './TableOfContents';
 import Reactions from './Reactions';
@@ -10,6 +11,12 @@ export default function BlogDetail({ cvData, slug }) {
 
   // 1. Scroll Progress Hook
   const [scrollProgress, setScrollProgress] = useState(0);
+
+  // View counter (KV-backed, dedup'd per session)
+  const { count: viewCount } = useArticleView(slug);
+  useEffect(() => {
+    if (article) trackBlogViewGA4(article.slug, article.title);
+  }, [article?.slug, article?.title]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -108,6 +115,7 @@ export default function BlogDetail({ cvData, slug }) {
           <div className="blog-card-meta" style={{ margin: 0 }}>
             <span>📅 {article.date}</span>
             <span>{getReadingTime(article.content)}</span>
+            <span>👁️ {formatViewCount(viewCount) || '0'} {viewCount === 1 ? 'view' : 'views'}</span>
             <span>✍️ {article.author || 'Do Minh Tuan'}</span>
           </div>
           <span style={{

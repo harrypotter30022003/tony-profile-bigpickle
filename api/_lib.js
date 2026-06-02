@@ -429,6 +429,78 @@ export async function handleReactionsPost(req, res) {
   }
 }
 
+// ===== VIEW COUNTERS =====
+// Lightweight article view counter. Stores per-slug counts in KV.
+// GET  /api/data?type=views[&slug=xxx]   → counts (single slug or all)
+// POST /api/data?type=view&slug=xxx      → increment + return new count
+//   Body (optional): { sessionId } to dedup per session (1 per 30 min).
+
+const VIEW_DEDUP_TTL_SEC = 30 * 60; // 30 minutes
+
+export async function handleViewsGet(req, res) {
+  try {
+    const slug = req.query.slug;
+    if (process.env.VERCEL && process.env.KV_REST_API_URL) {
+      if (slug) {
+        const count = (await kv.get(`views:${slug}`)) || 0;
+        return res.status(200).json({ slug, count });
+      }
+      // No slug → return all view counts (for feed display)
+      const all = await kv.keys('views:*');
+      const counts = {};
+      if (all && all.length > 0) {
+        const values = await kv.mget(...all);
+        all.forEach((k, i) => {
+          const s = k.replace(/^views:/, '');
+          counts[s] = values[i] || 0;
+        });
+      }
+      return res.status(200).json({ counts });
+    }
+    // No KV → return empty (graceful degradation)
+    if (slug) return res.status(200).json({ slug, count: 0 });
+    return res.status(200).json({ counts: {} });
+  } catch (e) {
+    console.error('Views GET error:', e);
+    return res.status(500).json({ error: 'Failed to load views' });
+  }
+}
+
+export async function handleViewIncrement(req, res) {
+  const slug = req.query.slug;
+  if (!slug) return res.status(400).json({ error: 'slug required' });
+
+  // Optional dedup via sessionId
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
+  }
+  body = body || {};
+  const sessionId = body.sessionId;
+
+  try {
+    if (!process.env.VERCEL || !process.env.KV_REST_API_URL) {
+      return res.status(200).json({ slug, count: 0, kvDisabled: true });
+    }
+
+    // Dedup: if sessionId provided, check if a view was already counted recently
+    if (sessionId) {
+      const lastView = await kv.get(`view-ts:${slug}:${sessionId}`);
+      if (lastView) {
+        const count = (await kv.get(`views:${slug}`)) || 0;
+        return res.status(200).json({ slug, count, deduped: true });
+      }
+      await kv.set(`view-ts:${slug}:${sessionId}`, Date.now(), { ex: VIEW_DEDUP_TTL_SEC });
+    }
+
+    const newCount = await kv.incr(`views:${slug}`);
+    return res.status(200).json({ slug, count: newCount });
+  } catch (e) {
+    console.error('View increment error:', e);
+    return res.status(500).json({ error: 'Failed to increment view' });
+  }
+}
+
 // ===== GITHUB BACKUP =====
 // Backs up portfolio data + comments + reactions + subscribers to a dedicated
 // `data-backups` branch in the GitHub repo. Daily snapshots kept for 30 days,

@@ -81,6 +81,14 @@
       "destination": "/api/data?type=reactions"
     },
     {
+      "source": "/api/views",
+      "destination": "/api/data?type=views"
+    },
+    {
+      "source": "/api/view",
+      "destination": "/api/data?type=view"
+    },
+    {
       "source": "/tony-cms-portal",
       "destination": "/tony-cms-portal"
     },

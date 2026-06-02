@@ -1105,10 +1105,14 @@ function BlogSpotlight({ cvData }) {
               overflow: 'hidden',
               position: 'relative'
             }}>
-              <img 
-                src={featured.image || getFallbackImage(featured.category)} 
-                alt={featured.title} 
+              <img
+                src={featured.image || getFallbackImage(featured.category)}
+                alt={featured.title}
                 loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                width="1200"
+                height="675"
                 onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(featured.category); }}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
               />

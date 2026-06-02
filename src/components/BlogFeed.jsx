@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { getReadingTime, getFallbackImage, getCategoryColor } from '../utils/blogHelpers';
+import { useViewCounts, formatViewCount } from '../hooks/useArticleView';
 
 export default function BlogFeed({ cvData }) {
   const articles = cvData?.blog || [];
@@ -7,6 +8,10 @@ export default function BlogFeed({ cvData }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 12;
+
+  // Fetch view counts for all article slugs
+  const slugs = useMemo(() => articles.map(a => a.slug), [articles]);
+  const viewCounts = useViewCounts(slugs);
 
   // Change handler that resets pagination atomically (avoids setState-in-effect)
   const setCategory = (cat) => {
@@ -214,6 +219,7 @@ export default function BlogFeed({ cvData }) {
                     <div className="blog-card-meta">
                       <span>📅 {article.date}</span>
                       <span>{getReadingTime(article.content)}</span>
+                      <span>👁️ {formatViewCount(viewCounts[article.slug]) || '0'}</span>
                       <span>✍️ {article.author || 'Do Minh Tuan'}</span>
                     </div>
                     <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: 'var(--text)', lineHeight: '1.3' }}>{article.title}</h3>

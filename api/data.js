@@ -9,6 +9,8 @@ import {
   handleCommentsModerate,
   handleReactionsGet,
   handleReactionsPost,
+  handleViewsGet,
+  handleViewIncrement,
 } from './_lib.js';
 
 const DATA_FILE = path.join(process.cwd(), 'src/admin/data.json');
@@ -94,28 +96,8 @@ export default async function handler(req, res) {
     if (req.method === 'POST') return handleReactionsPost(req, res);
     return handleReactionsGet(req, res);
   }
-
-  // Default: portfolio data (backwards compatible)
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  // Comments (rewrite target from /api/comments)
-  if (type === 'comments') {
-    if (req.method === 'POST') return handleCommentsPost(req, res);
-    return handleCommentsGet(req, res);
-  }
-
-  // Reactions (rewrite target from /api/reactions)
-  if (type === 'reactions') {
-    if (req.method === 'POST') return handleReactionsPost(req, res);
-    return handleReactionsGet(req, res);
-  }
-
-  // Admin moderation: ?type=comments&action=moderate (uses HMAC auth header)
-  if (type === 'comments' && req.query.action === 'moderate' && req.method === 'POST') {
-    return handleCommentsModerate(req, res);
-  }
+  if (type === 'views') return handleViewsGet(req, res);
+  if (type === 'view' && req.method === 'POST') return handleViewIncrement(req, res);
 
   // Default: portfolio data (backwards compatible)
   if (req.method !== 'GET') {
