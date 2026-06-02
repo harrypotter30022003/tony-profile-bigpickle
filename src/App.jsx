@@ -67,25 +67,19 @@ const hiddenMessages = [
 function Navigation({ cvData, currentView }) {
   const [isOpen, setIsOpen] = useState(false);
   
-  const menuItems = currentView === 'home' 
-    ? [
-        { label: 'About', href: '#about' },
-        { label: 'Experience', href: '#experience' },
-        { label: 'Skills', href: '#skills' },
-        { label: 'Projects', href: '#projects' },
-        { label: 'Blog', href: '#blog' },
-        { label: 'Contact', href: '#contact' }
-      ]
-    : [
-        { label: 'Home', href: '#' },
-        { label: 'Blog', href: '#blog' },
-        { label: 'Contact', href: '#contact' }
-      ];
+  const menuItems = [
+    { label: 'About', href: '#about' },
+    { label: 'Experience', href: '#experience' },
+    { label: 'Skills', href: '#skills' },
+    { label: 'Projects', href: '#projects' },
+    { label: 'Blog', href: '#blog' },
+    { label: 'Contact', href: '#contact' }
+  ];
 
   return (
     <nav>
       <div className="logo">
-        <a href="#" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 'bold' }}>
+        <a href="#" onClick={(e) => { e.preventDefault(); window.location.hash = ''; }} style={{ textDecoration: 'none', color: 'inherit', fontWeight: 'bold' }}>
           {cvData?.name || 'Tony'}
         </a>
       </div>
