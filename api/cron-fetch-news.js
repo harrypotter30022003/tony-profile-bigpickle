@@ -20,9 +20,6 @@ const TARGET_CATEGORIES = [
 
 // Helper to extract tag contents from vanilla RSS XML (handles tag attributes and CDATA)
 const extractTag = (xml, tag) => {
-  const openTag = `<${tag}>`;
-  const closeTag = `</${tag}>`;
-  
   const regex = new RegExp(`<${tag}(?:\\s+[^>]*)?>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${tag}>`, 'i');
   const match = xml.match(regex);
   if (match) {

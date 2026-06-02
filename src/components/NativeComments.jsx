@@ -87,8 +87,8 @@ export default function NativeComments({ slug }) {
 
   return (
     <div className="native-comments" style={{
-      marginTop: '3rem',
-      padding: '2rem',
+      marginTop: '1.5rem',
+      padding: '1.5rem',
       background: 'rgba(255, 255, 255, 0.02)',
       border: '1px solid var(--border-color, rgba(255,255,255,0.08))',
       borderRadius: '12px'

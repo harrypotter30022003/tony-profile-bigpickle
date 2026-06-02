@@ -926,7 +926,7 @@ function App() {
         jsonLdScript.textContent = JSON.stringify(jsonLdData);
       }
     }
-  }, [currentView, activeSlug, activeArticle]);
+  }, [currentView, activeSlug, activeArticle, data?.experience, data?.projects]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -954,6 +954,17 @@ function App() {
         setCurrentView('privacy-policy');
         setActiveSlug('');
         window.scrollTo(0, 0);
+      } else if (hash === '#experience' || hash === '#skills' || hash === '#projects' || hash === '#contact' || hash === '#about') {
+        // Homepage section anchors — stay on home view, scroll to section
+        if (currentView !== 'home') {
+          setCurrentView('home');
+          setActiveSlug('');
+        }
+        // Scroll after render cycle
+        requestAnimationFrame(() => {
+          const el = document.getElementById(hash.slice(1));
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
       } else if (hash && hash.length > 1) {
         // Unknown hash route → 404
         setCurrentView('not-found');
@@ -969,7 +980,7 @@ function App() {
     handleHashChange(); // Run on mount
 
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [data]);
+  }, [data, currentView]);
 
   // Page View analytics on Hash Route change
   useEffect(() => {
@@ -992,9 +1003,11 @@ function App() {
   }, [currentView, activeSlug]);
 
   useEffect(() => {
-    // Theme is read lazily in useState; just apply it to <html> on mount
+    // Apply initial theme to <html> (FOUC fix also in index.html inline script)
     document.documentElement.setAttribute('data-theme', theme);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- run once on mount
 
+  useEffect(() => {
     let cancelled = false;
     fetch('/api/data')
       .then(r => r.ok ? r.json() : null)

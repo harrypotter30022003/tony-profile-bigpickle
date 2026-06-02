@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 
 // Stable per-session id (resets when browser storage is cleared)
 function getSessionId() {

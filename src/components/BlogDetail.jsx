@@ -16,7 +16,7 @@ export default function BlogDetail({ cvData, slug }) {
   const { count: viewCount } = useArticleView(slug);
   useEffect(() => {
     if (article) trackBlogViewGA4(article.slug, article.title);
-  }, [article?.slug, article?.title]);
+  }, [article]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -213,8 +213,8 @@ export default function BlogDetail({ cvData, slug }) {
       <NewsletterSubscribe />
 
       {/* Dynamic Privacy-First Comments (Cusdis Integration) */}
-      <section style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid var(--border-color)' }}>
-        <h3 style={{ fontSize: '1.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <section style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>
+        <h3 style={{ fontSize: '1.5rem', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span>💬</span> Join the Conversation
         </h3>
         <div 
@@ -226,10 +226,10 @@ export default function BlogDetail({ cvData, slug }) {
           data-page-title={article.title}
           style={{
             background: 'rgba(255, 255, 255, 0.01)',
-            padding: '2rem',
+            padding: '1.5rem',
             borderRadius: '12px',
             border: '1px solid var(--border-color)',
-            minHeight: '520px'
+            minHeight: '200px'
           }}
         ></div>
       </section>
@@ -328,7 +328,7 @@ function NewsletterSubscribe() {
         setStatus('error');
         setMsg(data.error || 'Something went wrong. Please try again.');
       }
-    } catch (err) {
+    } catch (_err) {
       setStatus('error');
       setMsg('Network error. Please try again later.');
     }

@@ -187,7 +187,6 @@ check('Git', () => {
  */
 check('Logger Stats', () => {
   const logFiles = ['agent-log.ndjson', 'heartbeat.ndjson', 'audit.ndjson', 'fix-log.ndjson'];
-  let totalEntries = 0;
   let totalSize = 0;
   const details = [];
 
@@ -197,7 +196,6 @@ check('Logger Stats', () => {
       const content = fs.readFileSync(filePath, 'utf-8');
       const lines = content.trim().split('\n').filter(Boolean).length;
       const size = Buffer.byteLength(content, 'utf-8');
-      totalEntries += lines;
       totalSize += size;
       details.push(`${file}: ${lines} entries (${(size / 1024).toFixed(1)} KB)`);
     } else {

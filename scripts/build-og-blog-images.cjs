@@ -88,7 +88,6 @@ async function fetchDefaultArticles() {
     const start = src.indexOf('export const defaultBlogArticles = [');
     const end = src.indexOf('];', start) + 2;
     const arrayText = src.substring(start + 'export const defaultBlogArticles = '.length, end);
-    // eslint-disable-next-line no-eval
     return eval(arrayText);
   } catch (e) {
     console.error('Failed to parse defaultBlogArticles:', e.message);

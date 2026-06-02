@@ -3,7 +3,7 @@ import { getReadingTime, getFallbackImage, getCategoryColor } from '../utils/blo
 import { useViewCounts, formatViewCount } from '../hooks/useArticleView';
 
 export default function BlogFeed({ cvData }) {
-  const articles = cvData?.blog || [];
+  const articles = useMemo(() => cvData?.blog || [], [cvData?.blog]);
   const [selectedCategory, _setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -312,7 +312,7 @@ function NewsletterSubscribe() {
         setStatus('error');
         setMsg(data.error || 'Something went wrong. Please try again.');
       }
-    } catch (err) {
+    } catch (_err) {
       setStatus('error');
       setMsg('Network error. Please try again later.');
     }

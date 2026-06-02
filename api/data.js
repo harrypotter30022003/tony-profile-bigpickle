@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { kv } from '@vercel/kv';
 import {
-  loadBlogArticles,
   defaultBlogArticles,
   handleRss,
   handleCommentsGet,
@@ -168,7 +167,7 @@ export default async function handler(req, res) {
       blog: defaultBlogArticles,
       footer: { text: 'Crafted with passion', year: '2026' }
     });
-  } catch (e) {
+  } catch (_e) {
     res.status(200).json({ error: 'Fallback', name: 'Tony', blog: defaultBlogArticles });
   }
 }

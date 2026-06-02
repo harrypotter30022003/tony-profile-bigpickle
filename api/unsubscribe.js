@@ -45,9 +45,7 @@ export default async function handler(req, res) {
     }
 
     // Filter out the subscriber
-    const beforeCount = subscribers.length;
     subscribers = subscribers.filter(sub => sub.email !== targetEmail);
-    const afterCount = subscribers.length;
 
     if (process.env.VERCEL && process.env.KV_REST_API_URL) {
       await kv.set('portfolio_subscribers', subscribers);

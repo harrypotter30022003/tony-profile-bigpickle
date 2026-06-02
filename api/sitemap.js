@@ -82,7 +82,7 @@ export default async function handler(req, res) {
     if (post.date) {
       try {
         postDate = new Date(post.date).toISOString().split('T')[0];
-      } catch (e) {
+      } catch (_e) {
         postDate = today;
       }
     }

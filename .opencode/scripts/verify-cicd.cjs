@@ -149,7 +149,6 @@ async function runChecks() {
   // ── Check 3: Site reachability ─────────────────────────────────────────────
   console.log('\n🌐 [3/4] Checking site reachability...');
   try {
-    const https = await import('https');
     const response = await fetch(SITE_URL, { method: 'HEAD', signal: AbortSignal.timeout(10000) });
     if (response.ok) {
       console.log(`  ✅ Site responded with ${response.status}`);

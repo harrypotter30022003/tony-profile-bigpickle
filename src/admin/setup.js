@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import crypto from 'crypto';
 import fs from 'fs';
 
 const config = `// Security config - CHANGE THESE IN PRODUCTION
