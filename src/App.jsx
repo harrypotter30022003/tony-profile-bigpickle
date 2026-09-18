@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
-import { getReadingTime, getFallbackImage, getCategoryColor } from './utils/blogHelpers';
+import { getReadingTime, getFallbackImage, getCategoryColor, responsiveProps } from './utils/blogHelpers';
 import HeroNewsletter from './components/HeroNewsletter';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import NotFound from './components/NotFound';
@@ -1198,18 +1198,6 @@ function App() {
     localStorage.setItem('tony-theme', newTheme);
   };
 
-  useEffect(() => {
-    if (loaded) {
-      // Load GSAP on idle so it doesn't block initial render
-      const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500));
-      idle(async () => {
-        const { gsap } = await loadGsap();
-        gsap.fromTo('.hero-content', { opacity: 0, y: 100 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.3 });
-        gsap.fromTo('.hero-orb', { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.5, stagger: 0.3, delay: 0.5 });
-      });
-    }
-  }, [loaded]);
-
   if (!loaded) {
     return (
       <div className="app">
@@ -1315,6 +1303,7 @@ function BlogSpotlight({ cvData }) {
             }}>
               <img
                 src={featured.image || getFallbackImage(featured.category)}
+                {...responsiveProps(featured.image || getFallbackImage(featured.category), '(max-width: 700px) 100vw, 560px')}
                 alt={featured.title}
                 loading="eager"
                 fetchPriority="high"
@@ -1403,6 +1392,7 @@ function BlogSpotlight({ cvData }) {
                 <div style={{ width: '100%', height: '180px', overflow: 'hidden', position: 'relative' }}>
                   <img 
                     src={article.image || getFallbackImage(article.category)} 
+                    {...responsiveProps(article.image || getFallbackImage(article.category), '(max-width: 600px) 100vw, 400px')}
                     alt={article.title} 
                     loading="lazy"
                     onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}

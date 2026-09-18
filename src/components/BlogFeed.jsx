@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { getReadingTime, getFallbackImage, getCategoryColor } from '../utils/blogHelpers';
+import { getReadingTime, getFallbackImage, getCategoryColor, responsiveProps } from '../utils/blogHelpers';
 import { useViewCounts, formatViewCount } from '../hooks/useArticleView';
 
 function readFeedParams() {
@@ -224,6 +224,7 @@ export default function BlogFeed({ cvData }) {
                   <div style={{ width: '100%', height: '200px', overflow: 'hidden', position: 'relative' }}>
                     <img 
                       src={article.image || getFallbackImage(article.category)} 
+                      {...responsiveProps(article.image || getFallbackImage(article.category), '(max-width: 600px) 100vw, 400px')}
                       alt={article.title} 
                       loading="lazy"
                       onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}

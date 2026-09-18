@@ -1,3 +1,11 @@
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/inter-400.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/inter-500.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/inter-600.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/inter-700.woff2') format('woff2'); }
+@font-face { font-family: 'Orbitron'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/orbitron-500.woff2') format('woff2'); }
+@font-face { font-family: 'Orbitron'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/orbitron-600.woff2') format('woff2'); }
+@font-face { font-family: 'Orbitron'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/orbitron-700.woff2') format('woff2'); }
+@font-face { font-family: 'Orbitron'; font-style: normal; font-weight: 800; font-display: swap; src: url('/fonts/orbitron-800.woff2') format('woff2'); }
 :root {
   --bg: #0a0a0f;
   --bg-secondary: #12121a;
@@ -237,15 +245,14 @@ nav {
 
 .btn-primary {
   background: var(--gradient);
-  color: #ffffff !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  color: #000000 !important;
   box-shadow: 0 10px 40px rgba(0,245,212,0.3);
 }
 
 .btn-primary:hover { 
   transform: translateY(-5px) scale(1.05); 
   box-shadow: 0 20px 60px rgba(0,245,212,0.5); 
-  color: var(--accent) !important; 
+  color: #000000 !important; 
 }
 
 .btn-secondary {
@@ -357,7 +364,15 @@ nav {
   bottom: -100px; left: 30%;
 }
 
-.hero-content { max-width: 900px; }
+.hero-content { max-width: 900px; animation: heroRise 1s cubic-bezier(0.22,1,0.36,1) 0.2s both; }
+.hero-orb-1 { animation: orbIn 1.4s ease-out 0.3s both; }
+.hero-orb-2 { animation: orbIn 1.4s ease-out 0.5s both; }
+.hero-orb-3 { animation: orbIn 1.4s ease-out 0.7s both; }
+@keyframes heroRise { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes orbIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 0.6; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .hero-content, .hero-orb-1, .hero-orb-2, .hero-orb-3 { animation: none; }
+}
 
 .greeting {
   font-family: 'Orbitron', sans-serif;
@@ -1226,7 +1241,7 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
 }
 .not-found-code {
   font-size: clamp(5rem, 12vw, 9rem);
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1;
   background: linear-gradient(135deg, var(--accent, #00f5d4), #7b2cbf);
   -webkit-background-clip: text;

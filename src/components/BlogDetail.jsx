@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getReadingTime, getFallbackImage, getCategoryColor, renderContent, getTableOfContents } from '../utils/blogHelpers';
+import { getReadingTime, getFallbackImage, getCategoryColor, renderContent, getTableOfContents, responsiveProps } from '../utils/blogHelpers';
 import { useArticleView, trackBlogViewGA4, formatViewCount } from '../hooks/useArticleView';
 import NativeComments from './NativeComments';
 import TableOfContents from './TableOfContents';
@@ -174,6 +174,7 @@ export default function BlogDetail({ cvData, slug }) {
       <div style={{ width: '100%', height: 'clamp(200px, 40vw, 380px)', borderRadius: '16px', overflow: 'hidden', marginBottom: '3rem', border: '1px solid var(--border-color)' }}>
         <img 
           src={article.image || getFallbackImage(article.category)} 
+          {...responsiveProps(article.image || getFallbackImage(article.category), '(max-width: 960px) 100vw, 900px')}
           alt={article.title} 
           loading="eager"
           fetchPriority="high"
@@ -317,6 +318,7 @@ export default function BlogDetail({ cvData, slug }) {
                   <div style={{ width: '100%', height: '160px', overflow: 'hidden', position: 'relative' }}>
                     <img 
                       src={post.image || getFallbackImage(post.category)} 
+                      {...responsiveProps(post.image || getFallbackImage(post.category), '(max-width: 600px) 100vw, 400px')}
                       alt={post.title} 
                       loading="lazy"
                       onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(post.category); }}

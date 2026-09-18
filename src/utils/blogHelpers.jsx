@@ -48,6 +48,20 @@ export const getFallbackImage = (category) => {
   }
 };
 
+export const sizedUnsplash = (url, w) => {
+  if (typeof url !== 'string' || !url.includes('images.unsplash.com')) return url;
+  if (/[?&]w=\d+/.test(url)) return url.replace(/([?&])w=\d+/, `$1w=${w}`);
+  return url + (url.includes('?') ? '&' : '?') + `w=${w}`;
+};
+
+export const responsiveProps = (url, sizes) => {
+  if (typeof url !== 'string' || !url.includes('images.unsplash.com')) return {};
+  const src400 = sizedUnsplash(url, 400);
+  const src800 = sizedUnsplash(url, 800);
+  if (src400 === url || src800 === url) return {};
+  return { srcSet: `${src400} 400w, ${src800} 800w, ${url} 1200w`, sizes };
+};
+
 // Utility: Category-specific color mapping for active neon borders & badges
 export const getCategoryColor = (cat) => {
   switch (cat) {
