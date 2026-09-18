@@ -3,7 +3,8 @@ import { getReadingTime, getFallbackImage, getCategoryColor } from './utils/blog
 import HeroNewsletter from './components/HeroNewsletter';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import NotFound from './components/NotFound';
-import ChatWidget from './components/ChatWidget';
+
+const ChatWidget = lazy(() => import('./components/ChatWidget'));
 
 const BlogFeed = lazy(() => import('./components/BlogFeed'));
 const BlogDetail = lazy(() => import('./components/BlogDetail'));
@@ -24,6 +25,14 @@ async function loadGsap() {
   return { gsap: gsapRef, ScrollTrigger: ScrollTriggerRef };
 }
 import './App.css';
+
+export function spaNav(path) {
+  if (typeof window === 'undefined') return;
+  if (window.location.pathname + window.location.search === path) return;
+  window.history.pushState(null, '', path);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+  window.scrollTo(0, 0);
+}
 
 const cvData = {
   name: 'Do Minh Tuan',
@@ -69,18 +78,25 @@ function Navigation({ cvData, currentView }) {
   const [isOpen, setIsOpen] = useState(false);
   
   const menuItems = [
-    { label: 'About', href: '#about' },
-    { label: 'Experience', href: '#experience' },
-    { label: 'Skills', href: '#skills' },
-    { label: 'Projects', href: '#projects' },
-    { label: 'Blog', href: '#blog' },
-    { label: 'Contact', href: '#contact' }
+    { label: 'About', href: '/#about', section: 'about' },
+    { label: 'Experience', href: '/#experience', section: 'experience' },
+    { label: 'Skills', href: '/#skills', section: 'skills' },
+    { label: 'Projects', href: '/#projects', section: 'projects' },
+    { label: 'Blog', href: '/blog', section: null },
+    { label: 'Contact', href: '/#contact', section: 'contact' }
   ];
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setIsOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen]);
+
   return (
-    <nav>
+    <nav aria-label="Primary">
       <div className="logo">
-        <a href="#" onClick={(e) => { e.preventDefault(); window.location.hash = ''; }} style={{ textDecoration: 'none', color: 'inherit', fontWeight: 'bold' }}>
+        <a href="/" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 'bold' }}>
           {cvData?.name || 'Tony'}
         </a>
       </div>
@@ -90,15 +106,29 @@ function Navigation({ cvData, currentView }) {
         {/* Close button for mobile */}
         <li className="mobile-close" onClick={() => setIsOpen(false)}>✕</li>
         
-        {menuItems.map(item => (
-          <li key={item.label}>
-            <a href={item.href} onClick={() => setIsOpen(false)}>{item.label}</a>
-          </li>
-        ))}
+        {menuItems.map(item => {
+          const go = (e) => {
+            setIsOpen(false);
+            if (!item.section) return;
+            if (window.location.pathname === '/') {
+              e.preventDefault();
+              window.history.replaceState(null, '', `/#${item.section}`);
+              requestAnimationFrame(() => {
+                const el = document.getElementById(item.section);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              });
+            }
+          };
+          return (
+            <li key={item.label}>
+              <a href={item.href} onClick={go}>{item.label}</a>
+            </li>
+          );
+        })}
       </ul>
 
       {/* Hamburger Icon */}
-      <div className="mobile-menu" onClick={() => setIsOpen(true)}>
+      <div className="mobile-menu" role="button" tabIndex={0} aria-label={isOpen ? 'Close menu' : 'Open menu'} aria-expanded={isOpen} onClick={() => setIsOpen(!isOpen)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(!isOpen); } }}>
         <span></span><span></span><span></span>
       </div>
     </nav>
@@ -362,7 +392,7 @@ function BackToTop() {
         setVisible(false);
       }
     };
-    window.addEventListener('scroll', toggleVisible);
+    window.addEventListener('scroll', toggleVisible, { passive: true });
     return () => window.removeEventListener('scroll', toggleVisible);
   }, []);
 
@@ -505,9 +535,14 @@ function Footer({ cvData }) {
     <footer>
       <div className="footer-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', alignItems: 'center' }}>
         <p>© {currentYear} {cvData?.name} • {cvData?.footer?.text || 'Crafted with passion'}</p>
-        <p style={{ fontSize: '0.95rem' }}>
-          <a href="#privacy-policy" style={{ color: 'var(--accent)', textDecoration: 'none', transition: 'opacity 0.2s', fontWeight: '500' }} onMouseOver={e => e.target.style.opacity = 0.8} onMouseOut={e => e.target.style.opacity = 1}>Privacy Policy</a>
-        </p>
+        <nav aria-label="Legal" style={{ fontSize: '0.95rem', display: 'flex', gap: '1.2rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <a href="/about" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>About</a>
+          <a href="/contact" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>Contact</a>
+          <a href="/privacy-policy" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>Privacy Policy</a>
+          <a href="/terms" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>Terms</a>
+          <a href="/disclaimer" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>Disclaimer</a>
+          <a href="/blog" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>Blog</a>
+        </nav>
       </div>
 
       <div className="social-links">
@@ -609,14 +644,95 @@ function PrivacyPolicy() {
   );
 }
 
+function AdSlot({ slot = 'auto', format = 'auto' }) {
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.adsbygoogle) {
+        window.adsbygoogle.push({});
+      }
+    } catch { /* ads blocked or not approved yet */ }
+  }, []);
+  return (
+    <ins
+      className="adsbygoogle"
+      style={{ display: 'block', textAlign: 'center', margin: '2rem auto', minHeight: '90px' }}
+      data-ad-client="ca-pub-1471589681114517"
+      data-ad-slot={slot}
+      data-ad-format={format}
+      data-full-width-responsive="true"
+    />
+  );
+}
+
+function TrustPage({ title, updated, children }) {
+  return (
+    <div style={{ minHeight: '80vh', paddingTop: '120px', paddingBottom: '100px', maxWidth: '800px', margin: '0 auto', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
+      <header style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+        <h1 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{title}</h1>
+        {updated && <p style={{ color: '#888' }}>Last Updated: {updated}</p>}
+      </header>
+      <div className="box" style={{ padding: '2.5rem', borderRadius: '12px', background: 'rgba(18, 18, 26, 0.4)', border: '1px solid var(--border-color)', lineHeight: '1.8' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function AboutPage() {
+  return (
+    <TrustPage title="About Tony Do" updated="September 2026">
+      <p style={{ marginBottom: '1.5rem' }}>I am Do Minh Tuan (Tony Do), Senior Project Manager and Tech Leader based in Ho Chi Minh City, Vietnam. For 15+ years I have built and led software teams across Southeast Asia: Developer (2011-2013) and Senior Developer (2013-2014) at StratAgile Singapore, Lead PHP and Mobile (2014-2015), Technical Director at StratAgile Vietnam (2015-2021) managing PHP, mobile and marketing teams, Senior PM at CoffeeMug (2021-2022) running global projects across Singapore, Korea, Australia and the UK, and COO at Finantaged (2022-2023) building the IT, creative and HR teams for an AI fintech product.</p>
+      <p style={{ marginBottom: '1.5rem' }}>My stack is hands-on: PHP, WordPress, Magento, JavaScript, React, iOS with Xcode, Android management, AWS EC2, LAMP, CentOS, SSL. Education: Computer Science, University of Wollongong (2007-2010). English: IELTS 7.5, British Council. I have shipped 50+ projects with teams of up to 30 people across 7 countries, including Clue-Box (iOS survey app), Post-a-Card for SingPost, Symptom Care for NCIS Singapore, Smile Asia charity eCommerce, EZ Fast Tech for SMEs, and Wizard Chess at chess.tony.do.</p>
+      <p style={{ marginBottom: '1.5rem' }}>This site (me.tony.do) is my publisher site: portfolio plus first-hand technical notes. Every article is written with AI assistance, then reviewed and edited by me from production experience. Contact: tonydo.pm@gmail.com, +84 96 288 2315, Ho Chi Minh City. LinkedIn via tony.do/linkedin.</p>
+    </TrustPage>
+  );
+}
+
+function ContactPage({ cvData }) {
+  return (
+    <TrustPage title="Contact" updated="September 2026">
+      <p style={{ marginBottom: '1.5rem' }}>Best way to reach me is email at {cvData?.email || 'tonydo.pm@gmail.com'} or WhatsApp at {cvData?.phone || '+84 96 288 2315'}. I am based in {cvData?.contact?.location || 'Ho Chi Minh City'} (GMT+7) and reply within 1-2 business days.</p>
+      <p style={{ marginBottom: '1.5rem' }}>For project inquiries, include: goals, timeline, budget range, and links to anything you have built. For hiring or consulting on Agile delivery, team leadership, or Vietnam tech hiring, mention team size and stack.</p>
+      <p>Professional profiles: LinkedIn (tony.do/linkedin), portfolio (me.tony.do), hobby build (chess.tony.do).</p>
+    </TrustPage>
+  );
+}
+
+function TermsPage() {
+  return (
+    <TrustPage title="Terms of Service" updated="September 2026">
+      <p style={{ marginBottom: '1.5rem' }}>By accessing me.tony.do you agree to these terms. Content on this site is my own opinion from 15 years of production experience and is for educational purposes, not professional legal, financial, or medical advice. Code samples are provided as-is without warranty.</p>
+      <p style={{ marginBottom: '1.5rem' }}>You may share links and quote up to 150 words with attribution and a link back. Do not republish full articles, scrape the blog feed for republishing, or use content to train models for competing auto-generated sites without permission.</p>
+      <p>Comments are moderated. Spam, hate speech, and promotional links are removed. Contact tonydo.pm@gmail.com for permissions or takedown requests.</p>
+    </TrustPage>
+  );
+}
+
+function DisclaimerPage() {
+  return (
+    <TrustPage title="Disclaimer & AI Disclosure" updated="September 2026">
+      <p style={{ marginBottom: '1.5rem' }}>Some articles start from public tech news (InfoQ, Dev.to, TechCrunch) as a topic hook, then add my first-hand experience, opinions, Vietnam market context, and case studies. AI tools assist drafting; I review, edit, and approve every post. Any errors are mine — email corrections to tonydo.pm@gmail.com.</p>
+      <p style={{ marginBottom: '1.5rem' }}>Affiliate policy: I do not use affiliate links in reviews. Tool recommendations come from a year of production use. Ads served by Google AdSense are clearly labeled and do not influence editorial content.</p>
+      <p>External links (Unsplash images, vendor docs) belong to their owners. Ad choices: opt out of personalized ads at policies.google.com/technologies/ads.</p>
+    </TrustPage>
+  );
+}
+
 function App() {
   const [data, setData] = useState(cvData);
-  const [loaded, setLoaded] = useState(false);
+  // Start rendered with static data so first paint never waits on /api/data (LCP).
+  // The fetch below hydrates with live KV content when it resolves.
+  const [loaded, setLoaded] = useState(true);
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') return 'dark';
-    return localStorage.getItem('tony-theme') || 'dark';
+    try {
+      const saved = localStorage.getItem('tony-theme');
+      if (saved) return saved;
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
+    } catch { /* ignore */ }
+    return 'dark';
   });
-  const [currentView, setCurrentView] = useState('home'); // 'home', 'blog', 'blog-detail', 'privacy-policy'
+  const [currentView, setCurrentView] = useState('home'); // home, blog, blog-detail, privacy-policy, about, contact, terms, disclaimer, not-found
   const [activeSlug, setActiveSlug] = useState('');
   const activeArticle = useMemo(() => {
     if (currentView === 'blog-detail' && activeSlug) {
@@ -647,6 +763,15 @@ function App() {
       }
       element.setAttribute('content', content);
     };
+    const setCanonical = (url) => {
+      let link = document.querySelector('link[rel="canonical"]');
+      if (!link) {
+        link = document.createElement('link');
+        link.setAttribute('rel', 'canonical');
+        document.head.appendChild(link);
+      }
+      link.setAttribute('href', url);
+    };
 
     if (currentView === 'blog-detail' && activeArticle) {
       const pageTitle = `${activeArticle.title} | Tony Do - Tech Leader`;
@@ -654,7 +779,7 @@ function App() {
       // Prefer pre-rendered branded OG image; runtime-fallback to source image if missing
       const brandedOgImg = `https://me.tony.do/og/blog/${activeSlug}.png`;
       const pageImgFallback = activeArticle.image || "https://me.tony.do/og-image.png";
-      const pageUrl = `https://me.tony.do/#blog/${activeSlug}`;
+      const pageUrl = `https://me.tony.do/blog/${activeSlug}`;
 
       // Probe: does the branded image exist? Use HEAD to avoid download.
       // Default to branded; replace with fallback if HEAD returns 404.
@@ -690,7 +815,8 @@ function App() {
       setMetaTag('property', 'twitter:image', pageImg);
       setMetaTag('property', 'twitter:url', pageUrl);
       setMetaTag('property', 'twitter:card', 'summary_large_image');
-      
+      setCanonical(pageUrl);
+
       const jsonLdData = {
         "@context": "https://schema.org",
         "@graph": [
@@ -741,7 +867,7 @@ function App() {
                 "@type": "ListItem",
                 "position": 2,
                 "name": "Blog",
-                "item": "https://me.tony.do/#blog"
+                "item": "https://me.tony.do/blog"
               },
               {
                 "@type": "ListItem",
@@ -757,8 +883,8 @@ function App() {
     } else if (currentView === 'blog') {
       const pageTitle = "Blog & Technical Insights | Tony Do - Tech Leader";
       const pageDesc = "Read beginner-friendly programming tips, everyday technology tutorials, and high-level business growth hacks by Do Minh Tuan.";
-      const pageImg = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3";
-      const pageUrl = "https://me.tony.do/#blog";
+      const pageImg = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80";
+      const pageUrl = "https://me.tony.do/blog";
 
       document.title = pageTitle;
       if (metaDescription) {
@@ -778,7 +904,8 @@ function App() {
       setMetaTag('property', 'twitter:image', pageImg);
       setMetaTag('property', 'twitter:url', pageUrl);
       setMetaTag('property', 'twitter:card', 'summary_large_image');
-      
+      setCanonical(pageUrl);
+
       const jsonLdData = {
         "@context": "https://schema.org",
         "@type": "WebPage",
@@ -786,10 +913,27 @@ function App() {
         "description": pageDesc
       };
       jsonLdScript.textContent = JSON.stringify(jsonLdData);
+    } else if (currentView === 'about' || currentView === 'contact' || currentView === 'terms' || currentView === 'disclaimer' || currentView === 'privacy-policy') {
+      const trustMeta = {
+        about: ['About Tony Do — Senior PM & Tech Leader (15+ Years Vietnam)', 'Do Minh Tuan (Tony Do): 15+ years leading Vietnamese tech teams — StratAgile, CoffeeMug, Finantaged. Wollongong CS, IELTS 7.5.'],
+        contact: ['Contact Tony Do — Senior PM & Tech Leader', 'Reach Do Minh Tuan in Ho Chi Minh City: tonydo.pm@gmail.com, +84 96 288 2315. Project, hiring, and consulting inquiries.'],
+        terms: ['Terms of Service — me.tony.do', 'Terms for using Tony Do portfolio and blog: fair-use quoting, no scraping, comments policy.'],
+        disclaimer: ['Disclaimer & AI Disclosure — me.tony.do', 'How articles are written: public news as hooks plus first-hand experience. AI-assisted, human-reviewed by Do Minh Tuan.'],
+        'privacy-policy': ['Privacy Policy — me.tony.do', 'How Tony Do portfolio handles contact data, cookies, Google AdSense DART cookies, GDPR/CCPA rights.']
+      }[currentView];
+      const pageUrl = `https://me.tony.do/${currentView === 'privacy-policy' ? 'privacy-policy' : currentView}`;
+      document.title = trustMeta[0];
+      if (metaDescription) metaDescription.setAttribute('content', trustMeta[1]);
+      setMetaTag('property', 'og:title', trustMeta[0]);
+      setMetaTag('property', 'og:description', trustMeta[1]);
+      setMetaTag('property', 'og:url', pageUrl);
+      setMetaTag('property', 'og:type', 'website');
+      setCanonical(pageUrl);
+      jsonLdScript.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebPage', name: trustMeta[0], description: trustMeta[1], url: pageUrl });
     } else {
       const pageTitle = "Do Minh Tuan - Senior Project Manager & Tech Leader";
       const pageDesc = "Portfolio of Do Minh Tuan - Senior Project Manager with 15+ years experience in Web Development, Mobile Apps, and IT Leadership";
-      const pageImg = "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d";
+      const pageImg = "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=1200&q=80";
       const pageUrl = "https://me.tony.do";
 
       document.title = pageTitle;
@@ -810,6 +954,7 @@ function App() {
       setMetaTag('property', 'twitter:image', pageImg);
       setMetaTag('property', 'twitter:url', pageUrl);
       setMetaTag('property', 'twitter:card', 'summary_large_image');
+      setCanonical(pageUrl);
 
       const portfolioUrl = 'https://me.tony.do';
       const personSchema = {
@@ -882,39 +1027,10 @@ function App() {
             "inLanguage": "en-US",
             "potentialAction": {
               "@type": "SearchAction",
-              "target": `${portfolioUrl}/#blog?q={search_term_string}`,
+              "target": `${portfolioUrl}/blog?q={search_term_string}`,
               "query-input": "required name=search_term_string"
             }
           },
-          {
-            "@type": "FAQPage",
-            "mainEntity": [
-              {
-                "@type": "Question",
-                "name": "What is Do Minh Tuan's core project management methodology?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Do Minh Tuan specializes in Agile and Scrum methodologies. He breaks down complex software engineering projects into 2-week sprint iterations to maintain strict budget controls, mitigate delivery risks, and ensure high-quality, on-time releases."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "What technical platforms and architectures does Tony Do have experience managing?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Tony Do has 15+ years of extensive hands-on experience managing PHP, WordPress, Magento, iOS (Xcode), and AWS cloud architectures, leading technical teams from initial product scoping to high-scale production deployments."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "What are Tony Do's notable achievements as COO and Technical Director?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "As COO at Finantaged, Tony built the complete IT engineering and creative teams for an AI Fintech product. As Technical Director at StratAgile, he led complex PHP and Mobile teams, directly managing multi-national client portfolios and timeline budgets."
-                }
-              }
-            ]
-          }
         ]
       };
       if (jsonLdScript) {
@@ -924,11 +1040,27 @@ function App() {
   }, [currentView, activeSlug, activeArticle, data?.experience, data?.projects]);
 
   useEffect(() => {
-    const handleHashChange = () => {
+    const resolveRoute = () => {
+      const path = window.location.pathname.replace(/\/$/, '') || '/';
       const hash = window.location.hash;
-      if (hash.startsWith('#blog/')) {
-        const slug = hash.replace('#blog/', '');
-        // Verify slug exists (after data loads)
+      const legacyToPath = (h) => {
+        if (h.startsWith('#blog/')) return `/blog/${h.replace('#blog/', '')}`;
+        if (h === '#blog') return '/blog';
+        if (h === '#privacy-policy') return '/privacy-policy';
+        return null;
+      };
+      const legacy = legacyToPath(hash);
+      if (legacy) {
+        window.history.replaceState(null, '', legacy);
+        resolvePath(legacy);
+        return;
+      }
+      resolvePath(path);
+    };
+    const resolvePath = (path) => {
+      const blogMatch = path.match(/^\/blog\/(.+)$/);
+      if (blogMatch) {
+        const slug = decodeURIComponent(blogMatch[1]);
         if (data && data.blog && data.blog.length > 0) {
           const exists = data.blog.some(a => a.slug === slug);
           if (!exists) {
@@ -941,57 +1073,99 @@ function App() {
         setCurrentView('blog-detail');
         setActiveSlug(slug);
         window.scrollTo(0, 0);
-      } else if (hash === '#blog') {
+        return;
+      }
+      if (path === '/blog') {
         setCurrentView('blog');
         setActiveSlug('');
         window.scrollTo(0, 0);
-      } else if (hash === '#privacy-policy') {
+        return;
+      }
+      if (path === '/privacy-policy') {
         setCurrentView('privacy-policy');
         setActiveSlug('');
         window.scrollTo(0, 0);
-      } else if (hash === '#experience' || hash === '#skills' || hash === '#projects' || hash === '#contact' || hash === '#about') {
-        // Homepage section anchors — stay on home view, scroll to section
-        if (currentView !== 'home') {
-          setCurrentView('home');
-          setActiveSlug('');
-        }
-        // Scroll after render cycle
-        requestAnimationFrame(() => {
-          const el = document.getElementById(hash.slice(1));
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-      } else if (hash && hash.length > 1) {
-        // Unknown hash route → 404
-        setCurrentView('not-found');
-        setActiveSlug(hash);
+        return;
+      }
+      if (path === '/about') {
+        setCurrentView('about');
+        setActiveSlug('');
         window.scrollTo(0, 0);
-      } else {
+        return;
+      }
+      if (path === '/contact') {
+        setCurrentView('contact');
+        setActiveSlug('');
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (path === '/terms') {
+        setCurrentView('terms');
+        setActiveSlug('');
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (path === '/disclaimer') {
+        setCurrentView('disclaimer');
+        setActiveSlug('');
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (path === '/' || path === '') {
+        const hash = window.location.hash;
+        if (hash === '#experience' || hash === '#skills' || hash === '#projects' || hash === '#contact' || hash === '#about') {
+          if (currentView !== 'home') {
+            setCurrentView('home');
+            setActiveSlug('');
+          }
+          requestAnimationFrame(() => {
+            const el = document.getElementById(hash.slice(1));
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+          return;
+        }
         setCurrentView('home');
         setActiveSlug('');
+        return;
       }
+      setCurrentView('not-found');
+      setActiveSlug(path);
+      window.scrollTo(0, 0);
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Run on mount
+    window.addEventListener('hashchange', resolveRoute);
+    window.addEventListener('popstate', resolveRoute);
+    resolveRoute();
 
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', resolveRoute);
+      window.removeEventListener('popstate', resolveRoute);
+    };
   }, [data, currentView]);
 
   // Page View analytics on Hash Route change
   useEffect(() => {
-    if (typeof window.gtag === 'function') {
-      const pagePath = window.location.hash || '/';
-      const pageTitle = currentView === 'home' 
-        ? 'Home Portfolio' 
-        : currentView === 'blog' 
-          ? 'Blog Feed' 
-          : currentView === 'blog-detail' 
-            ? `Blog: ${activeSlug}` 
-            : 'Privacy Policy';
+    let tag = document.querySelector('meta[name="robots"]');
+    if (currentView === 'not-found') {
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('name', 'robots');
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', 'noindex, follow');
+    } else if (tag) {
+      tag.setAttribute('content', 'index, follow, max-image-preview:large');
+    }
+  }, [currentView]);
 
+  // Page View analytics on route change
+  useEffect(() => {
+    if (typeof window.gtag === 'function') {
+      const pagePath = window.location.pathname + window.location.search;
+      const titles = { home: 'Home Portfolio', blog: 'Blog Feed', 'blog-detail': `Blog: ${activeSlug}`, 'privacy-policy': 'Privacy Policy', about: 'About Tony Do', contact: 'Contact Tony Do', terms: 'Terms of Service', disclaimer: 'Disclaimer', 'not-found': 'Not Found' };
       window.gtag('event', 'page_view', {
         page_path: pagePath,
-        page_title: pageTitle,
+        page_title: titles[currentView] || currentView,
         page_location: window.location.href
       });
     }
@@ -1004,7 +1178,7 @@ function App() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/data')
+    fetch('/api/data?compact=1')
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (cancelled) return;
@@ -1073,6 +1247,10 @@ function App() {
         </Suspense>
         
         {currentView === 'privacy-policy' && <PrivacyPolicy />}
+        {currentView === 'about' && <AboutPage />}
+        {currentView === 'contact' && <ContactPage cvData={data} />}
+        {currentView === 'terms' && <TermsPage />}
+        {currentView === 'disclaimer' && <DisclaimerPage />}
         {currentView === 'not-found' && <NotFound requestedPath={activeSlug} />}
       </main>
 
@@ -1080,11 +1258,13 @@ function App() {
       <WhatsAppWidget cvData={data} />
       <BackToTop />
       
-      <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme">
+      <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme" aria-pressed={theme === 'light'}>
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
 
-      <ChatWidget />
+      <Suspense fallback={null}>
+        <ChatWidget />
+      </Suspense>
     </div>
   );
 }
@@ -1112,7 +1292,7 @@ function BlogSpotlight({ cvData }) {
       {/* Featured Article Hero */}
       {featured && (
         <div 
-          onClick={() => { window.location.hash = '#blog/' + featured.slug; }}
+          onClick={() => { spaNav('/blog/' + featured.slug); }}
           style={{
             cursor: 'pointer',
             maxWidth: '1100px',
@@ -1184,7 +1364,7 @@ function BlogSpotlight({ cvData }) {
             }}>
               <div className="blog-card-meta" style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
                 <span>📅 {featured.date}</span>
-                <span>{getReadingTime(featured.content)}</span>
+                <span>{featured.readingTime || getReadingTime(featured.content)}</span>
               </div>
               <h3 style={{ fontSize: '1.6rem', marginBottom: '1rem', color: 'var(--text)', lineHeight: '1.3' }}>{featured.title}</h3>
               <p style={{ fontSize: '1rem', color: 'var(--text-muted)', lineHeight: '1.6', margin: '0 0 1.5rem 0' }}>{featured.summary}</p>
@@ -1213,7 +1393,7 @@ function BlogSpotlight({ cvData }) {
             <article 
               key={i} 
               className="blog-card" 
-              onClick={() => { window.location.hash = '#blog/' + article.slug; }}
+              onClick={() => { spaNav('/blog/' + article.slug); }}
               style={{
                 cursor: 'pointer',
                 '--glow-color': getCategoryColor(article.category)
@@ -1248,7 +1428,7 @@ function BlogSpotlight({ cvData }) {
                 <div style={{ padding: '1.5rem' }}>
                   <div className="blog-card-meta" style={{ marginBottom: '0.8rem', fontSize: '0.85rem' }}>
                     <span>📅 {article.date}</span>
-                    <span>{getReadingTime(article.content)}</span>
+                        <span>{article.readingTime || getReadingTime(article.content)}</span>
                   </div>
                   <h3 style={{ fontSize: '1.2rem', marginBottom: '0.8rem', color: 'var(--text)', lineHeight: '1.4' }}>{article.title}</h3>
                   <p className="blog-card-summary" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{article.summary}</p>
@@ -1260,7 +1440,7 @@ function BlogSpotlight({ cvData }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-        <a href="#blog" className="btn btn-primary" style={{ padding: '0.8rem 2rem', fontWeight: 'bold' }}>
+        <a href="/blog" className="btn btn-primary" style={{ padding: '0.8rem 2rem', fontWeight: 'bold' }}>
           Explore Full Blog Stream →
         </a>
       </div>

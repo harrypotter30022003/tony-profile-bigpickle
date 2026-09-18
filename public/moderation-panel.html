@@ -62,13 +62,22 @@
     let currentToken = null;
     let currentFilter = 'pending';
 
+    async function apiCall(body) {
+      const r = await fetch('/api/data?type=comments&action=moderate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': currentToken },
+        body: JSON.stringify(body)
+      });
+      return r;
+    }
+
     async function login() {
       const token = document.getElementById('token').value.trim();
       if (!token) return;
       currentToken = token;
       // Verify by listing
       try {
-        const r = await fetch(`/api/comments-moderate?token=${encodeURIComponent(token)}&status=pending`);
+        const r = await apiCall({ action: 'list', status: 'pending' });
         if (r.status === 401) {
           document.getElementById('loginError').textContent = 'Invalid token.';
           document.getElementById('loginError').classList.remove('hidden');
@@ -96,9 +105,8 @@
     async function loadComments() {
       const el = document.getElementById('comments');
       el.innerHTML = '<p class="empty">Loading...</p>';
-      const url = `/api/comments-moderate?token=${encodeURIComponent(currentToken)}${currentFilter ? '&status=' + currentFilter : ''}`;
       try {
-        const r = await fetch(url);
+        const r = await apiCall({ action: 'list', status: currentFilter || undefined });
         const data = await r.json();
         if (!r.ok) {
           el.innerHTML = `<p class="error">Error: ${data.error || 'Failed to load'}</p>`;
@@ -115,10 +123,10 @@
                 <span class="author">${escapeHtml(c.author)}</span>
                 <span class="status-${c.status}"> [${c.status}]</span>
               </div>
-              <span class="date">${new Date(c.createdAt).toLocaleString()}</span>
+              <span class="date">${new Date(c.date || c.createdAt).toLocaleString()}</span>
             </div>
             <div class="meta-extra">
-              📧 ${escapeHtml(c.email)} • 📄 /${escapeHtml(c.slug)} • IP: ${escapeHtml((c.ip || '').slice(0, 20))}
+              📧 ${escapeHtml(c.email)} • 📄 /${escapeHtml(c.slug)}${c.ip ? ` • IP: ${escapeHtml(String(c.ip).slice(0, 20))}` : ''}
             </div>
             <div class="content">${escapeHtml(c.content)}</div>
             <div class="actions">
@@ -137,11 +145,7 @@
     async function moderate(slug, id, action) {
       if (action === 'delete' && !confirm('Delete this comment permanently?')) return;
       try {
-        const r = await fetch(`/api/comments-moderate?token=${encodeURIComponent(currentToken)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, slug, id })
-        });
+        const r = await apiCall({ action, slug, id });
         if (r.ok) {
           loadComments();
         } else {

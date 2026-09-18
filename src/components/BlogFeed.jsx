@@ -1,13 +1,45 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { getReadingTime, getFallbackImage, getCategoryColor } from '../utils/blogHelpers';
 import { useViewCounts, formatViewCount } from '../hooks/useArticleView';
+
+function readFeedParams() {
+  try {
+    const sp = new URLSearchParams(window.location.search);
+    const q = sp.get('q') || '';
+    const page = Math.max(1, parseInt(sp.get('page') || '1', 10) || 1);
+    return { q, page };
+  } catch {
+    return { q: '', page: 1 };
+  }
+}
+
+function writeFeedParams(q, page) {
+  try {
+    const sp = new URLSearchParams(window.location.search);
+    if (q) sp.set('q', q); else sp.delete('q');
+    if (page > 1) sp.set('page', String(page)); else sp.delete('page');
+    const qs = sp.toString();
+    window.history.replaceState(null, '', `/blog${qs ? `?${qs}` : ''}`);
+  } catch { /* ignore */ }
+}
+
+export function spaGo(path) {
+  window.history.pushState(null, '', path);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+  window.scrollTo(0, 0);
+}
 
 export default function BlogFeed({ cvData }) {
   const articles = useMemo(() => cvData?.blog || [], [cvData?.blog]);
   const [selectedCategory, _setSelectedCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const initial = useMemo(readFeedParams, []);
+  const [searchQuery, setSearchQuery] = useState(initial.q);
+  const [currentPage, setCurrentPage] = useState(initial.page);
   const postsPerPage = 12;
+
+  useEffect(() => {
+    writeFeedParams(searchQuery.trim(), currentPage);
+  }, [searchQuery, currentPage]);
 
   // Fetch view counts for all article slugs
   const slugs = useMemo(() => articles.map(a => a.slug), [articles]);
@@ -182,7 +214,7 @@ export default function BlogFeed({ cvData }) {
               <article 
                 key={i} 
                 className="blog-card" 
-                onClick={() => window.location.hash = `#blog/${article.slug}`}
+                onClick={() => { spaGo(`/blog/${article.slug}`); }}
                 style={{
                   '--glow-color': getCategoryColor(article.category)
                 }}
@@ -218,7 +250,7 @@ export default function BlogFeed({ cvData }) {
                   <div style={{ padding: '2rem' }}>
                     <div className="blog-card-meta">
                       <span>📅 {article.date}</span>
-                      <span>{getReadingTime(article.content)}</span>
+                      <span>{article.readingTime || getReadingTime(article.content)}</span>
                       <span>👁️ {formatViewCount(viewCounts[article.slug]) || '0'}</span>
                       <span>✍️ {article.author || 'Do Minh Tuan'}</span>
                     </div>
@@ -229,9 +261,9 @@ export default function BlogFeed({ cvData }) {
 
                 <div style={{ padding: '0 2rem 2rem 2rem' }}>
                   <a 
-                    href={`#blog/${article.slug}`} 
+                    href={`/blog/${article.slug}`} 
                     className="btn btn-secondary" 
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); spaGo(`/blog/${article.slug}`); }}
                     style={{ width: 'fit-content', fontSize: '0.9rem', padding: '0.6rem 1.2rem' }}
                   >
                     Read Article →
@@ -249,7 +281,7 @@ export default function BlogFeed({ cvData }) {
             <div className="pagination-container" aria-label="Blog pagination">
               {/* Previous Page Button */}
               <a
-                href={`#blog?page=${currentPage - 1}`}
+                href={`/blog?page=${currentPage - 1}`}
                 onClick={(e) => currentPage > 1 && handlePageChange(currentPage - 1, e)}
                 className={currentPage === 1 ? 'disabled' : ''}
               >
@@ -260,7 +292,7 @@ export default function BlogFeed({ cvData }) {
               {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(pageNum => (
                 <a
                   key={pageNum}
-                  href={`#blog?page=${pageNum}`}
+                  href={`/blog?page=${pageNum}`}
                   onClick={(e) => handlePageChange(pageNum, e)}
                   className={currentPage === pageNum ? 'active' : ''}
                   style={{
@@ -274,7 +306,7 @@ export default function BlogFeed({ cvData }) {
 
               {/* Next Page Button */}
               <a
-                href={`#blog?page=${currentPage + 1}`}
+                href={`/blog?page=${currentPage + 1}`}
                 onClick={(e) => currentPage < totalPages && handlePageChange(currentPage + 1, e)}
                 className={currentPage === totalPages ? 'disabled' : ''}
               >

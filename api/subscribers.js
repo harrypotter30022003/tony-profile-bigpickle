@@ -4,7 +4,8 @@ import crypto from 'crypto';
 import { kv } from '@vercel/kv';
 
 const DATA_FILE = path.join(process.cwd(), 'src/admin/subscribers.json');
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) throw new Error('Server misconfigured: ADMIN_PASSWORD is not set.');
 
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -16,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   const expectedToken = crypto.createHmac('sha256', ADMIN_PASSWORD).update('cms-session').digest('hex');
-  if (token !== expectedToken) {
+  if (typeof token !== 'string' || token.length !== expectedToken.length || !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expectedToken))) {
     return res.status(401).json({ error: 'Unauthorized. Invalid session token.' });
   }
 

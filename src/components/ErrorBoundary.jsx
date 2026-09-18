@@ -30,7 +30,7 @@ export default class ErrorBoundary extends Component {
   };
 
   handleHome = () => {
-    if (typeof window !== 'undefined') window.location.hash = '';
+    if (typeof window !== 'undefined') window.location.href = '/';
   };
 
   render() {

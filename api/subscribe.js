@@ -1,8 +1,37 @@
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { kv } from '@vercel/kv';
 
 const DATA_FILE = path.join(process.cwd(), 'src/admin/subscribers.json');
+const SUBSCRIBE_LIMIT_MAX = 5;
+const SUBSCRIBE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+
+function getClientIP(req) {
+  return (
+    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+    req.headers['x-real-ip'] ||
+    req.socket?.remoteAddress ||
+    'unknown'
+  );
+}
+
+async function checkSubscribeLimit(ip) {
+  if (!process.env.VERCEL || !process.env.KV_REST_API_URL) return { allowed: true };
+  try {
+    const hash = crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
+    const key = `ratelimit:subscribe:${hash}`;
+    const raw = await kv.get(key);
+    const now = Date.now();
+    const recent = (Array.isArray(raw) ? raw : []).filter((t) => now - t < SUBSCRIBE_LIMIT_WINDOW_MS);
+    if (recent.length >= SUBSCRIBE_LIMIT_MAX) return { allowed: false };
+    recent.push(now);
+    await kv.set(key, recent, { ex: 3600 });
+    return { allowed: true };
+  } catch {
+    return { allowed: true };
+  }
+}
 
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -11,13 +40,24 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email } = req.body;
+  const body = typeof req.body === 'string' ? (() => { try { return JSON.parse(req.body); } catch { return {}; } })() : (req.body || {});
+  if (body.website) {
+    return res.status(200).json({ message: 'Welcome aboard! Successfully subscribed to the weekly tech stream.' });
+  }
+
+  const limit = await checkSubscribeLimit(getClientIP(req));
+  if (!limit.allowed) {
+    return res.status(429).json({ error: 'Too many signup attempts. Please try again later.' });
+  }
+
+  const { email } = body;
   if (!email || !email.includes('@') || email.length < 5) {
     return res.status(400).json({ error: 'Invalid email address provided.' });
   }
 
   const cleanEmail = email.trim().toLowerCase();
   let subscribers = [];
+  let storeOk = true;
 
   try {
     // 1. Load current list from Vercel KV or local disk
@@ -26,9 +66,15 @@ export default async function handler(req, res) {
         const cloudData = await kv.get('portfolio_subscribers');
         if (Array.isArray(cloudData)) {
           subscribers = cloudData;
+        } else if (cloudData != null) {
+          storeOk = false;
         }
       } catch (kvErr) {
         console.error('Subscribe: KV load failed:', kvErr);
+        storeOk = false;
+      }
+      if (!storeOk) {
+        return res.status(503).json({ error: 'Subscription service temporarily unavailable. Please try again later.' });
       }
     } else {
       try {

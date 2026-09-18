@@ -48,9 +48,30 @@ export default async function handler(req, res) {
 
   const today = new Date().toISOString().split('T')[0];
 
+  const seen = new Set();
+  const normTitle = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const titleWords = (s) => new Set(normTitle(s).split(' ').filter((w) => w.length > 3));
+  const isNearDuplicate = (a, b) => {
+    const wa = titleWords(a);
+    const wb = titleWords(b);
+    if (wa.size === 0 || wb.size === 0) return false;
+    let overlap = 0;
+    wa.forEach((w) => { if (wb.has(w)) overlap += 1; });
+    return overlap / Math.max(wa.size, wb.size) >= 0.6;
+  };
+  const wordCount = (s) => String(s || '').trim().split(/\s+/).filter(Boolean).length;
+  const MIN_SITEMAP_WORDS = 500;
+  const uniqueArticles = [];
+  [...blogArticles].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach((post) => {
+    if (!post.slug || seen.has(post.slug)) return;
+    if (wordCount(post.content) < MIN_SITEMAP_WORDS) return;
+    if (uniqueArticles.some((u) => isNearDuplicate(u.title, post.title))) return;
+    seen.add(post.slug);
+    uniqueArticles.push(post);
+  });
+
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Core Static Views -->
   <url>
     <loc>https://me.tony.do/</loc>
     <lastmod>${today}</lastmod>
@@ -58,26 +79,40 @@ export default async function handler(req, res) {
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://me.tony.do/#blog</loc>
+    <loc>https://me.tony.do/blog</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://me.tony.do/#privacy-policy</loc>
+    <loc>https://me.tony.do/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://me.tony.do/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://me.tony.do/privacy-policy</loc>
     <lastmod>2026-05-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://me.tony.do/api/rss</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://me.tony.do/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://me.tony.do/disclaimer</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
   </url>
 `;
 
-  blogArticles.forEach(post => {
+  uniqueArticles.forEach(post => {
     let postDate = today;
     if (post.date) {
       try {
@@ -88,7 +123,7 @@ export default async function handler(req, res) {
     }
     
     xml += `  <url>
-    <loc>https://me.tony.do/#blog/${post.slug}</loc>
+    <loc>https://me.tony.do/blog/${post.slug}</loc>
     <lastmod>${postDate}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

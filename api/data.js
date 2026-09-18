@@ -4,6 +4,8 @@ import { kv } from '@vercel/kv';
 import {
   defaultBlogArticles,
   handleRss,
+  handleArticleGet,
+  toCompactPost,
   handleCommentsGet,
   handleCommentsPost,
   handleCommentsModerate,
@@ -17,13 +19,49 @@ const DATA_FILE = path.join(process.cwd(), 'src/admin/data.json');
 
 
 export default async function handler(req, res) {
+  const type = req.query.type;
+
+  if (type === 'article') return handleArticleGet(req, res);
+
+  if (req.query.compact === '1' && req.method === 'GET' && !type) {
+    try {
+      const kv = await import('@vercel/kv').then((m) => m.kv).catch(() => null);
+      let blog = null;
+      if (process.env.VERCEL && process.env.KV_REST_API_URL && kv) {
+        try {
+          const cloudData = await kv.get('portfolio_data');
+          if (cloudData && Array.isArray(cloudData.blog)) blog = cloudData.blog;
+        } catch { /* fall through */ }
+      }
+      if (!blog) {
+        const fs = await import('fs');
+        const path = await import('path');
+        const { defaultBlogArticles } = await import('./_lib.js');
+        const DATA_FILE = path.join(process.cwd(), 'src/admin/data.json');
+        if (fs.existsSync(DATA_FILE)) {
+          try {
+            const fileData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+            blog = Array.isArray(fileData.blog) && fileData.blog.length > 0 ? fileData.blog : defaultBlogArticles;
+          } catch { blog = defaultBlogArticles; }
+        } else {
+          blog = defaultBlogArticles;
+        }
+      }
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=600, stale-while-revalidate=3600');
+      return res.status(200).json({ blog: blog.map(toCompactPost) });
+    } catch (e) {
+      console.error('Compact feed error:', e);
+      return res.status(500).json({ error: 'Failed to load feed' });
+    }
+  }
+
   // Set strict headers to bypass browser, CDN, and edge server caching
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
 
   // Sub-endpoint routing via ?type= (saves us Vercel serverless function slots)
   // Each ?type= maps to a handler in _lib.js; URL paths /api/rss, /api/comments, /api/reactions
   // are rewrites in vercel.json -> /api/data?type=...
-  const type = req.query.type;
   if (type === 'rss') return handleRss(req, res);
   if (type === 'comments') {
     if (req.query.action === 'moderate' && req.method === 'POST') return handleCommentsModerate(req, res);

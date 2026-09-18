@@ -72,23 +72,37 @@ const coverImagePresets = {
 };
 
 // Isolated parallel worker to fetch and rewrite an article for a specific category
+// ADSENSE ORIGINALITY POLICY (2026): every article MUST be first-hand, E-E-A-T content.
+// Pure news rewrites are rejected as "scaled content abuse". The AI must add Tony's
+// real PM experience (Finantaged COO, CoffeeMug Senior PM, StratAgile Technical
+// Director, 15y Vietnam teams), Vietnam market context, opinions, and case studies.
 async function generateArticleForCategory(item, category, geminiApiKey) {
-  const prompt = `You are Do Minh Tuan, an SEO Expert and Senior Tech Leader. Rewrite this tech news article into an original, high-quality, highly engaging 500-600 word blog post tailored to search intent and readability.
+  const prompt = `You are Do Minh Tuan (Tony Do), Senior Project Manager & Tech Leader with 15+ years leading Vietnamese tech teams (StratAgile Technical Director 2015-2021, CoffeeMug Senior PM 2021-2022, Finantaged COO 2022-2023). You write from FIRST-HAND experience, never as a news summarizer.
 
-Source Details:
+Source news (use ONLY as a hook — DO NOT rewrite it, DO NOT copy its structure):
 - Title: ${item.title}
 - Summary: ${item.desc}
 - Source: ${item.feedSource}
 
 Your target category is: "${category}". You must output your response in this exact category.
 
+ORIGINALITY REQUIREMENTS (mandatory — AdSense E-E-A-T compliance):
+- Write in first person ('I', 'my team', 'in our Da Nang / HCMC office'). Minimum 2000 words — long-form SEO content only. Anything shorter is rejected automatically.
+- Include at least 2 concrete stories from YOUR career: a hire that failed, a sprint that slipped, a client in Singapore/Korea/Australia/UK, an AWS bill you cut, a Jira/Slack/Notion workflow you run.
+- Include a 'Vietnam Reality Check' paragraph: salaries ($3,000-4,000 senior React), hiring competition from Singapore/Australia/US remote, cultural dynamics.
+- Give an OPINION: agree/disagree with the source news and explain why from experience. No neutral summaries.
+- Never copy sentences from the source. Never invent fake quotes, fake stats, or fake customer stories.
+- Disclose AI assistance at the end: 'Written with AI assistance, reviewed and edited by Do Minh Tuan from 15 years of production experience.'
+
 Writing Style Guidelines:
 - Tone: Technical Authority yet incredibly friendly, accessible, and exciting for beginners.
 - Formatting: Use structured Markdown headers (###), complete sentences, and clean paragraphs.
 - Vocabulary: If you introduce a technical term (like API, database replication, server scaling, or Docker), immediately explain it using a simple real-world analogy.
-- Specific Sections:
-  1. You MUST include a dedicated section titled "### 👨‍💻 Developer Tip" containing practical programming insights, simple React/Node coding advice, or infrastructure best practices related to the topic.
-  2. You MUST include a dedicated section titled "### 💼 Business Growth Takeaway" written in plain, jargon-free English explaining how small-to-medium businesses or beginner founders can use this tech/concept to cut budgets, boost sales, or automate operations.
+- Specific Sections (ALL mandatory):
+  1. '### 🧪 What I Tried On My Team' — real experiment, tool, sprint data, what worked/failed.
+  2. '### 🇻🇳 Vietnam Reality Check' — local salaries, hiring, market context.
+  3. '### 👨‍💻 Developer Tip' containing practical programming insights, simple React/Node coding advice, or infrastructure best practices related to the topic.
+  4. '### 💼 Business Growth Takeaway' written in plain, jargon-free English explaining how small-to-medium businesses or beginner founders can use this tech/concept to cut budgets, boost sales, or automate operations.
 - CRITICAL JSON COMPLIANCE: Never use unescaped double quotes ("...") inside your JSON string values (especially inside "title", "summary", or "content"). If you need to write a quote or highlight a term inside your text, always use single quotes ('...') to prevent JSON parsing crashes.
 
 Return your response in this exact JSON schema:
@@ -159,24 +173,26 @@ export default async function handler(req, res) {
   // Log request metadata
   console.log('Cron UA:', req.headers['user-agent']);
 
-  // Sub-endpoint routing for backup (does not require Gemini key)
-  if (req.query.action === 'backup-daily') return handleBackup(req, res, 'daily');
-  if (req.query.action === 'backup-weekly') return handleBackup(req, res, 'weekly');
-  if (req.query.action === 'backup-list') return handleBackupList(req, res);
-
-  // 1. Security Authorization Guard
+  // 1. Security Authorization Guard — runs before ANY action routing.
+  // Only the shared Bearer secret is accepted. Header-based bypasses
+  // (x-vercel-cron, x-cron, user-agent) are spoofable and must never grant access.
+  // Vercel Cron sends Authorization: Bearer $CRON_SECRET automatically when set.
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.authorization;
   const isAuthorized =
-    req.headers['x-vercel-cron'] === 'true' ||
-    req.headers['x-cron'] === 'true' ||
-    req.headers['user-agent'] === 'vercel-cron/1.0' ||
     (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
     !process.env.VERCEL; // Always allow local testing
 
   if (!isAuthorized) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+
+  // Sub-endpoint routing (all authenticated from here on)
+  if (req.query.action === 'backup-daily') return handleBackup(req, res, 'daily');
+  if (req.query.action === 'backup-weekly') return handleBackup(req, res, 'weekly');
+  if (req.query.action === 'backup-list') return handleBackupList(req, res);
+
+  if (req.query.action === 'dedup-cleanup') return handleDedupCleanup(req, res);
 
   const geminiApiKey = process.env.GEMINI_API_KEY;
   if (!geminiApiKey) {
@@ -255,9 +271,37 @@ export default async function handler(req, res) {
       });
     }
 
-    // 5. Package imported articles and resolve any slug collisions globally
+    // 5. Package imported articles, enforce originality gate, resolve slug collisions
     const newArticles = [];
+    const REQUIRED_SECTIONS = ['What I Tried', 'Vietnam Reality Check', 'Developer Tip', 'Business Growth Takeaway'];
+    const wordCount = (s) => String(s || '').trim().split(/\s+/).filter(Boolean).length;
+    const normTitle = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const titleWords = (s) => new Set(normTitle(s).split(' ').filter((w) => w.length > 3));
+    const isNearDuplicate = (a, b) => {
+      const wa = titleWords(a);
+      const wb = titleWords(b);
+      if (wa.size === 0 || wb.size === 0) return false;
+      let overlap = 0;
+      wa.forEach((w) => { if (wb.has(w)) overlap += 1; });
+      return overlap / Math.max(wa.size, wb.size) >= 0.6;
+    };
     successfulResults.forEach(({ parsed, originalItem }) => {
+      const content = parsed.content || '';
+      if (wordCount(content) < 1800) {
+        console.error(`Originality gate rejected '${parsed.slug}': too thin (${wordCount(content)} words, need 1800+)`);
+        return;
+      }
+      const missing = REQUIRED_SECTIONS.filter((sec) => !content.includes(sec));
+      if (missing.length > 0) {
+        console.error(`Originality gate rejected '${parsed.slug}': missing ${missing.join(', ')}`);
+        return;
+      }
+      const candidateTitle = parsed.title || originalItem.title;
+      const allTitles = [...newArticles.map((a) => a.title), ...existingBlog.map((b) => b.title)];
+      if (allTitles.some((t) => isNearDuplicate(candidateTitle, t))) {
+        console.error(`Originality gate rejected '${candidateTitle}': near-duplicate title`);
+        return;
+      }
       const presetImages = coverImagePresets[parsed.category] || coverImagePresets['Tech Made Simple 💡'];
       const randomImage = presetImages[Math.floor(Math.random() * presetImages.length)];
       
@@ -265,7 +309,6 @@ export default async function handler(req, res) {
       let finalSlug = proposedSlug;
       let counter = 1;
       
-      // Loop to prevent slug collisions in the existing DB and within this run batch
       while (processedSlugsThisRun.has(finalSlug)) {
         finalSlug = `${proposedSlug}-${counter}`;
         counter++;
@@ -273,16 +316,20 @@ export default async function handler(req, res) {
       processedSlugsThisRun.add(finalSlug);
 
       newArticles.push({
-        title: parsed.title || originalItem.title,
+        title: candidateTitle,
         slug: finalSlug,
         category: parsed.category,
         image: randomImage,
         date: new Date().toISOString().split('T')[0],
         author: 'Do Minh Tuan',
         summary: parsed.summary || originalItem.desc.substring(0, 150),
-        content: parsed.content || originalItem.desc
+        content: `${content}\n\n---\n*Written with AI assistance, reviewed and edited by Do Minh Tuan from 15 years leading Vietnamese tech teams.*`
       });
     });
+
+    if (newArticles.length === 0) {
+      return res.status(200).json({ success: true, message: 'No articles passed the originality gate this run. Nothing published.' });
+    }
 
     // 6. Prepend new batch, self-clean database, and save to Vercel KV
     const mergedBlog = [...newArticles, ...existingBlog];
@@ -316,7 +363,65 @@ export default async function handler(req, res) {
 
   } catch (e) {
     console.error('Parallel Cron Execution Error:', e);
-    return res.status(500).json({ error: 'Internal Server Error', details: e.message });
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
+
+// One-time KV cleanup: removes exact slug dupes, near-duplicate titles, and
+// optionally thin posts. Dry-run by default; pass ?apply=true to save.
+// Usage: curl -H "Authorization: Bearer $CRON_SECRET" "https://me.tony.do/api/cron-fetch-news?action=dedup-cleanup&minWords=500"
+// Then re-run with &apply=true after reviewing the list.
+async function handleDedupCleanup(req, res) {
+  const minWords = parseInt(req.query.minWords || '0', 10) || 0;
+  const apply = req.query.apply === 'true';
+  try {
+    const cloudData = await kv.get('portfolio_data') || { blog: [] };
+    const blog = cloudData.blog || [];
+    const normTitle = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const titleWords = (s) => new Set(normTitle(s).split(' ').filter((w) => w.length > 3));
+    const isNearDuplicate = (a, b) => {
+      const wa = titleWords(a);
+      const wb = titleWords(b);
+      if (wa.size === 0 || wb.size === 0) return false;
+      let overlap = 0;
+      wa.forEach((w) => { if (wb.has(w)) overlap += 1; });
+      return overlap / Math.max(wa.size, wb.size) >= 0.6;
+    };
+    const wordCount = (s) => String(s || '').trim().split(/\s+/).filter(Boolean).length;
+    const kept = [];
+    const removed = [];
+    const seenSlugs = new Set();
+    blog.forEach((post) => {
+      if (seenSlugs.has(post.slug)) {
+        removed.push({ slug: post.slug, title: post.title, reason: 'exact-slug-dupe' });
+        return;
+      }
+      if (kept.some((k) => isNearDuplicate(k.title, post.title))) {
+        removed.push({ slug: post.slug, title: post.title, reason: 'near-duplicate-title' });
+        return;
+      }
+      if (minWords > 0 && wordCount(post.content) < minWords) {
+        removed.push({ slug: post.slug, title: post.title, reason: `thin-${wordCount(post.content)}-words` });
+        return;
+      }
+      seenSlugs.add(post.slug);
+      kept.push(post);
+    });
+    if (apply) {
+      cloudData.blog = kept;
+      await kv.set('portfolio_data', cloudData);
+    }
+    return res.status(200).json({
+      success: true,
+      dryRun: !apply,
+      before: blog.length,
+      after: kept.length,
+      removedCount: removed.length,
+      removed,
+    });
+  } catch (e) {
+    console.error('Dedup cleanup error:', e);
+    return res.status(500).json({ error: 'Cleanup failed', details: e.message });
   }
 }
 
@@ -403,9 +508,9 @@ async function sendpulseNewsletterBlaster(newArticles) {
       emailHtml += `
       <div class="article-card">
         <span class="category-badge" style="background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeColor};">${post.category}</span>
-        <h2 class="article-title"><a href="https://me.tony.do/#blog/${post.slug}">${post.title}</a></h2>
+        <h2 class="article-title"><a href="https://me.tony.do/blog/${post.slug}">${post.title}</a></h2>
         <p class="article-summary">${post.summary}</p>
-        <a href="https://me.tony.do/#blog/${post.slug}" class="btn" style="background: ${badgeColor};">Read Article →</a>
+        <a href="https://me.tony.do/blog/${post.slug}" class="btn" style="background: ${badgeColor};">Read Article →</a>
       </div>
       `;
     });
@@ -451,7 +556,7 @@ async function sendpulseNewsletterBlaster(newArticles) {
     const emailPayload = {
       email: {
         html: base64Html,
-        text: '4 new weekly tech insights published on Tony Do\'s portfolio feed. Read more at https://me.tony.do/#blog',
+        text: '4 new weekly tech insights published on Tony Do\'s portfolio feed. Read more at https://me.tony.do/blog',
         subject: '🎯 Tony Do\'s Weekly Tech Stream - 4 New Insights Published',
         from: {
           name: 'Tony Do - Tech Leader',

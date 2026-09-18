@@ -50,6 +50,7 @@
 </head>
 <body>
   <div id="app"></div>
+  <script src="./config.js" onerror="window.__adminConfigMissing=true"></script>
   <script>
 const DEFAULT_DATA = {
   name: "Do Minh Tuan",
@@ -230,17 +231,19 @@ function switchTab(tab, btn) {
 }
 
 function doLogin() {
+  if (window.__adminConfigMissing || typeof ADMIN_PASSWORD_HASH === 'undefined' || typeof TOTP_SECRET === 'undefined') {
+    document.getElementById('app').innerHTML = renderLogin('Admin not configured. Run: node src/admin/setup.js <strong-password>');
+    return;
+  }
   const password = document.getElementById('password').value;
   const totp = document.getElementById('totp').value;
-  
-  // Check password (simple hash: admin123 -> 5f4dcc3b5aa765d61d8327deb882cf99)
+
   const pwHash = simpleHash(password);
-  const correctHash = '5f4dcc3b5aa765d61d8327deb882cf99'; // password123
-  
-  // Simple TOTP check (accept any 6-digit or use google auth secret JBSWY3DPEHPK3PXP)
-  const expected = getTOTP('JBSWY3DPEHPK3PXP');
-  
-  if (pwHash === correctHash && (totp === expected || totp.length === 6)) {
+  const correctHash = ADMIN_PASSWORD_HASH;
+
+  const expected = getTOTP(TOTP_SECRET);
+
+  if (pwHash === correctHash && totp === expected) {
     session = 'logged_in';
     localStorage.setItem('cms_session', session);
     render();

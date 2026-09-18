@@ -53,6 +53,12 @@ const AvatarScene = forwardRef(function AvatarScene({ isMuted, isVisible }, ref)
 
     async function initTalkingHead() {
       try {
+        try {
+          const head = await fetch('/avatars/tony.glb', { method: 'HEAD' });
+          if (!head.ok) return;
+        } catch {
+          return;
+        }
         const { TalkingHead } = await import('@met4citizen/talkinghead');
         if (!mounted || !canvasRef.current) return;
         const th = new TalkingHead(canvasRef.current, {

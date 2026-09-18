@@ -7,9 +7,23 @@ import Reactions from './Reactions';
 
 export default function BlogDetail({ cvData, slug }) {
   const articles = cvData?.blog || [];
-  const article = articles.find(a => a.slug === slug);
+  const summary = articles.find(a => a.slug === slug);
+  const [full, setFull] = useState(null);
 
-  // 1. Scroll Progress Hook
+  useEffect(() => {
+    setFull(null);
+    if (summary && summary.content) return;
+    let cancelled = false;
+    fetch(`/api/data?type=article&slug=${encodeURIComponent(slug)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (!cancelled && d && d.article) setFull(d.article); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [slug, summary]);
+
+  const article = (full && full.slug === slug) ? full : summary;
+
+  // 1. Scroll Progress Hook (rAF-throttled, passive)
   const [scrollProgress, setScrollProgress] = useState(0);
 
   // View counter (KV-backed, dedup'd per session)
@@ -19,19 +33,35 @@ export default function BlogDetail({ cvData, slug }) {
   }, [article]);
 
   useEffect(() => {
-    const handleScroll = () => {
+    let ticking = false;
+    const update = () => {
+      ticking = false;
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
       if (totalHeight > 0) {
-        const progress = (window.pageYOffset / totalHeight) * 100;
-        setScrollProgress(progress);
+        setScrollProgress((window.pageYOffset / totalHeight) * 100);
       }
     };
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [slug]);
 
-  // 2. Cusdis Comments Script Injection
+  // 2. Cusdis Comments Script Injection (+ preconnect only where needed)
   useEffect(() => {
+    let preconnect = document.querySelector('link[data-cusdis-preconnect]');
+    if (!preconnect) {
+      preconnect = document.createElement('link');
+      preconnect.rel = 'preconnect';
+      preconnect.href = 'https://cusdis.com';
+      preconnect.setAttribute('data-cusdis-preconnect', '1');
+      document.head.appendChild(preconnect);
+    }
+
     const oldScript = document.getElementById('cusdis-script');
     if (oldScript) oldScript.remove();
 
@@ -53,7 +83,16 @@ export default function BlogDetail({ cvData, slug }) {
       <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
         <h2>🔍 Article Not Found</h2>
         <p style={{ margin: '1rem 0 2rem', color: '#888' }}>The article you are looking for might have been moved or renamed.</p>
-        <a href="#blog" className="btn btn-primary">Back to Articles</a>
+        <a href="/blog" className="btn btn-primary">Back to Articles</a>
+      </div>
+    );
+  }
+
+  if (!article.content) {
+    return (
+      <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', gap: '1rem' }}>
+        <div className="spinner" style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.05)', borderTop: '3px solid var(--accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', letterSpacing: '2px', textTransform: 'uppercase' }}>Loading article...</span>
       </div>
     );
   }
@@ -95,9 +134,9 @@ export default function BlogDetail({ cvData, slug }) {
         width: '100%',
         justifyContent: 'flex-start'
       }}>
-        <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--text)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>Home</a>
+        <a href="/" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--text)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>Home</a>
         <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
-        <a href="#blog" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--text)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>Blog</a>
+        <a href="/blog" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--text)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>Blog</a>
         <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
         <span style={{ color: activeColor, fontWeight: '500', opacity: 0.95 }}>{article.title}</span>
       </div>
@@ -114,7 +153,7 @@ export default function BlogDetail({ cvData, slug }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
           <div className="blog-card-meta" style={{ margin: 0 }}>
             <span>📅 {article.date}</span>
-            <span>{getReadingTime(article.content)}</span>
+            <span>{article.readingTime || getReadingTime(article.content)}</span>
             <span>👁️ {formatViewCount(viewCount) || '0'} {viewCount === 1 ? 'view' : 'views'}</span>
             <span>✍️ {article.author || 'Do Minh Tuan'}</span>
           </div>
@@ -136,7 +175,10 @@ export default function BlogDetail({ cvData, slug }) {
         <img 
           src={article.image || getFallbackImage(article.category)} 
           alt={article.title} 
-          loading="lazy"
+          loading="eager"
+          fetchPriority="high"
+          width="1200"
+          height="675"
           onError={(e) => { e.target.onerror = null; e.target.src = getFallbackImage(article.category); }}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
@@ -166,6 +208,16 @@ export default function BlogDetail({ cvData, slug }) {
 
       {/* Reactions (likes / insightful / inspired) */}
       <Reactions slug={slug} />
+
+      <ins className="adsbygoogle" style={{ display: 'block', textAlign: 'center', margin: '2.5rem auto', minHeight: '90px' }} data-ad-client="ca-pub-1471589681114517" data-ad-format="auto" data-full-width-responsive="true" />
+
+      <section aria-label="About the author" style={{ marginTop: '2.5rem', padding: '1.5rem 2rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', display: 'flex', gap: '1.2rem', alignItems: 'flex-start' }}>
+        <div style={{ fontSize: '2.2rem' }}>👨‍💻</div>
+        <div>
+          <div style={{ fontWeight: '700' }}>Do Minh Tuan (Tony Do) — Senior PM & Tech Leader, Ho Chi Minh City</div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.7', margin: '0.5rem 0' }}>15+ years leading Vietnamese tech teams (StratAgile Technical Director, CoffeeMug Senior PM, Finantaged COO). Computer Science, University of Wollongong. I review every article from production experience. Contact: tonydo.pm@gmail.com. More: <a href="/about">About</a> · <a href="/contact">Contact</a> · <a href="/disclaimer">AI disclosure</a>.</p>
+        </div>
+      </section>
 
       {/* Social Share Bar */}
       <div style={{
@@ -197,9 +249,12 @@ export default function BlogDetail({ cvData, slug }) {
             Facebook
           </button>
           <button 
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.href);
-              alert('Copied link to clipboard!');
+            onClick={(e) => {
+              try { navigator.clipboard.writeText(window.location.href); } catch { /* clipboard unavailable */ }
+              const btn = e.currentTarget;
+              const original = btn.textContent;
+              btn.textContent = 'Copied ✓';
+              setTimeout(() => { btn.textContent = original; }, 1600);
             }}
             className="btn"
             style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px', background: activeColor, color: '#000', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
@@ -249,7 +304,8 @@ export default function BlogDetail({ cvData, slug }) {
                 key={i} 
                 className="blog-card" 
                 onClick={() => {
-                  window.location.hash = `#blog/${post.slug}`;
+                  window.history.pushState(null, '', `/blog/${post.slug}`);
+                  window.dispatchEvent(new PopStateEvent('popstate'));
                   window.scrollTo(0, 0);
                 }}
                 style={{
@@ -297,7 +353,7 @@ export default function BlogDetail({ cvData, slug }) {
       {/* CTA Footer */}
       <footer style={{ marginTop: '5rem', borderTop: '1px solid var(--border-color)', paddingTop: '3rem', textAlign: 'center' }}>
         <h2 style={{ marginBottom: '1.5rem' }}>Interested in working together or discussing tech?</h2>
-        <a href="#contact" className="btn btn-primary">Connect with Tony</a>
+        <a href="/contact" className="btn btn-primary">Connect with Tony</a>
       </footer>
 
     </article>

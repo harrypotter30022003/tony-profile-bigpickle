@@ -4,11 +4,13 @@ import crypto from 'crypto';
 import { kv } from '@vercel/kv';
 
 const DATA_FILE = path.join(process.cwd(), 'src/admin/data.json');
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) throw new Error('Server misconfigured: ADMIN_PASSWORD is not set.');
 
 function verifyToken(token) {
   const expectedToken = crypto.createHmac('sha256', ADMIN_PASSWORD).update('cms-session').digest('hex');
-  return token === expectedToken;
+  if (typeof token !== 'string' || token.length !== expectedToken.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expectedToken));
 }
 
 export default async function handler(req, res) {
@@ -40,6 +42,7 @@ export default async function handler(req, res) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true, message: 'Saved to Local File' });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('Save error:', e);
+    res.status(500).json({ error: 'Failed to save. Please try again later.' });
   }
 }

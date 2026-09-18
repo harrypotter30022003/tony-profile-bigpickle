@@ -21,6 +21,11 @@ export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store'); // always fresh for agent
 
+  const opsSecret = process.env.CRON_SECRET;
+  if (opsSecret && req.headers.authorization !== `Bearer ${opsSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const results = [];
   let allPassed = true;
   const siteUrl = process.env.VERCEL_URL

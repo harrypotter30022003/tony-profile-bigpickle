@@ -4,7 +4,8 @@ import { kv } from '@vercel/kv';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const CRON_SECRET = process.env.CRON_SECRET || '';
 
-const SESSION_SECRET = process.env.ADMIN_PASSWORD || 'chat-session-secret';
+const SESSION_SECRET = process.env.ADMIN_PASSWORD || (() => { try { return crypto.randomBytes(32).toString('hex'); } catch { return null; } })();
+if (!SESSION_SECRET) throw new Error('Server misconfigured: ADMIN_PASSWORD is not set.');
 const RATE_LIMIT_WINDOW = 60;
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_DAILY_MAX = 20;
@@ -43,7 +44,7 @@ function haship(ip) {
 
 function signToken(data) {
   const payload = Buffer.from(JSON.stringify(data)).toString('base64');
-  const sig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex').slice(0, 8);
+  const sig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
   return payload + '.' + sig;
 }
 
@@ -52,8 +53,13 @@ function verifyToken(token) {
   const parts = token.split('.');
   if (parts.length !== 2) return null;
   const [payload, sig] = parts;
-  const expected = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex').slice(0, 8);
-  if (sig !== expected) return null;
+  const expected = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  if (sig.length !== expected.length) return null;
+  let match = false;
+  try {
+    match = crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+  } catch { return null; }
+  if (!match) return null;
   try {
     return JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
   } catch { return null; }
@@ -70,10 +76,42 @@ function makeid(n) {
   return crypto.randomBytes(n).toString('hex');
 }
 
-function genMathChallenge() {
+const captchaMemory = new Map();
+
+async function genMathChallenge() {
   const a = Math.floor(Math.random() * 10) + 3;
   const b = Math.floor(Math.random() * 10) + 3;
-  return { question: `What is ${a} + ${b}?`, answer: String(a + b), id: makeid(4) };
+  const id = makeid(8);
+  const answer = String(a + b);
+  try {
+    if (process.env.VERCEL && process.env.KV_REST_API_URL) {
+      await kv.set(`captcha:${id}`, answer, { ex: 300 });
+    } else {
+      captchaMemory.set(id, { answer, exp: Date.now() + 300000 });
+      if (captchaMemory.size > 500) {
+        const oldest = captchaMemory.keys().next().value;
+        captchaMemory.delete(oldest);
+      }
+    }
+  } catch { /* store failed; verification will issue a fresh challenge */ }
+  return { question: `What is ${a} + ${b}?`, id };
+}
+
+async function takeCaptchaAnswer(id) {
+  try {
+    if (process.env.VERCEL && process.env.KV_REST_API_URL) {
+      const stored = await kv.get(`captcha:${id}`);
+      if (stored != null) {
+        try { await kv.del(`captcha:${id}`); } catch { /* ignore */ }
+        return String(stored);
+      }
+      return null;
+    }
+  } catch { /* fall through to memory */ }
+  const entry = captchaMemory.get(id);
+  if (entry) captchaMemory.delete(id);
+  if (!entry || Date.now() > entry.exp) return null;
+  return entry.answer;
 }
 
 async function checkRateLimit(ip) {
@@ -81,10 +119,16 @@ async function checkRateLimit(ip) {
   const dailyKey = `ratelimit:chat:daily:${haship(ip)}`;
   const now = Date.now();
 
-  const [windowRaw, dailyRaw] = await Promise.all([
-    kv.get(key),
-    kv.get(dailyKey),
-  ]);
+  let windowRaw = null;
+  let dailyRaw = null;
+  try {
+    [windowRaw, dailyRaw] = await Promise.all([
+      kv.get(key),
+      kv.get(dailyKey),
+    ]);
+  } catch {
+    return { blocked: false };
+  }
 
   const window = windowRaw ? JSON.parse(windowRaw) : [];
   const daily = dailyRaw ? JSON.parse(dailyRaw) : [];
@@ -107,7 +151,7 @@ async function checkRateLimit(ip) {
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://me.tony.do');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Session-Token');
 
@@ -128,7 +172,7 @@ export default async function handler(req, res) {
     const { name, email, captchaAnswer, captchaId, t } = req.body;
 
     if (!name || !email) {
-      return res.json({ entry: true, challenge: genMathChallenge() });
+      return res.json({ entry: true, challenge: await genMathChallenge() });
     }
 
     if (typeof name !== 'string' || typeof email !== 'string' || name.length > 100 || email.length > 200) {
@@ -136,21 +180,20 @@ export default async function handler(req, res) {
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.json({ entry: true, error: 'Please enter a valid email address.', challenge: genMathChallenge() });
+      return res.json({ entry: true, error: 'Please enter a valid email address.', challenge: await genMathChallenge() });
     }
 
     if (captchaId && captchaAnswer) {
-      const stored = await kv.get(`captcha:${captchaId}`);
+      const stored = await takeCaptchaAnswer(captchaId);
       if (!stored || stored !== captchaAnswer.trim().toLowerCase()) {
-        return res.json({ entry: true, error: 'Incorrect answer. Try again.', challenge: genMathChallenge() });
+        return res.json({ entry: true, error: 'Incorrect answer. Try again.', challenge: await genMathChallenge() });
       }
-      await kv.del(`captcha:${captchaId}`);
     } else {
-      return res.json({ entry: true, challenge: genMathChallenge() });
+      return res.json({ entry: true, challenge: await genMathChallenge() });
     }
 
     if (t && Date.now() - Number(t) < 3000) {
-      return res.json({ entry: true, error: 'Please wait a moment before submitting.', challenge: genMathChallenge() });
+      return res.json({ entry: true, error: 'Please wait a moment before submitting.', challenge: await genMathChallenge() });
     }
 
     const rl = await checkRateLimit(ip);

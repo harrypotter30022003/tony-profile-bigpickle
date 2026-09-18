@@ -10,7 +10,8 @@ const app = express();
 const PORT = 3001;
 const PROJECT_DIR = process.env.PROJECT_DIR || 'P:\\OpenCode_Projects\\Tony-cv-cloud\\tony-portfolio';
 const DATA_FILE = path.join(PROJECT_DIR, 'src/admin/data.json');
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) throw new Error('Server misconfigured: ADMIN_PASSWORD is not set.');
 
 app.use(cors());
 app.use(express.json());

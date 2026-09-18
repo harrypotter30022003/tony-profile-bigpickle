@@ -107,7 +107,7 @@ export default async function handler(req, res) {
       date_published: post.date,
       estimated_read_time: `${Math.ceil((post.content ? post.content.split(/\s+/).length : 0) / 200)} min read`,
       article_summary: post.summary,
-      canonical_url: `https://me.tony.do/#blog/${post.slug}`
+      canonical_url: `https://me.tony.do/blog/${post.slug}`
     })) : []
   };
 

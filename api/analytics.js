@@ -318,6 +318,11 @@ export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=1800');
 
+  const opsSecret = process.env.CRON_SECRET;
+  if (opsSecret && req.headers.authorization !== `Bearer ${opsSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const report = req.query.report || req.query._report || 'summary';
   const period = (req.query.period || '30d').toLowerCase();
   const reportType = (req.query.type || 'queries').toLowerCase();

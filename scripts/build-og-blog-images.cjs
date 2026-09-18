@@ -79,20 +79,15 @@ function buildSvg(article) {
 }
 
 async function fetchDefaultArticles() {
-  // Use the existing data endpoint to get the merged article list
-  // (works in both build-time and post-deploy contexts)
-  const { execSync } = require('child_process');
   try {
-    // Try reading the seed file directly
-    const src = fs.readFileSync(BLOG_DATA_FILE, 'utf8');
-    const start = src.indexOf('export const defaultBlogArticles = [');
-    const end = src.indexOf('];', start) + 2;
-    const arrayText = src.substring(start + 'export const defaultBlogArticles = '.length, end);
-    return eval(arrayText);
+    const { pathToFileURL } = require('url');
+    const libPath = path.join(__dirname, '..', 'api', '_lib.js');
+    const lib = await import(pathToFileURL(libPath).href);
+    if (lib && Array.isArray(lib.defaultBlogArticles)) return lib.defaultBlogArticles;
   } catch (e) {
-    console.error('Failed to parse defaultBlogArticles:', e.message);
-    return [];
+    console.error('Failed to import defaultBlogArticles:', e.message);
   }
+  return [];
 }
 
 async function build() {

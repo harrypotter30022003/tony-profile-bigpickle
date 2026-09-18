@@ -34,10 +34,10 @@ export default function NotFound({ requestedPath = '' }) {
         )}
       </p>
       <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <a href="#" className="btn btn-primary" style={{ padding: '0.7rem 1.4rem' }}>
+        <a href="/" className="btn btn-primary" style={{ padding: '0.7rem 1.4rem' }}>
           ← Back to Home
         </a>
-        <a href="#blog" className="btn btn-secondary" style={{ padding: '0.7rem 1.4rem' }}>
+        <a href="/blog" className="btn btn-secondary" style={{ padding: '0.7rem 1.4rem' }}>
           Browse Blog
         </a>
       </div>

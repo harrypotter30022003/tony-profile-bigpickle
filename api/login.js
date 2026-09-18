@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) throw new Error('Server misconfigured: ADMIN_PASSWORD is not set.');
 
 export default function handler(req, res) {
   if (req.method !== 'POST') {

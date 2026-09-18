@@ -30,6 +30,8 @@ dist-ssr
 src/admin/data.json
 src/admin/data.json.bak
 src/admin/comments.json
+src/admin/config.js
+src/admin/subscribers.json
 
 # Editor directories and files
 .vscode/*

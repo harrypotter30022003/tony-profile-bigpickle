@@ -19,7 +19,9 @@ export default async function handler(req, res) {
   }
 
   const targetEmail = email.trim().toLowerCase();
+  const escapeHtml = (s) => String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let subscribers = [];
+  let storeOk = true;
 
   try {
     if (process.env.VERCEL && process.env.KV_REST_API_URL) {
@@ -27,9 +29,15 @@ export default async function handler(req, res) {
         const cloudData = await kv.get('portfolio_subscribers');
         if (Array.isArray(cloudData)) {
           subscribers = cloudData;
+        } else if (cloudData != null) {
+          storeOk = false;
         }
       } catch (kvErr) {
         console.error('Unsubscribe: KV load failed:', kvErr);
+        storeOk = false;
+      }
+      if (!storeOk) {
+        return res.status(503).send('Subscription service temporarily unavailable. Please try again later.');
       }
     } else {
       try {
@@ -63,7 +71,7 @@ export default async function handler(req, res) {
           <span style="font-size: 3rem; margin-bottom: 1.5rem; display: block;">📬</span>
           <h1 style="color: #00f5d4; font-size: 2rem; margin-bottom: 1rem;">Unsubscribed Successfully</h1>
           <p style="color: #b0b0b8; font-size: 1.05rem; line-height: 1.6; margin-bottom: 2rem;">
-            You have been cleanly removed from Tony Do's weekly tech stream (<strong>${targetEmail}</strong>). We are sorry to see you go!
+            You have been cleanly removed from Tony Do's weekly tech stream (<strong>${escapeHtml(targetEmail)}</strong>). We are sorry to see you go!
           </p>
           <a href="https://me.tony.do" style="color: #000; background: #00f5d4; text-decoration: none; font-weight: bold; padding: 0.8rem 2rem; border-radius: 6px; box-shadow: 0 0 15px rgba(0, 245, 212, 0.3); transition: all 0.2s;">
             Back to me.tony.do
