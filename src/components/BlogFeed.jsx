@@ -32,7 +32,7 @@ export function spaGo(path) {
 export default function BlogFeed({ cvData }) {
   const articles = useMemo(() => cvData?.blog || [], [cvData?.blog]);
   const [selectedCategory, _setSelectedCategory] = useState('All');
-  const initial = useMemo(readFeedParams, []);
+  const initial = useMemo(() => readFeedParams(), []);
   const [searchQuery, setSearchQuery] = useState(initial.q);
   const [currentPage, setCurrentPage] = useState(initial.page);
   const postsPerPage = 12;

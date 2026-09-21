@@ -9,9 +9,13 @@ export default function BlogDetail({ cvData, slug }) {
   const articles = cvData?.blog || [];
   const summary = articles.find(a => a.slug === slug);
   const [full, setFull] = useState(null);
+  const [prevSlug, setPrevSlug] = useState(slug);
+  if (prevSlug !== slug) {
+    setPrevSlug(slug);
+    setFull(null);
+  }
 
   useEffect(() => {
-    setFull(null);
     if (summary && summary.content) return;
     let cancelled = false;
     fetch(`/api/data?type=article&slug=${encodeURIComponent(slug)}`)
