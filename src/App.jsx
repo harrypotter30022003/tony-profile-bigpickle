@@ -74,7 +74,7 @@ const hiddenMessages = [
   { quote: "Teamwork makes the dream work.", author: "John C. Maxwell" }
 ];
 
-function Navigation({ cvData, currentView }) {
+function Navigation({ cvData }) {
   const [isOpen, setIsOpen] = useState(false);
   
   const menuItems = [
@@ -224,10 +224,10 @@ function About({ cvData }) {
           </div>
           <div className="edu-section">
             <div className="edu-card">
-              <h4>{cvData?.education.institution}</h4>
-              <p>{cvData?.education.degree} • {cvData?.education.period}</p>
+              <h4>{cvData?.education?.institution}</h4>
+              <p>{cvData?.education?.degree} • {cvData?.education?.period}</p>
             </div>
-            <div className="cert-badge">📜 {cvData?.certifications[0].name} {cvData?.certifications[0].score} - {cvData?.certifications[0].issuer}</div>
+            <div className="cert-badge">📜 {cvData?.certifications?.[0]?.name} {cvData?.certifications?.[0]?.score} - {cvData?.certifications?.[0]?.issuer}</div>
           </div>
         </div>
       </div>
@@ -1182,7 +1182,7 @@ function App() {
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (cancelled) return;
-        if (d) setData(d);
+        if (d) setData(prev => ({ ...prev, ...d }));
         setLoaded(true);
       })
       .catch(() => {
