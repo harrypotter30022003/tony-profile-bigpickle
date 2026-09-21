@@ -104,7 +104,7 @@ body {
 .app > * { position: relative; z-index: 0; }
 
 /* Navigation */
-nav {
+.app > nav {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 2147483647 !important;
@@ -764,7 +764,7 @@ footer p { color: var(--text-muted); margin-bottom: 1rem; }
   .mystery-icon { margin-bottom: 1rem; }
 
   /* Mobile Menu Overlay Fix */
-  nav { padding: 1rem 1.5rem; width: 100%; }
+  .app > nav { padding: 1rem 1.5rem; width: 100%; }
   
   .nav-links { 
     position: fixed; 
