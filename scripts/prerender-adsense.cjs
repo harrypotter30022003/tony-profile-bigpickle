@@ -79,13 +79,24 @@ async function main() {
   try {
     const indexHtml = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
     const tags = [];
-    const re = /<(script|link)[^>]*(src|href)="\/assets\/[^"]*"[^>]*>/g;
+    const seenTags = new Set();
+    // Capture full tags: scripts include their closing </script> so the
+    // browser doesn't swallow following <link> tags as script content.
+    const re = /<(script|link)[^>]*(src|href)="\/assets\/[^"]*"[^>]*>(?:<\/script>)?/g;
     let m;
-    while ((m = re.exec(indexHtml)) !== null) tags.push(m[0]);
+    while ((m = re.exec(indexHtml)) !== null) {
+      if (!seenTags.has(m[0])) {
+        seenTags.add(m[0]);
+        tags.push(m[0]);
+      }
+    }
     const moduleRe = /<script type="module"[^>]*><\/script>|<script type="module"[^>]*src="[^"]*"[^>]*><\/script>/g;
     let mm;
     while ((mm = moduleRe.exec(indexHtml)) !== null) {
-      if (!tags.includes(mm[0])) tags.push(mm[0]);
+      if (!seenTags.has(mm[0])) {
+        seenTags.add(mm[0]);
+        tags.push(mm[0]);
+      }
     }
     spaAssets = tags.join('\n');
   } catch (e) {
