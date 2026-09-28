@@ -32,7 +32,13 @@ const extractTag = (xml, tag) => {
   return '';
 };
 
-// Parse items from XML
+// Parse items from XML (also captures a source image for self-hosted covers)
+const extractAttr = (xml, tag, attr) => {
+  const regex = new RegExp(`<${tag}[^>]*\\s${attr}=["']([^"']+)["']`, 'i');
+  const match = xml.match(regex);
+  return match ? match[1].trim() : '';
+};
+
 const parseRssItems = (xml) => {
   const items = [];
   const itemBlocks = xml.split('<item>');
@@ -42,7 +48,13 @@ const parseRssItems = (xml) => {
     const link = extractTag(block, 'link');
     const desc = extractTag(block, 'description');
     const pubDate = extractTag(block, 'pubDate');
-    items.push({ title, link, desc, pubDate });
+    const image =
+      extractAttr(block, 'enclosure', 'url') ||
+      extractAttr(block, 'media:content', 'url') ||
+      extractAttr(block, 'media:thumbnail', 'url') ||
+      (desc.match(/<img[^>]*\ssrc=["']([^"']+)["']/i) || [])[1] ||
+      '';
+    items.push({ title, link, desc, pubDate, image });
   }
   return items;
 };
@@ -70,6 +82,127 @@ const coverImagePresets = {
     'https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=1200&q=80'
   ]
 };
+
+const MAX_HOSTED_IMG_BYTES = 8 * 1024 * 1024;
+
+function extFromContentType(ct) {
+  const t = String(ct || '').toLowerCase();
+  if (t.includes('jpeg') || t.includes('jpg')) return 'jpg';
+  if (t.includes('png')) return 'png';
+  if (t.includes('webp')) return 'webp';
+  if (t.includes('gif')) return 'gif';
+  return '';
+}
+
+async function downloadImageBuffer(url) {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+  });
+  if (!res.ok) throw new Error(`image fetch ${res.status}`);
+  const ct = res.headers.get('content-type') || '';
+  const ext = extFromContentType(ct);
+  if (!ext) throw new Error(`not an image (${ct})`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (buf.length === 0 || buf.length > MAX_HOSTED_IMG_BYTES) throw new Error('image size out of range');
+  return { buffer: buf, ext };
+}
+
+function ghImgConfig() {
+  return {
+    owner: process.env.GITHUB_REPO_OWNER || 'harrypotter30022003',
+    repo: process.env.GITHUB_REPO_NAME || 'tony-profile-bigpickle',
+    branch: 'data-backups',
+    base: process.env.GITHUB_REPO_BASE_BRANCH || 'main',
+    token: process.env.GITHUB_BACKUP_TOKEN || ''
+  };
+}
+
+async function ghImg(pathSuffix, options = {}) {
+  const cfg = ghImgConfig();
+  if (!cfg.token) throw new Error('GITHUB_BACKUP_TOKEN missing');
+  const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}${pathSuffix}`;
+  const resp = await fetch(url, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${cfg.token}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'tony-portfolio-image-bot',
+      ...(options.headers || {})
+    }
+  });
+  const text = await resp.text();
+  if (!resp.ok) throw new Error(`GitHub ${resp.status}: ${text.slice(0, 160)}`);
+  return text ? JSON.parse(text) : null;
+}
+
+async function ensureImgBranch() {
+  const cfg = ghImgConfig();
+  try {
+    await ghImg(`/branches/${cfg.branch}`);
+  } catch {
+    const mainRef = await ghImg(`/git/ref/heads/${cfg.base}`);
+    await ghImg('/git/refs', {
+      method: 'POST',
+      body: JSON.stringify({ ref: `refs/heads/${cfg.branch}`, sha: mainRef.object.sha })
+    });
+  }
+}
+
+async function uploadCoverToGitHub(slug, buffer, ext) {
+  const cfg = ghImgConfig();
+  await ensureImgBranch();
+  const dest = `images/blog/${slug}.${ext}`;
+  let sha = null;
+  try {
+    const existing = await ghImg(`/contents/${encodeURIComponent(dest)}?ref=${cfg.branch}`);
+    sha = existing.sha;
+  } catch { /* new file */ }
+  const body = {
+    message: `images(blog): self-hosted cover for ${slug}`,
+    content: buffer.toString('base64'),
+    branch: cfg.branch
+  };
+  if (sha) body.sha = sha;
+  await ghImg(`/contents/${encodeURIComponent(dest)}`, { method: 'PUT', body: JSON.stringify(body) });
+  return `https://cdn.jsdelivr.net/gh/${cfg.owner}/${cfg.repo}@${cfg.branch}/${dest}`;
+}
+
+async function pexelsCoverUrl(query) {
+  const key = process.env.PEXELS_API_KEY || '';
+  if (!key) return '';
+  const q = String(query || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').split(' ').filter((w) => w.length > 3).slice(0, 6).join(' ');
+  if (!q) return '';
+  const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&per_page=3&orientation=landscape`, {
+    headers: { 'Authorization': key }
+  });
+  if (!res.ok) throw new Error(`pexels ${res.status}`);
+  const data = await res.json();
+  const photo = (data.photos || [])[0];
+  return (photo && photo.src && (photo.src.large2x || photo.src.large)) || '';
+}
+
+async function resolveCoverImage({ slug, category, title, sourceImage }) {
+  const presets = coverImagePresets[category] || coverImagePresets['Tech Made Simple 💡'];
+  const fallback = presets[Math.floor(Math.random() * presets.length)];
+  const candidates = [];
+  if (sourceImage) candidates.push(sourceImage);
+  try {
+    const pexelsUrl = await pexelsCoverUrl(title);
+    if (pexelsUrl) candidates.push(pexelsUrl);
+  } catch (e) {
+    console.error('Cover: pexels lookup failed:', e.message);
+  }
+  for (const url of candidates) {
+    try {
+      const { buffer, ext } = await downloadImageBuffer(url);
+      return await uploadCoverToGitHub(slug, buffer, ext);
+    } catch (e) {
+      console.error(`Cover: self-host failed for ${String(url).slice(0, 80)}:`, e.message);
+    }
+  }
+  return fallback;
+}
 
 // Isolated parallel worker to fetch and rewrite an article for a specific category
 // ADSENSE ORIGINALITY POLICY (2026): every article MUST be first-hand, E-E-A-T content.
@@ -285,47 +418,53 @@ export default async function handler(req, res) {
       wa.forEach((w) => { if (wb.has(w)) overlap += 1; });
       return overlap / Math.max(wa.size, wb.size) >= 0.6;
     };
-    successfulResults.forEach(({ parsed, originalItem }, idx) => {
+    for (const { parsed, originalItem } of successfulResults) {
       const content = parsed.content || '';
       if (wordCount(content) < 1200) {
         console.error(`Originality gate rejected '${parsed.slug}': too thin (${wordCount(content)} words, need 1200+)`);
-        return;
+        continue;
       }
       const present = REQUIRED_SECTIONS.filter((sec) => content.includes(sec));
       if (present.length < 2) {
         console.error(`Originality gate rejected '${parsed.slug}': only ${present.length}/4 signature sections — need at least 2 with varied structure`);
-        return;
+        continue;
       }
       const candidateTitle = parsed.title || originalItem.title;
       const allTitles = [...newArticles.map((a) => a.title), ...existingBlog.map((b) => b.title)];
       if (allTitles.some((t) => isNearDuplicate(candidateTitle, t))) {
         console.error(`Originality gate rejected '${candidateTitle}': near-duplicate title`);
-        return;
+        continue;
       }
-      const presetImages = coverImagePresets[parsed.category] || coverImagePresets['Tech Made Simple 💡'];
-      const randomImage = presetImages[Math.floor(Math.random() * presetImages.length)];
-      
+
       let proposedSlug = (parsed.slug || originalItem.slugHash).trim();
       let finalSlug = proposedSlug;
       let counter = 1;
-      
+
       while (processedSlugsThisRun.has(finalSlug)) {
         finalSlug = `${proposedSlug}-${counter}`;
         counter++;
       }
       processedSlugsThisRun.add(finalSlug);
 
+      const idx = newArticles.length;
+      const coverImage = await resolveCoverImage({
+        slug: finalSlug,
+        category: parsed.category,
+        title: candidateTitle,
+        sourceImage: originalItem.image || ''
+      });
+
       newArticles.push({
         title: candidateTitle,
         slug: finalSlug,
         category: parsed.category,
-        image: randomImage,
+        image: coverImage,
         date: new Date(Date.now() - idx * 86400000).toISOString().split('T')[0],
         author: 'Do Minh Tuan',
         summary: parsed.summary || originalItem.desc.substring(0, 150),
         content: `${content}\n\n---\n*By Do Minh Tuan — from 15 years leading Vietnamese tech teams. Drafting assisted, facts, opinions and edits are mine. Corrections: tonydo.pm@gmail.com.*`
       });
-    });
+    }
 
     if (newArticles.length === 0) {
       return res.status(200).json({ success: true, message: 'No articles passed the originality gate this run. Nothing published.' });

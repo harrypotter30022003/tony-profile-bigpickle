@@ -158,6 +158,10 @@
   ],
   "crons": [
     {
+      "path": "/api/cron-fetch-news",
+      "schedule": "0 0 * * 0"
+    },
+    {
       "path": "/api/cron-fetch-news?action=backup-weekly",
       "schedule": "30 0 * * 0"
     },
