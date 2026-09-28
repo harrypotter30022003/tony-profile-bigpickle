@@ -186,23 +186,27 @@ async function resolveCoverImage({ slug, category, title, sourceImage }) {
   const presets = coverImagePresets[category] || coverImagePresets['Tech Made Simple 💡'];
   const fallback = presets[Math.floor(Math.random() * presets.length)];
   const candidates = [];
-  if (sourceImage) candidates.push(sourceImage);
+  if (sourceImage) candidates.push({ url: sourceImage, source: 'news-source' });
   try {
     const pexelsUrl = await pexelsCoverUrl(title);
-    if (pexelsUrl) candidates.push(pexelsUrl);
+    if (pexelsUrl) candidates.push({ url: pexelsUrl, source: 'pexels' });
   } catch (e) {
     console.error('Cover: pexels lookup failed:', e.message);
   }
-  for (const url of candidates) {
+  for (const { url, source } of candidates) {
     try {
       const { buffer, ext } = await downloadImageBuffer(url);
-      return await uploadCoverToGitHub(slug, buffer, ext);
+      const hosted = await uploadCoverToGitHub(slug, buffer, ext);
+      console.log(`Cover: self-hosted via ${source} for ${slug}`);
+      return { url: hosted, source };
     } catch (e) {
       console.error(`Cover: self-host failed for ${String(url).slice(0, 80)}:`, e.message);
     }
   }
-  return fallback;
+  return { url: fallback, source: 'preset-fallback' };
 }
+
+export { resolveCoverImage, pexelsCoverUrl, downloadImageBuffer };
 
 // Isolated parallel worker to fetch and rewrite an article for a specific category
 // ADSENSE ORIGINALITY POLICY (2026): every article MUST be first-hand, E-E-A-T content.
@@ -327,6 +331,8 @@ export default async function handler(req, res) {
 
   if (req.query.action === 'dedup-cleanup') return handleDedupCleanup(req, res);
 
+  if (req.query.action === 'cover-dryrun') return handleCoverDryrun(req, res);
+
   const geminiApiKey = process.env.GEMINI_API_KEY;
   if (!geminiApiKey) {
     return res.status(500).json({ error: 'Gemini API Key is not configured in Vercel.' });
@@ -447,12 +453,13 @@ export default async function handler(req, res) {
       processedSlugsThisRun.add(finalSlug);
 
       const idx = newArticles.length;
-      const coverImage = await resolveCoverImage({
+      const cover = await resolveCoverImage({
         slug: finalSlug,
         category: parsed.category,
         title: candidateTitle,
         sourceImage: originalItem.image || ''
       });
+      const coverImage = cover.url;
 
       newArticles.push({
         title: candidateTitle,
@@ -506,7 +513,54 @@ export default async function handler(req, res) {
   }
 }
 
-// One-time KV cleanup: removes exact slug dupes, near-duplicate titles, and
+// Self-test for the self-hosted cover pipeline: resolves one cover with a
+// throwaway slug, verifies it is hosted (not hotlinked), then deletes it.
+// Requires CRON_SECRET (same guard as all actions above). No secrets in output.
+async function handleCoverDryrun(req, res) {
+  const slug = '__dryrun-cover-test';
+  const started = Date.now();
+  try {
+    const cover = await resolveCoverImage({
+      slug,
+      category: 'Developer Corner 💻',
+      title: 'How I debugged a production WebSocket outage',
+      sourceImage: ''
+    });
+    const url = new URL(cover.url);
+    const hosted = url.hostname === 'cdn.jsdelivr.net';
+    let cleanedUp = false;
+    let bytes = 0;
+    if (hosted) {
+      const head = await fetch(cover.url, { method: 'HEAD' });
+      bytes = parseInt(head.headers.get('content-length') || '0', 10) || 0;
+      const cfg = ghImgConfig();
+      try {
+        const existing = await ghImg(`/contents/${encodeURIComponent(`images/blog/${slug}.${cover.url.split('.').pop()}`)}?ref=${cfg.branch}`);
+        if (existing && existing.sha) {
+          await ghImg(`/contents/${encodeURIComponent(`images/blog/${slug}.${cover.url.split('.').pop()}`)}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ message: `images(blog): remove dry-run cover ${slug}`, sha: existing.sha, branch: cfg.branch })
+          });
+          cleanedUp = true;
+        }
+      } catch (e) {
+        console.error('Cover dry-run cleanup failed:', e.message);
+      }
+    }
+    return res.status(200).json({
+      ok: true,
+      source: cover.source,
+      hosted,
+      imageHost: url.hostname,
+      bytes,
+      cleanedUp,
+      ms: Date.now() - started
+    });
+  } catch (e) {
+    console.error('Cover dry-run failed:', e);
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+}
 // optionally thin posts. Dry-run by default; pass ?apply=true to save.
 // Usage: curl -H "Authorization: Bearer $CRON_SECRET" "https://me.tony.do/api/cron-fetch-news?action=dedup-cleanup&minWords=500"
 // Then re-run with &apply=true after reviewing the list.
