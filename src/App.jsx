@@ -3,6 +3,7 @@ import { getReadingTime, getFallbackImage, getCategoryColor, responsiveProps } f
 import HeroNewsletter from './components/HeroNewsletter';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import NotFound from './components/NotFound';
+import CookieConsent from './components/CookieConsent';
 
 const ChatWidget = lazy(() => import('./components/ChatWidget'));
 
@@ -644,24 +645,8 @@ function PrivacyPolicy() {
   );
 }
 
-function AdSlot({ slot = 'auto', format = 'auto' }) {
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && window.adsbygoogle) {
-        window.adsbygoogle.push({});
-      }
-    } catch { /* ads blocked or not approved yet */ }
-  }, []);
-  return (
-    <ins
-      className="adsbygoogle"
-      style={{ display: 'block', textAlign: 'center', margin: '2rem auto', minHeight: '90px' }}
-      data-ad-client="ca-pub-1471589681114517"
-      data-ad-slot={slot}
-      data-ad-format={format}
-      data-full-width-responsive="true"
-    />
-  );
+function AdSlot() {
+  return null;
 }
 
 function TrustPage({ title, updated, children }) {
@@ -681,9 +666,11 @@ function TrustPage({ title, updated, children }) {
 function AboutPage() {
   return (
     <TrustPage title="About Tony Do" updated="September 2026">
-      <p style={{ marginBottom: '1.5rem' }}>I am Do Minh Tuan (Tony Do), Senior Project Manager and Tech Leader based in Ho Chi Minh City, Vietnam. For 15+ years I have built and led software teams across Southeast Asia: Developer (2011-2013) and Senior Developer (2013-2014) at StratAgile Singapore, Lead PHP and Mobile (2014-2015), Technical Director at StratAgile Vietnam (2015-2021) managing PHP, mobile and marketing teams, Senior PM at CoffeeMug (2021-2022) running global projects across Singapore, Korea, Australia and the UK, and COO at Finantaged (2022-2023) building the IT, creative and HR teams for an AI fintech product.</p>
-      <p style={{ marginBottom: '1.5rem' }}>My stack is hands-on: PHP, WordPress, Magento, JavaScript, React, iOS with Xcode, Android management, AWS EC2, LAMP, CentOS, SSL. Education: Computer Science, University of Wollongong (2007-2010). English: IELTS 7.5, British Council. I have shipped 50+ projects with teams of up to 30 people across 7 countries, including Clue-Box (iOS survey app), Post-a-Card for SingPost, Symptom Care for NCIS Singapore, Smile Asia charity eCommerce, EZ Fast Tech for SMEs, and Wizard Chess at chess.tony.do.</p>
-      <p style={{ marginBottom: '1.5rem' }}>This site (me.tony.do) is my publisher site: portfolio plus first-hand technical notes. Every article is written with AI assistance, then reviewed and edited by me from production experience. Contact: tonydo.pm@gmail.com, +84 96 288 2315, Ho Chi Minh City. LinkedIn via tony.do/linkedin.</p>
+      <p style={{ marginBottom: '1.5rem' }}>I am Do Minh Tuan (Tony Do), Senior Project Manager and Tech Leader based in Ho Chi Minh City, Vietnam (GMT+7). For 15+ years I have built and led software teams across Southeast Asia. I started as Developer (2011-2013) then Senior Developer (2013-2014) at StratAgile Singapore building PHP web and iPhone apps with Xcode, became Lead PHP and Mobile (2014-2015), then Technical Director at StratAgile Vietnam (2015-2021) managing PHP, mobile and marketing teams, then Senior PM at CoffeeMug (2021-2022) running global projects across Singapore, Korea, Australia and the UK, then COO at Finantaged (2022-2023) building the IT, creative and HR teams for an AI fintech product.</p>
+      <p style={{ marginBottom: '1.5rem' }}>My stack is hands-on, not slideware: PHP, WordPress, Magento, JavaScript, React, iOS with Xcode, Android management, AWS EC2, LAMP, CentOS, SSL, GitHub Actions, Vercel. Education: Computer Science, University of Wollongong (2007-2010). English: IELTS 7.5, British Council. I have shipped 50+ projects with teams of up to 30 people across 7 countries, including Clue-Box (iOS survey app with rewards), Post-a-Card for SingPost Singapore, Symptom Care cancer monitoring for NCIS Singapore, Smile Asia charity eCommerce for Ritz-Carlton, EZ Fast Tech SEO and software platform for SMEs, and Wizard Chess at chess.tony.do (Firebase Auth, Firestore, Stockfish AI, Vercel).</p>
+      <p style={{ marginBottom: '1.5rem' }}>Why this site exists: me.tony.do is my publisher site, not a brochure. Portfolio proves who I am, blog proves how I think. Every article starts from a real problem I faced — a hire that failed, a sprint that slipped, an AWS bill I cut in half, a Jira workflow that saved 30 minutes a day — then adds Vietnam market context with real salary ranges, hiring competition from Singapore, Australia and US remote, and cultural dynamics. I publish project management deep-dives, developer tutorials for beginners, and business growth notes for SME founders.</p>
+      <p style={{ marginBottom: '1.5rem' }}>How articles are written: I draft from first-hand experience, use AI tools only to structure and clarify, then review, fact-check, edit and approve every post myself. I do not republish press releases, I do not copy merchant descriptions, I do not use affiliate links in reviews. Tool recommendations come from a year of production use. If I am wrong, email corrections to tonydo.pm@gmail.com and I fix with a dated update note. Comments are moderated by me — spam, hate speech and promotional links are removed.</p>
+      <p style={{ marginBottom: '1.5rem' }}>How to reach me: email tonydo.pm@gmail.com (1-2 business days reply), WhatsApp +84 96 288 2315, LinkedIn via tony.do/linkedin, portfolio me.tony.do, hobby build chess.tony.do. For project inquiries include goals, timeline, budget range and links. For hiring or consulting on Agile delivery, team leadership or Vietnam tech hiring, mention team size and stack. I am based in Ho Chi Minh City and work across Southeast Asia time zones.</p>
     </TrustPage>
   );
 }
@@ -841,7 +828,7 @@ function App() {
               "url": "https://me.tony.do",
               "logo": {
                 "@type": "ImageObject",
-                "url": "https://me.tony.do/favicon-v3.svg"
+                "url": "https://me.tony.do/favicon.svg"
               }
             },
             "mainEntityOfPage": {
@@ -1245,6 +1232,7 @@ function App() {
       <Footer cvData={data} />
       <WhatsAppWidget cvData={data} />
       <BackToTop />
+      <CookieConsent />
       
       <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme" aria-pressed={theme === 'light'}>
         {theme === 'dark' ? '☀️' : '🌙'}

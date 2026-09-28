@@ -1,5 +1,5 @@
 {
-  "name": "Do Minh Tuan test",
+  "name": "Do Minh Tuan",
   "title": "Senior Project Manager & Tech Leader",
   "phone": "+84 96 288 2315",
   "email": "tonydo.pm@gmail.com",
@@ -92,7 +92,7 @@
     { "name": "Clue-Box", "link": "http://clue-box.com/", "desc": "Mobile survey app with rewards", "tags": ["iOS", "PHP", "AWS"] },
     { "name": "Post-a-Card", "link": "https://www.techinasia.com/postacard-app-singapore", "desc": "SingPost postcard app worldwide", "tags": ["iOS", "Android"] },
     { "name": "Symptom Care", "link": "http://www.ncis.com.sg/", "desc": "Cancer symptom monitoring", "tags": ["R&D", "PM"] },
-    { "name": "Smile Asia", "link": "http://smileasia.org", "desc": "Cha rity eCommerce for Ritz-Carlton", "tags": ["WordPress"] },
+    { "name": "Smile Asia", "link": "http://smileasia.org", "desc": "Charity eCommerce for Ritz-Carlton", "tags": ["WordPress"] },
     { "name": "EZ Fast Tech", "link": "https://ezfasttech.com", "desc": "SEO web design & bespoke software development platform for SMEs", "tags": ["WordPress", "SEO", "React"] }
   ],
   "contact": {

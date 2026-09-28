@@ -5,6 +5,7 @@ import { kv } from '@vercel/kv';
 const DATA_FILE = path.join(process.cwd(), 'src/admin/data.json');
 
 const defaultBlogArticles = [
+  { "slug": "building-high-performance-tech-teams-vietnam-blueprint", "date": "2026-06-01" },
   { "slug": "save-hours-free-ai-tools-beginners", "date": "2026-05-15" },
   { "slug": "choosing-website-platform-small-business", "date": "2026-05-10" },
   { "slug": "ai-project-management-chatbots-run-team", "date": "2026-05-08" },

@@ -29,9 +29,9 @@
     <meta name="geo.placename" content="Ho Chi Minh City" />
     <meta name="language" content="English" />
 
-    <!-- Self-hosted fonts (no Google Fonts render-blocking chain) -->
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-400.woff2" crossorigin>
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/orbitron-700.woff2" crossorigin>
+    <!-- Self-hosted variable fonts (1 file covers all weights) -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-var.woff2" crossorigin>
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/orbitron-var.woff2" crossorigin>
     <link rel="preconnect" href="https://images.unsplash.com">
     <link rel="preconnect" href="https://www.googletagmanager.com">
 
@@ -70,30 +70,36 @@
       });
     </script>
 
-    <!-- Google AdSense - loaded after idle to avoid blocking LCP -->
-    <script>
-      window.addEventListener('load', function() {
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(function() {
-            var s = document.createElement('script');
-            s.async = true;
-            s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1471589681114517";
-            s.crossOrigin = "anonymous";
-            document.head.appendChild(s);
-          }, { timeout: 3000 });
-        }
-      });
-    </script>
+    <!-- Google AdSense - DISABLED pending approval (Low value content fix).
+         Do NOT load adsbygoogle.js until AdSense approves me.tony.do.
+         Re-enable after approval by restoring the loader below. -->
+    <!-- AdSense loader removed 2026-09-28 -->
 
-    <!-- Google tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1417QXB4PX"></script>
+    <!-- Google tag (gtag.js) - queueing shim now, script download deferred until after interaction/LCP -->
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-1417QXB4PX', {
-        send_page_view: false // We will track page views manually inside React to properly support Hash Routing
-      });
+      window.gtag = function(){ dataLayer.push(arguments); };
+      (function() {
+        var started = false;
+        function start() {
+          if (started) return;
+          started = true;
+          gtag('js', new Date());
+          gtag('config', 'G-1417QXB4PX', {
+            send_page_view: false // We will track page views manually inside React to properly support Hash Routing
+          });
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = "https://www.googletagmanager.com/gtag/js?id=G-1417QXB4PX";
+          document.head.appendChild(s);
+        }
+        window.addEventListener('load', function() {
+          ['scroll', 'pointerdown', 'keydown', 'touchstart'].forEach(function(evt) {
+            window.addEventListener(evt, start, { once: true, passive: true });
+          });
+          setTimeout(start, 12000);
+        });
+      })();
     </script>
 
     <!-- Apply theme before paint to prevent FOUC -->

@@ -214,8 +214,6 @@ export default function BlogDetail({ cvData, slug }) {
       {/* Reactions (likes / insightful / inspired) */}
       <Reactions slug={slug} />
 
-      <ins className="adsbygoogle" style={{ display: 'block', textAlign: 'center', margin: '2.5rem auto', minHeight: '90px' }} data-ad-client="ca-pub-1471589681114517" data-ad-format="auto" data-full-width-responsive="true" />
-
       <section aria-label="About the author" style={{ marginTop: '2.5rem', padding: '1.5rem 2rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', display: 'flex', gap: '1.2rem', alignItems: 'flex-start' }}>
         <div style={{ fontSize: '2.2rem' }}>👨‍💻</div>
         <div>

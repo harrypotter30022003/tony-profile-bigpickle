@@ -99,6 +99,10 @@ async function main() {
       }
     }
     spaAssets = tags.join('\n');
+    const styleRe = /<style>[\s\S]*?<\/style>/g;
+    const styles = [];
+    while ((m = styleRe.exec(indexHtml)) !== null) styles.push(m[0]);
+    if (styles.length > 0) spaAssets = styles.join('\n') + '\n' + spaAssets;
   } catch (e) {
     console.error('Prerender: could not extract SPA assets:', e.message);
   }
@@ -118,16 +122,16 @@ async function main() {
   };
 
   const trust = [
-    { slug: 'about', title: 'About Tony Do — Senior PM & Tech Leader (15+ Years Vietnam)', desc: 'Do Minh Tuan (Tony Do): 15+ years leading Vietnamese tech teams — StratAgile, CoffeeMug, Finantaged. Wollongong CS, IELTS 7.5.' },
-    { slug: 'contact', title: 'Contact Tony Do — Senior PM & Tech Leader', desc: 'Reach Do Minh Tuan in Ho Chi Minh City: tonydo.pm@gmail.com, +84 96 288 2315.' },
-    { slug: 'privacy-policy', title: 'Privacy Policy — me.tony.do', desc: 'How Tony Do portfolio handles contact data, cookies, AdSense DART cookies, GDPR/CCPA rights.' },
-    { slug: 'terms', title: 'Terms of Service — me.tony.do', desc: 'Fair-use quoting, no scraping, comments policy for Tony Do portfolio and blog.' },
-    { slug: 'disclaimer', title: 'Disclaimer & AI Disclosure — me.tony.do', desc: 'AI-assisted drafts, human-reviewed by Do Minh Tuan from 15 years of production experience.' },
+    { slug: 'about', title: 'About Tony Do — Senior PM & Tech Leader (15+ Years Vietnam)', desc: 'Do Minh Tuan (Tony Do): 15+ years leading Vietnamese tech teams — StratAgile, CoffeeMug, Finantaged. Wollongong CS, IELTS 7.5.', body: `<p>I am Do Minh Tuan (Tony Do), Senior Project Manager and Tech Leader based in Ho Chi Minh City, Vietnam. For 15+ years I have built and led software teams across Southeast Asia: Developer and Senior Developer at StratAgile Singapore, Lead PHP and Mobile, Technical Director at StratAgile Vietnam managing PHP, mobile and marketing teams, Senior PM at CoffeeMug running global projects across Singapore, Korea, Australia and the UK, and COO at Finantaged building IT, creative and HR teams for an AI fintech product.</p><p>My stack is hands-on: PHP, WordPress, Magento, JavaScript, React, iOS with Xcode, AWS EC2, LAMP, CentOS, SSL. Education: Computer Science, University of Wollongong (2007-2010). English: IELTS 7.5, British Council. I have shipped 50+ projects with teams of up to 30 people across 7 countries.</p><p>This site is my publisher site: portfolio plus first-hand technical notes. I draft from experience, use AI only to structure, then review and approve every post. Contact: tonydo.pm@gmail.com, +84 96 288 2315, Ho Chi Minh City. LinkedIn via tony.do/linkedin.</p>` },
+    { slug: 'contact', title: 'Contact Tony Do — Senior PM & Tech Leader', desc: 'Reach Do Minh Tuan in Ho Chi Minh City: tonydo.pm@gmail.com, +84 96 288 2315.', body: `<p>Best way to reach me is email at tonydo.pm@gmail.com or WhatsApp at +84 96 288 2315. I am based in Ho Chi Minh City (GMT+7) and reply within 1-2 business days.</p><p>For project inquiries, include goals, timeline, budget range, and links. For hiring or consulting on Agile delivery, team leadership, or Vietnam tech hiring, mention team size and stack.</p><p>Professional profiles: LinkedIn (tony.do/linkedin), portfolio (me.tony.do), hobby build (chess.tony.do).</p>` },
+    { slug: 'privacy-policy', title: 'Privacy Policy — me.tony.do', desc: 'How Tony Do portfolio handles contact data, cookies, AdSense DART cookies, GDPR/CCPA rights.', body: `<p>At Tony Do Portfolio (me.tony.do), privacy of visitors is a priority. This policy covers information collected via contact forms, WhatsApp, email, log files (IP, browser, ISP, timestamps), cookies for preferences, and Google DoubleClick DART cookies for ads. See https://policies.google.com/technologies/ads for opt-out.</p><p>By using the site you consent to this policy. Contact data is used only to reply. Log data is for trends and administration, not linked to personal identity. Third-party ad servers receive IP automatically for campaign measurement; we have no control over their cookies.</p><p>GDPR and CCPA rights: access, rectification, erasure, restrict processing, object, portability. Requests answered within one month via tonydo.pm@gmail.com.</p>` },
+    { slug: 'terms', title: 'Terms of Service — me.tony.do', desc: 'Fair-use quoting, no scraping, comments policy for Tony Do portfolio and blog.', body: `<p>By accessing me.tony.do you agree to these terms. Content is my opinion from 15 years of production experience for education, not legal, financial, or medical advice. Code samples as-is without warranty.</p><p>You may share links and quote up to 150 words with attribution and link back. Do not republish full articles, scrape the feed, or use content to train competing auto-generated sites without permission.</p><p>Comments are moderated. Spam, hate speech, promotional links removed. Contact tonydo.pm@gmail.com for permissions or takedowns.</p>` },
+    { slug: 'disclaimer', title: 'Disclaimer & AI Disclosure — me.tony.do', desc: 'AI-assisted drafts, human-reviewed by Do Minh Tuan from 15 years of production experience.', body: `<p>Some articles start from public tech news as a topic hook, then add first-hand experience, opinions, Vietnam market context, and case studies. AI tools assist drafting; I review, edit, and approve every post. Errors are mine — email corrections to tonydo.pm@gmail.com.</p><p>Affiliate policy: no affiliate links in reviews. Recommendations come from production use. Ads served by Google AdSense after approval are labeled and do not influence editorial content.</p><p>External links belong to owners. Ad choices at policies.google.com/technologies/ads.</p>` },
   ];
   trust.forEach((t) => {
     write(path.join(t.slug, 'index.html'), pageShell({
       title: t.title, desc: t.desc, canonical: `https://me.tony.do/${t.slug}`, spaAssets,
-      body: `<h1>${esc(t.title)}</h1><p>${esc(t.desc)}</p><p>Full interactive version loads in the app. This static copy exists for search indexing.</p>`,
+      body: `<h1>${esc(t.title)}</h1><p>${esc(t.desc)}</p>${t.body}<p>Full interactive version loads in the app.</p>`,
     }));
   });
 
@@ -143,7 +147,7 @@ async function main() {
   }));
 
   unique.forEach((a) => {
-    const text = mdToText(a.content).slice(0, 6000);
+    const text = mdToText(a.content);
     const pageUrl = `https://me.tony.do/blog/${a.slug}`;
     const brandedOg = `https://me.tony.do/og/blog/${a.slug}.png`;
     const ogImage = `https://me.tony.do/og-image.png`;

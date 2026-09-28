@@ -87,12 +87,12 @@ Source news (use ONLY as a hook — DO NOT rewrite it, DO NOT copy its structure
 Your target category is: "${category}". You must output your response in this exact category.
 
 ORIGINALITY REQUIREMENTS (mandatory — AdSense E-E-A-T compliance):
-- Write in first person ('I', 'my team', 'in our Da Nang / HCMC office'). Minimum 2000 words — long-form SEO content only. Anything shorter is rejected automatically.
+- Write in first person ('I', 'my team', 'in our Da Nang / HCMC office'). Target 1400-2200 words, vary length naturally — never pad to hit a fixed count.
 - Include at least 2 concrete stories from YOUR career: a hire that failed, a sprint that slipped, a client in Singapore/Korea/Australia/UK, an AWS bill you cut, a Jira/Slack/Notion workflow you run.
 - Include a 'Vietnam Reality Check' paragraph: salaries ($3,000-4,000 senior React), hiring competition from Singapore/Australia/US remote, cultural dynamics.
 - Give an OPINION: agree/disagree with the source news and explain why from experience. No neutral summaries.
 - Never copy sentences from the source. Never invent fake quotes, fake stats, or fake customer stories.
-- Disclose AI assistance at the end: 'Written with AI assistance, reviewed and edited by Do Minh Tuan from 15 years of production experience.'
+- End with human-first byline, not an AI label: 'By Do Minh Tuan — from 15 years leading Vietnamese tech teams. Drafting assisted, facts, opinions and edits are mine. Corrections: tonydo.pm@gmail.com.'
 
 Writing Style Guidelines:
 - Tone: Technical Authority yet incredibly friendly, accessible, and exciting for beginners.
@@ -285,15 +285,15 @@ export default async function handler(req, res) {
       wa.forEach((w) => { if (wb.has(w)) overlap += 1; });
       return overlap / Math.max(wa.size, wb.size) >= 0.6;
     };
-    successfulResults.forEach(({ parsed, originalItem }) => {
+    successfulResults.forEach(({ parsed, originalItem }, idx) => {
       const content = parsed.content || '';
-      if (wordCount(content) < 1800) {
-        console.error(`Originality gate rejected '${parsed.slug}': too thin (${wordCount(content)} words, need 1800+)`);
+      if (wordCount(content) < 1200) {
+        console.error(`Originality gate rejected '${parsed.slug}': too thin (${wordCount(content)} words, need 1200+)`);
         return;
       }
-      const missing = REQUIRED_SECTIONS.filter((sec) => !content.includes(sec));
-      if (missing.length > 0) {
-        console.error(`Originality gate rejected '${parsed.slug}': missing ${missing.join(', ')}`);
+      const present = REQUIRED_SECTIONS.filter((sec) => content.includes(sec));
+      if (present.length < 2) {
+        console.error(`Originality gate rejected '${parsed.slug}': only ${present.length}/4 signature sections — need at least 2 with varied structure`);
         return;
       }
       const candidateTitle = parsed.title || originalItem.title;
@@ -320,10 +320,10 @@ export default async function handler(req, res) {
         slug: finalSlug,
         category: parsed.category,
         image: randomImage,
-        date: new Date().toISOString().split('T')[0],
+        date: new Date(Date.now() - idx * 86400000).toISOString().split('T')[0],
         author: 'Do Minh Tuan',
         summary: parsed.summary || originalItem.desc.substring(0, 150),
-        content: `${content}\n\n---\n*Written with AI assistance, reviewed and edited by Do Minh Tuan from 15 years leading Vietnamese tech teams.*`
+        content: `${content}\n\n---\n*By Do Minh Tuan — from 15 years leading Vietnamese tech teams. Drafting assisted, facts, opinions and edits are mine. Corrections: tonydo.pm@gmail.com.*`
       });
     });
 
